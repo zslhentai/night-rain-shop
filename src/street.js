@@ -37,9 +37,9 @@
       S.box(0.82, 0.05, 0.05, mat(0x8b98a8), w[0], w[1], -5.48, {});
       if (w[2] === 0xffd8a0) S.glow(w[0], w[1], -5.44, 0xffcf90, 1.9, .16);
     });
-    [[-6.8, 0xffd8a0], [-8.3, 0x33435c], [-6.8, 0x9fc4dd], [-8.3, 0xffd8a0]].forEach(function (w) {
-      S.box(0.05, 1.05, 0.95, mat(0x1d2738), 9.36, w[0] === -6.8 ? 3.35 : 1.75, w[0], {});
-      S.plane(0.82, 0.92, S.basic(w[1]), 9.40, w[0] === -6.8 ? 3.35 : 1.75, w[0], { ry: Math.PI / 2 });
+    [[-6.8, 3.35, 0xffd8a0], [-8.3, 3.35, 0x33435c], [-6.8, 1.75, 0x9fc4dd], [-8.3, 1.75, 0xffd8a0]].forEach(function (w) {
+      S.box(0.05, 1.05, 0.95, mat(0x1d2738), 9.36, w[1], w[0], {});
+      S.plane(0.82, 0.92, S.basic(w[2]), 9.40, w[1], w[0], { ry: Math.PI / 2 });
     });
     /* balcony + rail */
     S.box(2.4, 0.09, 0.75, mat(0x6a7688), 7.5, 2.45, -5.20, {});
@@ -231,12 +231,10 @@
     }
     S.box(5.0, 0.045, 0.045, rail, 7.1, 0.84, 0.78, {});
     S.box(5.0, 0.035, 0.035, rail, 7.1, 0.48, 0.78, {});
-    for (var j = 0; j < 3; j++) {
-      var rz = 1.25 + j * 1.1;
-      S.cyl(0.035, 0.04, 0.88, 8, post, 4.42, 0.44, rz, {});
-    }
-    S.box(0.045, 0.045, 2.6, rail, 4.42, 0.84, 2.35, {});
-    S.box(0.035, 0.035, 2.6, rail, 4.42, 0.48, 2.35, {});
+    // Leave the zebra crossing accessible from the shop sidewalk.
+    [1.05, 3.25].forEach(function (rz) {
+      S.cyl(.035, .04, .88, 8, post, 4.42, .44, rz, {});
+    });
 
     /* community notice board */
     var nx = -8.15, nz = 0.42;

@@ -19,7 +19,7 @@ window.S = window.S || {};
   S.init = function () {
     var canvas = document.getElementById('scene');
     var renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 0);
     renderer.shadowMap.enabled = true;
@@ -59,8 +59,8 @@ window.S = window.S || {};
     moon.position.set(-11, 17, 9);
     moon.castShadow = true;
     moon.shadow.mapSize.set(1024, 1024);
-    moon.shadow.camera.left = -15; moon.shadow.camera.right = 15;
-    moon.shadow.camera.top = 15; moon.shadow.camera.bottom = -15;
+    moon.shadow.camera.left = -19; moon.shadow.camera.right = 19;
+    moon.shadow.camera.top = 19; moon.shadow.camera.bottom = -19;
     moon.shadow.camera.near = 1; moon.shadow.camera.far = 48;
     moon.shadow.bias = -0.0008;
     scene.add(moon);
@@ -92,9 +92,23 @@ window.S = window.S || {};
     S.camera.aspect = window.innerWidth / window.innerHeight;
     S.camera.updateProjectionMatrix();
     S.renderer.setSize(window.innerWidth, window.innerHeight);
+    var portrait = window.innerWidth < window.innerHeight;
+    if (portrait !== S.portrait) { S.portrait = portrait; S.resetView(); }
   }
 
   /* ---------- orbit control: drag = rotate, wheel = zoom, right-drag = pan ---------- */
+  S.setQuality = function (quality) {
+    S.quality = quality;
+    S.renderer.setPixelRatio(quality === "low" ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
+    S.renderer.shadowMap.enabled = quality !== "low";
+    S.scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; });
+  };
+  S.resetView = function () {
+    S.portrait = window.innerWidth < window.innerHeight;
+    C.tTheta = .55; C.tPhi = 1.02;
+    C.tRadius = window.innerWidth < window.innerHeight ? 112 : 43;
+    C.tTarget.set(0, 1, -.5);
+  };
   var C = {
     theta: 0.70, phi: 1.13, radius: 27.5,
     tTheta: 0.70, tPhi: 1.13, tRadius: 27.5,
@@ -125,7 +139,7 @@ window.S = window.S || {};
       if (keys.length === 2) {
         var p = keys.map(function (k) { return pointers[k]; });
         var d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
-        if (lastPinch > 0) C.tRadius = clamp(C.tRadius * (lastPinch / d), 9, 52);
+        if (lastPinch > 0) C.tRadius = clamp(C.tRadius * (lastPinch / d), 12, 140);
         lastPinch = d;
         return;
       }
@@ -148,6 +162,8 @@ window.S = window.S || {};
     function release(e) {
       delete pointers[e.pointerId];
       if (Object.keys(pointers).length < 2) lastPinch = 0;
+      var remaining = Object.keys(pointers);
+      if (remaining.length === 1) { lastX = pointers[remaining[0]].x; lastY = pointers[remaining[0]].y; }
       if (Object.keys(pointers).length === 0) document.body.classList.remove('dragging');
     }
     canvas.addEventListener('pointerup', release);
@@ -155,7 +171,7 @@ window.S = window.S || {};
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();
-      C.tRadius = clamp(C.tRadius * (1 + Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.0012, 0.16)), 9, 52);
+      C.tRadius = clamp(C.tRadius * (1 + Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.0012, 0.16)), 12, 140);
     }, { passive: false });
   }
 
@@ -174,6 +190,8 @@ window.S = window.S || {};
       C.target.z + C.radius * sp * Math.cos(C.theta)
     );
     S.camera.lookAt(C.target);
+    // Preserve the night contrast when portrait framing requires a distant camera.
+    S.scene.fog.density = .0115 * Math.min(1, 43 / C.radius);
   }
   S.updateCamera = function (dt) { updateCamera(1 - Math.pow(0.001, dt)); };
 

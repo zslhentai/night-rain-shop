@@ -10,8 +10,8 @@
   function r(a, b) { return a + (b - a) * Math.random(); }
 
   S.buildEffects = function () {
-    rainLayer(1150, 0.23, 7.5, 0.55);
-    rainLayer(200, 0.13, 11.5, 0.95);
+    rainLayer(1150, 0.15, 7.5, 0.48);
+    rainLayer(160, 0.10, 11.5, 0.8);
     ripples();
     eaveDrips();
     glassStreaks();
@@ -27,12 +27,13 @@
 
     function reset(k, initial) {
       var o = d[k];
-      o.x = r(-11, 11); o.z = r(-11, 11);
+      o.x = r(-14, 14); o.z = r(-14, 14);
       o.y = initial ? r(0.2, 13) : r(9.5, 13.5);
       o.v = speed * r(0.75, 1.35);
       o.len = maxLen * r(0.45, 1);
       o.tx = o.len * 0.14; o.tz = o.len * 0.035;
-      o.floor = inShop(o.x, o.z) ? 3.62 : 0.03;
+      o.floor = S.rainFloor(o.x, o.z);
+      if (initial) o.y = Math.max(o.y, o.floor + o.len + .1);
       /* raindrops catch the neon where the lights are */
       var warm = Math.max(0, 1 - Math.hypot(o.x + 1.5, o.z - 1) / 6);
       var pink = Math.max(0, 1 - Math.hypot(o.x - 3.4, o.z + 0.8) / 3.5);
@@ -63,9 +64,11 @@
     S.world.add(lines);
 
     S.addUpdate(function (t, dt) {
+      geom.setDrawRange(0, S.quality === "low" ? Math.floor(count * .55) * 2 : count * 2);
       var pA = geom.attributes.position, cA = geom.attributes.color;
       for (var k = 0; k < count; k++) {
         var o = d[k];
+        o.floor = S.rainFloor(o.x, o.z);
         o.y -= o.v * dt;
         if (o.y - o.len < o.floor) {
           reset(k, false);
@@ -197,8 +200,7 @@
     /* automatic door: absolute-time cycle so it stays in sync at any frame rate */
     var doorOpen = 0;
     S.addUpdate(function (t, dt) {
-      var phase = t % 15.5;
-      var doorTarget = (phase > 4.5 && phase < 8.4) ? 1 : 0;
+      var doorTarget = S.doorDemand ? 1 : 0;
       doorOpen += (doorTarget - doorOpen) * Math.min(1, dt * 4.2);
       if (S.door) {
         S.door.open = doorOpen;
@@ -211,8 +213,8 @@
     var glitch = 0, nextGlitch = r(2, 6);
     S.addUpdate(function (t, dt) {
       nextGlitch -= dt;
-      if (nextGlitch <= 0) { glitch = r(0.05, 0.16); nextGlitch = r(2.5, 8); }
-      var dip = glitch > 0 ? 0.55 : 1;
+      if (nextGlitch <= 0) { glitch = r(0.05, 0.16); nextGlitch = r(18, 35); }
+      var dip = glitch > 0 ? 0.88 : 1;
       if (glitch > 0) glitch -= dt;
       var breathe = 0.96 + 0.045 * Math.sin(t * 2.1) + 0.02 * Math.sin(t * 7.7);
       S.signMaterials.forEach(function (m, i) { m.opacity = Math.min(1, breathe * dip + i * 0.004); });
