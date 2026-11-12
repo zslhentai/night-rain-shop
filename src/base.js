@@ -20,20 +20,8 @@
     var white = S.basic(0xdfe9f2, { transparent: true, opacity: 0.86 });
 
     /* ---- plinth ---- */
-    var slab = S.box(20, 0.9, 20, side, 0, -0.45, 0, { cast: true, outline: true, outlineColor: 0x0b1322, outlineOpacity: 0.8 });
-    S.box(19.6, 0.06, 19.6, S.toon(0x222d40), 0, -0.88, 0, {});
-    /* brass-ish double trim line around the plinth */
-    [[0, 0, 10.02, 20, 0.12], [0, 0, -10.02, 20, 0.12], [10.02, 0, 0, 20, 0.12], [-10.02, 0, 0, 20, 0.12]].forEach(function (p, i) {
-      var horiz = i < 2;
-      var mat = S.basic(0x7d93b6, { transparent: true, opacity: 0.75 });
-      S.box(horiz ? 19.4 : 0.1, 0.055, horiz ? 0.1 : 19.4, mat,
-        horiz ? 0 : p[0], -0.16, horiz ? p[2] : 0, {});
-    });
-    /* four corner inlays */
-    [[-9.4, -9.4], [9.4, -9.4], [-9.4, 9.4], [9.4, 9.4]].forEach(function (p) {
-      S.box(0.42, 0.03, 0.42, trim, p[0], 0.012, p[1], {});
-    });
-
+    var slab = S.box(28, 0.9, 26, side, 0, -0.45, 0, { cast: true, outline: true, outlineColor: 0x0b1322, outlineOpacity: 0.8 });
+    S.box(27.6, 0.06, 25.6, S.toon(0x222d40), 0, -0.88, 0, {});
     /* floating shadow halo under the model */
     var haloTex = S.makeTex(256, 256, function (x, w, h) {
       var g = x.createRadialGradient(128, 128, 10, 128, 128, 126);
@@ -44,10 +32,10 @@
 
     /* ---- asphalt ---- */
     var asphalt = S.toon(0xffffff, { map: S.tex.asphalt(), color: 0xffffff });
-    groundPlane(20, 20, asphalt, 0, 0.008, 0);
+    groundPlane(28, 26, asphalt, 0, 0.008, 0);
 
     /* a cool ambient wash over the whole road */
-    groundPlane(20, 20, S.basic(0x3d5e8c, { transparent: true, opacity: 0.09, depthWrite: false }), 0, 0.011, 0);
+    groundPlane(28, 26, S.basic(0x3d5e8c, { transparent: true, opacity: 0.09, depthWrite: false }), 0, 0.011, 0);
 
     /* ---- L-shaped sidewalk ---- */
     var pave = S.toon(0xffffff, { map: S.tex.pavement() });
@@ -76,8 +64,8 @@
 
     /* ---- drainage grates ---- */
     var drainMat = S.basic(0xffffff, { map: S.tex.drain(), transparent: true, opacity: 0.95 });
-    groundPlane(13.8, 0.28, drainMat, -2.7, 0.026, 0.57, 0);
-    groundPlane(0.28, 8.2, drainMat, 4.14, 0.026, -4.3, Math.PI / 2);
+    groundPlane(13.8, 0.28, drainMat, -2.7, 0.068, 0.57, 0);
+    groundPlane(0.28, 8.2, drainMat, 4.14, 0.068, -4.3, Math.PI / 2);
     /* corner catch basin + manhole */
     var mh = S.cyl(0.44, 0.44, 0.02, 20, S.toon(0x374456), 3.15, 0.026, 0.62, {});
     S.torus(0.39, 0.025, S.toon(0x6a7a8c), 3.15, 0.038, 0.62, { rx: Math.PI / 2 });
@@ -92,19 +80,19 @@
     for (var k2 = 0; k2 < 4; k2++) groundPlane(0.075, 1.1, yellow, 7.15, 0.02, 1.8 + k2 * 2.3, 0);
 
     /* zebra crossing across the corner road */
-    for (var z = 0; z < 9; z++) {
-      var cx = 4.75 + z * 0.53;
+    for (var z = 0; z < 12; z++) {
+      var cx = 4.9 + z * 0.48;
       groundPlane(0.34, 1.55, white, cx, 0.024, 2.15, 0);
       groundPlane(0.34, 1.55, S.basic(0x8fbce8, { transparent: true, opacity: .20, blending: T.AdditiveBlending, depthWrite: false }), cx, 0.027, 2.15, 0);
     }
     /* stop line + painted characters */
-    groundPlane(4.9, 0.13, white, 7.15, 0.023, 0.98, 0);
+    groundPlane(4.9, 0.13, white, 7.6, 0.023, 3.35, 0);
     var stopTex = S.makeTex(512, 128, function (x, w, h) {
       x.clearRect(0, 0, w, h);
       x.font = '800 78px ' + S.FONT; x.fillStyle = 'rgba(230,242,250,.82)';
       x.textAlign = 'center'; x.textBaseline = 'middle'; x.fillText('止まれ', w / 2, h / 2);
     });
-    groundPlane(2.6, 0.65, S.basic(0xffffff, { map: stopTex, transparent: true, depthWrite: false }), 0.6, 0.028, 3.25, 0);
+    groundPlane(2.6, 0.65, S.basic(0xffffff, { map: stopTex, transparent: true, depthWrite: false }), 7.6, 0.028, 4.1, 0);
 
     /* ---- parking bays ---- */
     var bay = S.basic(0xd9e6ee, { transparent: true, opacity: .62 });
@@ -112,8 +100,8 @@
       var px = -7.4 + b * 2.5;
       groundPlane(0.07, 2.6, bay, px - 1.15, 0.022, 7.35, 0);
       groundPlane(2.35, 0.07, bay, px, 0.022, 8.62, 0);
-      groundPlane(2.35, 0.07, bay, px, 0.022, 6.08, 0);
-      S.box(0.9, 0.14, 0.16, S.toon(0xd0b06a), px, 0.07, 9.0, {});
+      // Parking bays open onto the access aisle.
+      S.box(0.9, 0.14, 0.16, S.toon(0xd0b06a), px, 0.07, 8.4, {});
       groundPlane(0.5, 0.5, S.basic(0xffffff, {
         map: S.tex.label('P', '', '#25303f', '#e8f2f8'), transparent: true, opacity: .55, depthWrite: false
       }), px, 0.024, 7.35, 0);
@@ -127,7 +115,7 @@
       [-7.9, -3.1, 1.9, 2.4, .1], [5.0, -6.2, 1.8, 1.3, .8]
     ];
     spots.forEach(function (p) {
-      var mat = S.basic(0xffffff, { map: puddleTex, transparent: true, depthWrite: false, opacity: .90, blending: T.AdditiveBlending });
+      var mat = S.basic(0xffffff, { map: puddleTex, transparent: true, depthWrite: false, opacity: .58, blending: T.AdditiveBlending });
       var m = groundPlane(p[2], p[3], mat, p[0], 0.031, p[1], p[4]);
       S.puddles.push({ x: p[0], z: p[1], r: Math.min(p[2], p[3]) * 0.42, mesh: m });
       /* a crisp specular rim */

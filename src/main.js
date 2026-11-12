@@ -11,6 +11,7 @@
     S.buildInterior();
     S.buildStreet();
     S.buildNeighborhood();
+    S.buildDetails();
     S.buildPeople();
     S.buildEffects();
     S.resetView();
@@ -29,6 +30,7 @@
       if (document.hidden) return;
       S.simulationTime = (S.simulationTime || 0) + dt;
       var t = S.simulationTime;
+      S.updateTraffic(t);
       S.updateCamera(dt);
       for (var i = 0; i < S.updaters.length; i++) S.updaters[i](t, dt);
       S.renderer.render(S.scene, S.camera);
