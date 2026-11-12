@@ -94,8 +94,8 @@
         p.arms[1].rotation.x = p.umbrella.visible ? -.8 : stride * .6;
         p.torso.position.y = step > 0 ? Math.abs(Math.sin(p.distance * 9)) * .025 : Math.sin(t * 1.5) * .008;
         p.umbrella.rotation.z = Math.sin(t * 2 + p.speed) * .025;
-        pos.y = S.groundHeight(pos.x, pos.z) + .02;
-        p.shadow.position.set(pos.x, pos.y + .005, pos.z);
+        pos.y = S.groundHeight(pos.x, pos.z) - .08;
+        p.shadow.position.set(pos.x, S.groundHeight(pos.x, pos.z) + .005, pos.z);
       });
     });
   };

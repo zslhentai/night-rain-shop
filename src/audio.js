@@ -22,6 +22,7 @@
       }
     }
     source = context.createBufferSource(); source.buffer = buffer; source.loop = true;
+    source.loopStart = .15; source.loopEnd = buffer.duration;
     var filter = context.createBiquadFilter(); filter.type = 'lowpass'; filter.frequency.value = 6500;
     gain = context.createGain(); gain.gain.value = .65;
     source.connect(filter); filter.connect(gain); gain.connect(context.destination);
@@ -37,6 +38,10 @@
       button.textContent = enabled ? '雨声：开' : '雨声：关';
       button.setAttribute('aria-pressed', String(enabled));
     } catch (error) {
+      if (context) {
+        try { await context.close(); } catch (closeError) { /* A closed context needs no cleanup. */ }
+        context = null;
+      }
       button.textContent = '雨声重试';
       button.setAttribute('aria-pressed', 'false');
       enabled = false;
