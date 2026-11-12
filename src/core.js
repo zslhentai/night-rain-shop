@@ -190,6 +190,8 @@ window.S = window.S || {};
       C.target.z + C.radius * sp * Math.cos(C.theta)
     );
     S.camera.lookAt(C.target);
+    // Preserve the night contrast when portrait framing requires a distant camera.
+    S.scene.fog.density = .0115 * Math.min(1, 43 / C.radius);
   }
   S.updateCamera = function (dt) { updateCamera(1 - Math.pow(0.001, dt)); };
 
