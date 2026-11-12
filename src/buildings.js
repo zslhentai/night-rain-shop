@@ -18,6 +18,9 @@
         S.box(.035, .94, .04, trim, wx, wy, d / 2 + .12, { parent: g });
       }
     }
+    S.box(.85, 1.6, .1, trim, -w * .33, .85, d / 2 + .1, { parent: g });
+    S.box(.06, .1, .04, frame, -w * .33 + .28, .9, d / 2 + .17, { parent: g });
+    S.box(1.2, .1, .7, trim, -w * .33, 1.8, d / 2 + .25, { parent: g });
     label(name, w * .65, .32, 0, h - .28, d / 2 + .12, '#263444', '#b5c4c9', g);
     S.layout.shelters.push({ x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2, height: h + .2 });
     return g;
@@ -28,10 +31,12 @@
     S.box(.42, .1, .55, steel, x, 3.42, z, {});
     S.plane(.32, .4, S.basic(0xc7dfe9), x, 3.36, z, { rx: Math.PI / 2 });
     S.glow(x, 3.35, z, 0xb5d7e6, 1.7, .2);
+    var light = new T.PointLight(0xb5d7e6, .35, 5, 2);
+    light.position.set(x, 3.3, z); S.scene.add(light);
     S.groundPlane(1.2, 3, S.basic(0xffffff, { map: S.tex.reflection('#9dc4db'), transparent: true, opacity: .23, depthWrite: false, blending: T.AdditiveBlending }), x, .038, z + 1);
   }
   function car() {
-    var g = S.group(); g.position.set(-7.4, .16, 7.35);
+    var g = S.group(); g.position.set(-7.4, .008, 7.0);
     var paint = S.toon(0x6b878b), glass = S.phong(0x233b50), rubber = S.toon(0x121c29);
     S.box(1.65, .55, 2.9, paint, 0, .55, 0, { parent: g, cast: true });
     S.box(1.42, .65, 1.65, glass, 0, 1.12, -.05, { parent: g });
@@ -44,17 +49,22 @@
     var asphalt = S.toon(0xffffff, { map: S.tex.asphalt() });
     var pavement = S.toon(0xffffff, { map: S.tex.pavement() });
     var curb = S.toon(0x748494);
-    S.box(28, .9, 26, S.toon(0x263348), 0, -.46, 0, { receive: true });
-    S.groundPlane(28, 26, asphalt, 0, .006, 0);
     // New outer sidewalks connect the crossing to both sides of the block.
-    S.box(2.6, .12, 26, curb, 12.6, .02, 0, {});
-    S.groundPlane(2.5, 26, pavement, 12.6, .085, 0);
+    S.box(2.4, .12, 26, curb, 12.7, .02, 0, {});
+    S.groundPlane(2.4, 26, pavement, 12.7, .085, 0);
     S.box(28, .12, 2.3, curb, 0, .02, 11.85, {});
     S.groundPlane(28, 2.2, pavement, 0, .085, 11.85);
     S.groundPlane(3.8, 15, pavement, -11.9, .06, -5.5);
-    for (var i = 0; i < 4; i++) S.groundPlane(.34, 1.55, S.basic(0xd0dce4), 9.52 + i * .53, .025, 2.15);
-    S.box(1.5, .08, 1.6, curb, 11.3, .04, 2.15, {});
-    S.box(.6, .08, 1.6, curb, 4.55, .04, 2.15, {});
+    function ramp(x0, x1, h0, h1) {
+      var geometry = new T.BufferGeometry();
+      geometry.setAttribute('position', new T.Float32BufferAttribute([
+        x0,h0,1.35, x0,h0,2.95, x1,h1,2.95,
+        x0,h0,1.35, x1,h1,2.95, x1,h1,1.35
+      ], 3));
+      geometry.computeVertexNormals();
+      S.world.add(new T.Mesh(geometry, curb));
+    }
+    ramp(3.4,4.7,.06,.009); ramp(10.6,11.5,.009,.085);
     building(-11.8, -7.6, 3.4, 5.8, 5.3, 0x424a59, '夜灯食堂');
     var diner = S.group(); diner.position.set(-11.8, 0, -4.65);
     S.box(3.7, 1.8, .08, S.toon(0x293343), 0, 1, 0, { parent: diner });
@@ -100,16 +110,16 @@
     car();
     // Pedestrian lamps share one phase with the road signal.
     var pedestrianLights = [];
-    [[4.2, 3.2], [11.6, 1.1]].forEach(function (p) {
+    [[3.8, 3.2, Math.PI / 2], [11.8, 1.1, -Math.PI / 2]].forEach(function (p) {
       S.cyl(.035, .05, 2.4, 8, metal, p[0], 1.2, p[1], {});
       S.box(.32, .65, .22, S.toon(0x202d3c), p[0], 2.25, p[1], {});
       var red = S.basic(0xd95e55), green = S.basic(0x233a35);
-      S.plane(.19, .22, red, p[0], 2.4, p[1] + .12, {});
-      S.plane(.19, .22, green, p[0], 2.1, p[1] + .12, {});
+      S.plane(.19, .22, red, p[0] + Math.sin(p[2]) * .12, 2.4, p[1], { ry: p[2] });
+      S.plane(.19, .22, green, p[0] + Math.sin(p[2]) * .12, 2.1, p[1], { ry: p[2] });
       pedestrianLights.push({ red: red, green: green });
     });
     S.addUpdate(function (t) {
-      S.traffic.pedestrianGreen = t % 15 >= 9.8 && t % 15 < 13.2;
+
       pedestrianLights.forEach(function (light) {
         light.red.color.setHex(S.traffic.pedestrianGreen ? 0x362b31 : 0xe88877);
         light.green.color.setHex(S.traffic.pedestrianGreen ? 0x8ed6b3 : 0x233a35);

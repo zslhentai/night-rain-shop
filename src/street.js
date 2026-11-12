@@ -317,7 +317,7 @@
 
   /* ---------- distant traffic signal ---------- */
   function trafficLight() {
-    var x = 8.62, z = 5.85, h = 3.20, ly = h - 0.10;
+    var x = 12.0, z = 3.5, h = 3.20, ly = h - 0.10;
     S.cyl(0.20, 0.24, 0.08, 10, mat(0x4b5868), x, 0.06, z, {});
     S.cyl(0.055, 0.075, h, 8, mat(0x59677a), x, h / 2, z, {});
     S.tube([[x, h - 0.04, z], [x - 0.55, h - 0.04, z], [x - 1.18, h - 0.04, z]], 0.05, mat(0x59677a));

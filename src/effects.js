@@ -57,7 +57,7 @@
     geom.setAttribute('color', new T.BufferAttribute(col, 3));
     var mat = new T.LineBasicMaterial({
       vertexColors: true, transparent: true, opacity: alpha,
-      depthWrite: false, blending: T.AdditiveBlending, fog: false
+      depthWrite: false, blending: T.AdditiveBlending, fog: true
     });
     var lines = new T.LineSegments(geom, mat);
     lines.frustumCulled = false;
@@ -66,7 +66,7 @@
     S.addUpdate(function (t, dt) {
       geom.setDrawRange(0, S.quality === "low" ? Math.floor(count * .55) * 2 : count * 2);
       var pA = geom.attributes.position, cA = geom.attributes.color;
-      for (var k = 0; k < count; k++) {
+      for (var k = 0; k < (S.quality === "low" ? Math.floor(count * .55) : count); k++) {
         var o = d[k];
         o.floor = S.rainFloor(o.x, o.z);
         o.y -= o.v * dt;
@@ -107,7 +107,7 @@
         d.y -= d.v * dt;
         d.mesh.position.set(d.x, d.y, d.z);
         d.mesh.scale.set(0.8, 1.5, 0.8);
-        if (d.y < 0.10) {
+        if (d.y < S.groundHeight(d.x, d.z) + .02) {
           d.y = 3.15; d.v = 0; d.wait = r(0.5, 3.2);
           S.spawnRipple(d.x, d.z, 0.55);
         }
@@ -133,7 +133,7 @@
         var p = pool[i];
         if (!p.mesh.visible) {
           p.mesh.visible = true;
-          p.mesh.position.set(x, 0.045 + Math.random() * 0.004, z);
+          p.mesh.position.set(x, S.groundHeight(x, z) + .012, z);
           p.life = 0; p.dur = r(0.9, 1.7); p.size = size || r(0.5, 1.3);
           p.mesh.scale.setScalar(0.1);
           return;
@@ -198,9 +198,10 @@
     S.signMaterials.forEach(function (m) { m.transparent = true; m.opacity = 1; });
 
     /* automatic door: absolute-time cycle so it stays in sync at any frame rate */
-    var doorOpen = 0;
+    var doorOpen = 0, doorHold = 0;
     S.addUpdate(function (t, dt) {
-      var doorTarget = S.doorDemand ? 1 : 0;
+      doorHold = S.doorDemand ? 1.3 : Math.max(0, doorHold - dt);
+      var doorTarget = doorHold > 0 ? 1 : 0;
       doorOpen += (doorTarget - doorOpen) * Math.min(1, dt * 4.2);
       if (S.door) {
         S.door.open = doorOpen;
@@ -243,8 +244,7 @@
     S.addUpdate(function (t) {
       var sig = S.trafficSignal;
       if (!sig) return;
-      var phase = t % 15;
-      var active = phase < 7 ? 2 : (phase < 8.8 ? 1 : 0);
+      var active = S.traffic.vehicleLight;
       sig.lights.forEach(function (l, i) {
         var on = i === active;
         var c = l.glow.material.color;

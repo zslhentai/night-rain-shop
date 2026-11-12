@@ -34,7 +34,7 @@
   S.buildPeople = function () {
     character(0xac8268, 0xb68d70, [
       point(-8.2, -6.5), point(-8.2, -1.3), point(-6.6, -1.3), point(-6.6, .35), point(-5.6, .35), point(-.8, .35, { wait: 1 }),
-      point(-.8, -1, { fold: true, wait: 1.2 }), point(-.8, -1.95, { door: true, fold: true, wait: 6 }),
+      point(-.8, -1, { fold: true, wait: 1.2 }), point(-.8, -1.95, { door: true, fold: true }), point(.4, -1.95, { fold: true, wait: 6 }), point(-.8, -1.95, { fold: true }),
       point(-.8, -1, { door: true, fold: true, wait: .5 }), point(-.8, .35, { wait: 1 }),
       point(-5.6, .35), point(-6.6, .35), point(-6.6, -1.3), point(-8.2, -1.3), point(-8.2, -6.5, { wait: 8 })
     ], .85, 1);
@@ -61,7 +61,7 @@
         }
         var pos = p.group.position, target = p.route[p.next];
         var dx = target.x - pos.x, dz = target.z - pos.z, distance = Math.hypot(dx, dz);
-        var nearDoor = Math.abs(pos.x + .8) < .75 && pos.z > -3 && pos.z < .5;
+        var nearDoor = Math.abs(pos.x + .8) < .75 && pos.z > -2.15 && pos.z < -.35;
         if (nearDoor) S.doorDemand = true;
         var folding = target.fold || pos.z < -.8 && Math.abs(pos.x + .8) < 1;
         p.folding += ((folding ? 0 : 1) - p.folding) * Math.min(1, dt * 4);
@@ -69,7 +69,7 @@
         p.umbrella.visible = p.folding > .08;
         var blocked = target.door && S.door.open < .85;
         // Once committed to crossing, continue to the opposite curb.
-        if (target.crossing && distance > 7.6 && !(t % 15 >= 9.8 && t % 15 < 11.2)) blocked = true;
+        if (target.crossing && distance > 7.6 && !S.traffic.canEnter) blocked = true;
         S.people.forEach(function (other, otherIndex) {
           if (other === p || other.staff || distance < .01 || otherIndex > personIndex) return;
           var ox = other.group.position.x - pos.x, oz = other.group.position.z - pos.z;
@@ -78,7 +78,7 @@
         var step = 0;
         if (p.wait > 0) p.wait = Math.max(0, p.wait - dt);
         else if (!blocked && distance > .02) {
-          step = Math.min(distance, dt * (target.crossing ? 2.5 : p.speed));
+          step = Math.min(distance, dt * (target.crossing ? 1.65 : p.speed));
           pos.x += dx / distance * step; pos.z += dz / distance * step;
           var angle = Math.atan2(dx, dz), delta = Math.atan2(Math.sin(angle - p.group.rotation.y), Math.cos(angle - p.group.rotation.y));
           p.group.rotation.y += delta * Math.min(1, dt * 7);
@@ -94,7 +94,8 @@
         p.arms[1].rotation.x = p.umbrella.visible ? -.8 : stride * .6;
         p.torso.position.y = step > 0 ? Math.abs(Math.sin(p.distance * 9)) * .025 : Math.sin(t * 1.5) * .008;
         p.umbrella.rotation.z = Math.sin(t * 2 + p.speed) * .025;
-        p.shadow.position.set(pos.x, .115, pos.z);
+        pos.y = S.groundHeight(pos.x, pos.z) + .02;
+        p.shadow.position.set(pos.x, pos.y + .005, pos.z);
       });
     });
   };

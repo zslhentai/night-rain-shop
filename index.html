@@ -28,7 +28,7 @@
 <body>
 <canvas id="scene"></canvas>
 <div id="vignette"></div>
-<div id="controls"><button id="reset-view" type="button">重置视角</button><label>画质 <select id="quality"><option value="high">高</option><option value="low">流畅</option></select></label></div>
+<div id="controls"><button id="rain-audio" type="button" aria-pressed="false">雨声：关</button><button id="reset-view" type="button">重置视角</button><label>画质 <select id="quality"><option value="high">高</option><option value="low">流畅</option></select></label></div>
 <p id="hint">拖动旋转 · 滚轮缩放 · 右键平移<br>触屏单指旋转 · 双指缩放</p>
 
 <script src="vendor/three.min.js"></script>
@@ -42,6 +42,7 @@
 <script src="src/buildings.js"></script>
 <script src="src/people.js"></script>
 <script src="src/effects.js"></script>
+<script src="src/audio.js"></script>
 <script src="src/main.js"></script>
 </body>
 </html>
