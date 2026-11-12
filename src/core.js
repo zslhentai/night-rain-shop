@@ -19,7 +19,7 @@ window.S = window.S || {};
   S.init = function () {
     var canvas = document.getElementById('scene');
     var renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 0);
     renderer.shadowMap.enabled = true;
@@ -92,6 +92,8 @@ window.S = window.S || {};
     S.camera.aspect = window.innerWidth / window.innerHeight;
     S.camera.updateProjectionMatrix();
     S.renderer.setSize(window.innerWidth, window.innerHeight);
+    var portrait = window.innerWidth < window.innerHeight;
+    if (portrait !== S.portrait) { S.portrait = portrait; S.resetView(); }
   }
 
   /* ---------- orbit control: drag = rotate, wheel = zoom, right-drag = pan ---------- */
@@ -102,8 +104,9 @@ window.S = window.S || {};
     S.scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; });
   };
   S.resetView = function () {
+    S.portrait = window.innerWidth < window.innerHeight;
     C.tTheta = .55; C.tPhi = 1.02;
-    C.tRadius = window.innerWidth < window.innerHeight ? 62 : 43;
+    C.tRadius = window.innerWidth < window.innerHeight ? 112 : 43;
     C.tTarget.set(0, 1, -.5);
   };
   var C = {
@@ -136,7 +139,7 @@ window.S = window.S || {};
       if (keys.length === 2) {
         var p = keys.map(function (k) { return pointers[k]; });
         var d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
-        if (lastPinch > 0) C.tRadius = clamp(C.tRadius * (lastPinch / d), 12, 80);
+        if (lastPinch > 0) C.tRadius = clamp(C.tRadius * (lastPinch / d), 12, 140);
         lastPinch = d;
         return;
       }
@@ -168,7 +171,7 @@ window.S = window.S || {};
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();
-      C.tRadius = clamp(C.tRadius * (1 + Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.0012, 0.16)), 12, 80);
+      C.tRadius = clamp(C.tRadius * (1 + Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.0012, 0.16)), 12, 140);
     }, { passive: false });
   }
 

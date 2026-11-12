@@ -80,6 +80,15 @@
     S.box(3.9, 1.65, .08, S.toon(0x657078), 0, 1, .94, { parent: kiosk });
     for (var slat = 0; slat < 12; slat++) S.box(3.9, .025, .035, S.toon(0x424e5c), 0, .25 + slat * .13, 1, { parent: kiosk });
     label('花と暮らし', 3.8, .4, 0, 2.08, .97, '#3a4c4c', '#bfc7b6', kiosk);
+    // Dress the rear facade visible from the default viewing direction.
+    S.box(.85, 1.7, .06, S.toon(0x344452), -1.2, .9, -.94, { parent: kiosk });
+    S.box(.06, .1, .04, S.toon(0xa3adb1), -.92, .9, -.99, { parent: kiosk });
+    var rearSign = label('花と暮らし', 2.4, .45, .6, 1.8, -.96, '#425952', '#d3dbbc', kiosk);
+    rearSign.rotation.y = Math.PI;
+    for (var pot = 0; pot < 3; pot++) {
+      S.cyl(.17, .13, .28, 8, S.toon(0x846e59), -.1 + pot * .55, .23, -1.2, { parent: kiosk });
+      S.sphere(.24, S.toon(0x557b63), -.1 + pot * .55, .55, -1.2, { parent: kiosk });
+    }
     S.layout.shelters.push({ x0: -13.8, x1: -9, z0: 10.8, z1: 12.8, height: 2.5 });
     // Bus stop on the opposite pavement, outside the crossing.
     var metal = S.toon(0x647a87);

@@ -52,7 +52,7 @@
     clerk.staff = true; clerk.umbrella.visible = false; clerk.bag.visible = false;
     S.addUpdate(function (t, dt) {
       S.doorDemand = false;
-      S.people.forEach(function (p) {
+      S.people.forEach(function (p, personIndex) {
         if (p.staff) {
           p.group.rotation.y = -.5 + Math.sin(t * .25) * .3;
           p.arms[0].rotation.x = -.4 + Math.sin(t * 1.2) * .16;
@@ -70,8 +70,8 @@
         var blocked = target.door && S.door.open < .85;
         // Once committed to crossing, continue to the opposite curb.
         if (target.crossing && distance > 7.6 && !(t % 15 >= 9.8 && t % 15 < 11.2)) blocked = true;
-        S.people.forEach(function (other) {
-          if (other === p || other.staff || distance < .01) return;
+        S.people.forEach(function (other, otherIndex) {
+          if (other === p || other.staff || distance < .01 || otherIndex > personIndex) return;
           var ox = other.group.position.x - pos.x, oz = other.group.position.z - pos.z;
           if (Math.hypot(ox, oz) < .58 && (ox * dx + oz * dz) / distance > .15) blocked = true;
         });
