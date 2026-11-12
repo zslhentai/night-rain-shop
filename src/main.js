@@ -10,7 +10,13 @@
     S.buildStore();
     S.buildInterior();
     S.buildStreet();
+    S.buildNeighborhood();
+    S.buildPeople();
     S.buildEffects();
+    S.resetView();
+    document.getElementById("reset-view").onclick = S.resetView;
+    document.getElementById("quality").onchange = function (e) { S.setQuality(e.target.value); };
+    setTimeout(function () { document.getElementById("hint").style.opacity = 0; }, 10000);
 
     /* a very soft cool ambience around the whole model */
     S.glow(0, 1.2, 0, 0x6f9fd8, 26, 0.055);
@@ -20,7 +26,9 @@
     function frame() {
       requestAnimationFrame(frame);
       var dt = Math.min(clock.getDelta(), 0.10);
-      var t = clock.elapsedTime;
+      if (document.hidden) return;
+      S.simulationTime = (S.simulationTime || 0) + dt;
+      var t = S.simulationTime;
       S.updateCamera(dt);
       for (var i = 0; i < S.updaters.length; i++) S.updaters[i](t, dt);
       S.renderer.render(S.scene, S.camera);

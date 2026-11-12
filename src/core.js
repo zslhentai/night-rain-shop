@@ -59,8 +59,8 @@ window.S = window.S || {};
     moon.position.set(-11, 17, 9);
     moon.castShadow = true;
     moon.shadow.mapSize.set(1024, 1024);
-    moon.shadow.camera.left = -15; moon.shadow.camera.right = 15;
-    moon.shadow.camera.top = 15; moon.shadow.camera.bottom = -15;
+    moon.shadow.camera.left = -19; moon.shadow.camera.right = 19;
+    moon.shadow.camera.top = 19; moon.shadow.camera.bottom = -19;
     moon.shadow.camera.near = 1; moon.shadow.camera.far = 48;
     moon.shadow.bias = -0.0008;
     scene.add(moon);
@@ -95,6 +95,17 @@ window.S = window.S || {};
   }
 
   /* ---------- orbit control: drag = rotate, wheel = zoom, right-drag = pan ---------- */
+  S.setQuality = function (quality) {
+    S.quality = quality;
+    S.renderer.setPixelRatio(quality === "low" ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
+    S.renderer.shadowMap.enabled = quality !== "low";
+    S.scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; });
+  };
+  S.resetView = function () {
+    C.tTheta = .55; C.tPhi = 1.02;
+    C.tRadius = window.innerWidth < window.innerHeight ? 62 : 43;
+    C.tTarget.set(0, 1, -.5);
+  };
   var C = {
     theta: 0.70, phi: 1.13, radius: 27.5,
     tTheta: 0.70, tPhi: 1.13, tRadius: 27.5,
@@ -125,7 +136,7 @@ window.S = window.S || {};
       if (keys.length === 2) {
         var p = keys.map(function (k) { return pointers[k]; });
         var d = Math.hypot(p[0].x - p[1].x, p[0].y - p[1].y);
-        if (lastPinch > 0) C.tRadius = clamp(C.tRadius * (lastPinch / d), 9, 52);
+        if (lastPinch > 0) C.tRadius = clamp(C.tRadius * (lastPinch / d), 12, 80);
         lastPinch = d;
         return;
       }
@@ -148,6 +159,8 @@ window.S = window.S || {};
     function release(e) {
       delete pointers[e.pointerId];
       if (Object.keys(pointers).length < 2) lastPinch = 0;
+      var remaining = Object.keys(pointers);
+      if (remaining.length === 1) { lastX = pointers[remaining[0]].x; lastY = pointers[remaining[0]].y; }
       if (Object.keys(pointers).length === 0) document.body.classList.remove('dragging');
     }
     canvas.addEventListener('pointerup', release);
@@ -155,7 +168,7 @@ window.S = window.S || {};
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();
-      C.tRadius = clamp(C.tRadius * (1 + Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.0012, 0.16)), 9, 52);
+      C.tRadius = clamp(C.tRadius * (1 + Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.0012, 0.16)), 12, 80);
     }, { passive: false });
   }
 
