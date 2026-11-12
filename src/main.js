@@ -11,6 +11,7 @@
     S.buildInterior();
     S.buildStreet();
     S.buildNeighborhood();
+    S.buildDetails();
     S.buildPeople();
     S.buildEffects();
     S.resetView();

@@ -102,10 +102,9 @@
     S.layout.shelters.push({ x0: -13.8, x1: -9, z0: 10.8, z1: 12.8, height: 2.5 });
     // Bus stop on the opposite pavement, outside the crossing.
     var metal = S.toon(0x647a87);
-    S.cyl(.045, .045, 2.7, 8, metal, 12.4, 1.4, 5.8, {});
-    label('夜灯二丁目', .7, .8, 12.4, 2.35, 5.85, '#385964', '#dce8db');
-    S.box(1.8, .13, .6, S.toon(0x7e6f5c), 12.3, .6, 7, {});
-    [-.65, .65].forEach(function (dx) { S.box(.08, .55, .4, metal, 12.3 + dx, .3, 7, {}); });
+    S.cyl(.045, .045, 2.7, 8, metal, 13.25, 1.435, 5.45, {});
+    label('夜灯二丁目', .7, .8, 13.25, 2.385, 5.50, '#385964', '#dce8db');
+    // Detailed bench and shelter are assembled in details.js.
     lamp(12.6, 4.4); lamp(-11.8, 1.6); lamp(1.5, 11.7);
     car();
     // Pedestrian lamps share one phase with the road signal.

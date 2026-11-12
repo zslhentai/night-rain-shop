@@ -64,8 +64,8 @@
 
     /* ---- drainage grates ---- */
     var drainMat = S.basic(0xffffff, { map: S.tex.drain(), transparent: true, opacity: 0.95 });
-    groundPlane(13.8, 0.28, drainMat, -2.7, 0.026, 0.57, 0);
-    groundPlane(0.28, 8.2, drainMat, 4.14, 0.026, -4.3, Math.PI / 2);
+    groundPlane(13.8, 0.28, drainMat, -2.7, 0.068, 0.57, 0);
+    groundPlane(0.28, 8.2, drainMat, 4.14, 0.068, -4.3, Math.PI / 2);
     /* corner catch basin + manhole */
     var mh = S.cyl(0.44, 0.44, 0.02, 20, S.toon(0x374456), 3.15, 0.026, 0.62, {});
     S.torus(0.39, 0.025, S.toon(0x6a7a8c), 3.15, 0.038, 0.62, { rx: Math.PI / 2 });
@@ -115,7 +115,7 @@
       [-7.9, -3.1, 1.9, 2.4, .1], [5.0, -6.2, 1.8, 1.3, .8]
     ];
     spots.forEach(function (p) {
-      var mat = S.basic(0xffffff, { map: puddleTex, transparent: true, depthWrite: false, opacity: .90, blending: T.AdditiveBlending });
+      var mat = S.basic(0xffffff, { map: puddleTex, transparent: true, depthWrite: false, opacity: .58, blending: T.AdditiveBlending });
       var m = groundPlane(p[2], p[3], mat, p[0], 0.031, p[1], p[4]);
       S.puddles.push({ x: p[0], z: p[1], r: Math.min(p[2], p[3]) * 0.42, mesh: m });
       /* a crisp specular rim */
