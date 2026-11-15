@@ -4,7 +4,7 @@ const fs = require('node:fs'), vm = require('node:vm'), assert = require('node:a
 const {createCanvas} = require('@napi-rs/canvas');
 const path = require('node:path');
 const root = path.resolve(__dirname, '..');
-global.window = global; global.document = {createElement: () => createCanvas(1, 1)};
+global.window = global; global.addEventListener = () => {}; global.document = {createElement: () => createCanvas(1, 1)};
 global.THREE = require(path.join(root, 'vendor/three.min.js'));
 for (const name of ['core','textures','layout','base','store','interior','street','buildings','details','people','bus','effects'])
   vm.runInThisContext(fs.readFileSync(path.join(root, 'src',name+'.js'),'utf8'));

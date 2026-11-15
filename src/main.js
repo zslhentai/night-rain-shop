@@ -30,8 +30,10 @@
         });
       };
     });
+    document.getElementById('walk-forward').onclick = function(){ S.walkStep(0,-.25); };
+    document.getElementById('walk-back').onclick = function(){ S.walkStep(0,.25); };
     var quality = document.getElementById('quality');
-    if (window.innerWidth < 650) quality.value = 'low';
+
     S.setQuality(quality.value);
     quality.onchange = function () { S.setQuality(quality.value); };
     document.getElementById('weather').onchange = function (e) {
@@ -51,8 +53,8 @@
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') exitPhoto(); });
 
     /* a very soft cool ambience around the whole model */
-    S.glow(0, 1.2, 0, 0x6f9fd8, 26, 0.055);
-    S.glow(-1.7, 1.6, -4.6, 0xffa45c, 9.5, 0.075);
+
+
 
     var clock = new THREE.Clock();
     function frame() {

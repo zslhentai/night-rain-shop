@@ -7,6 +7,17 @@
 
   S.buildInterior = function () {
     var f = S.SHOP.floor;
+    // Entry mat with a thin rubber border and absorbent fabric center.
+    S.box(1.65,.025,.42,S.toon(0x263a3e),-.8,.115,-1.87,{});
+    S.box(1.52,.008,.34,S.toon(0x46534f),-.8,.132,-1.87,{});
+    // Ceiling services are mounted flush to the ceiling plane.
+    [-5.9,-3.3].forEach(function(z) {
+      S.box(.65,.035,.65,S.toon(0xbbbdb5),-3.5,3.235,z,{});
+      for(var slot=0;slot<6;slot++) S.box(.48,.008,.018,S.toon(0x4d5756),-3.5,3.214,z-.2+slot*.08,{});
+    });
+    S.cyl(.10,.10,.035,12,S.toon(0xe7e7dd),-.8,3.21,-3.8,{});
+    S.sphere(.08,S.toon(0x26343c),2.53,3.12,-1.95,{});
+
     var cream = S.toon(0xf6e7ca);
     var white = S.toon(0xeadcc2);
     var wood = S.toon(0xb08a67);
@@ -39,7 +50,7 @@
     /* ---------- back wall light boxes ---------- */
     S.box(4.3, 0.72, 0.10, frame, -1.7, 2.72, -8.47, {});
     S.plane(4.15, 0.60, S.basic(0xffffff, { map: S.tex.adPanel('挽きたて コーヒー', 'HOT COFFEE  ¥100', '#fff2d6') }), -1.7, 2.72, -8.40, {});
-    S.glow(-1.7, 2.72, -8.32, 0xffb774, 4.4, .22);
+    S.glow(-1.7, 2.72, -8.32, 0xffe3c4, .6, .06);
     S.box(1.5, 0.55, 0.09, frame, 1.9, 2.62, -8.47, {});
     S.plane(1.4, 0.46, S.basic(0xffffff, { map: S.tex.adPanel('お弁当', 'できたて', '#ffe8b9') }), 1.9, 2.62, -8.40, {});
 
@@ -53,6 +64,8 @@
         S.box(.025,1.95,.025,S.basic(0xe5f5ff),bx+dx*.94,1.2,-7.96,{});
       });
       S.box(2.35,.12,.62,frame,bx,.17,-8.22,{});
+      for(var vent=0;vent<18;vent++) S.box(.065,.045,.012,frame,bx-.98+vent*.115,.20,-7.90,{});
+      S.plane(.34,.10,S.basic(0xffffff,{map:S.tex.label('4°C','','#183c39','#c3e7cc')}),bx+.78,2.37,-7.88,{});
       for (var row = 0; row < 3; row++) {
         var yy = 0.48 + row * 0.56;
         S.box(2.12, 0.035, 0.50, metal, bx, yy - 0.17, -8.20, {});
@@ -60,6 +73,8 @@
         for (var c = 0; c < 8; c++) {
           var col = bottleColors[(c + row * 3 + (bx > -3 ? 2 : 0)) % bottleColors.length];
           S.box(0.17, 0.33, 0.16, bottleMats[bottleColors.indexOf(col)], bx - 0.90 + c * 0.255, yy + 0.01, -8.14, {});
+          S.cyl(.045,.055,.065,10,bottleMats[bottleColors.indexOf(col)],bx-.90+c*.255,yy+.205,-8.14,{});
+          S.cyl(.046,.046,.025,10,frame,bx-.90+c*.255,yy+.25,-8.14,{});
           S.box(0.13, 0.06, 0.02, S.basic(0xf7f4e8), bx - 0.90 + c * 0.255, yy + 0.06, -8.05, {});
         }
       }
@@ -112,7 +127,7 @@
     }
     gondola(-4.85, 0);
     gondola(-2.15, 1);
-    gondola(0.55, 2);
+
 
     /* rice balls + snacks on the shelf ends */
     for (var rb = 0; rb < 6; rb++) {
@@ -164,7 +179,7 @@
     // An open display lets a customer reach the front row.
     S.box(1.11, .075, .025, S.glass(0xe5f6ff, .24), 1.75, .99, -3.155, {});
     S.plane(0.72, 0.24, S.basic(0xffffff, { map: S.tex.priceTag('お弁当', '#ffd97a'), transparent: true, side: T.DoubleSide }), 1.75, 1.30, -3.18, {});
-    S.glow(1.75, 1.05, -4.15, 0xffe0ae, 2.2, .12);
+    S.glow(1.75, 1.05, -4.15, 0xe5f2ff, .4, .04);
 
     /* ---------- chest freezer near the entrance ---------- */
     S.box(1.60, 0.72, 0.92, white, -3.55, 0.46, -2.30, { outline: true, outlineOpacity: .3 });
@@ -220,7 +235,7 @@
     S.box(0.02, 0.02, 0.42, metal, -2.30, 1.31, -2.62, {});
     S.plane(0.50, 0.28, S.basic(0xffffff, { map: S.tex.priceTag('おでん', '#ffcf8a'), transparent: true, side: T.DoubleSide }), -2.75, 1.55, -2.98, {});
     S.box(0.02, 0.38, 0.02, metal, -2.75, 1.36, -2.98, {});
-    S.glow(-2.75, 1.30, -2.62, 0xffbb7a, 1.4, .18);
+    S.glow(-2.75, 1.30, -2.62, 0xffbb7a, .4, .05);
     for (var puff = 0; puff < 4; puff++) {
       (function (offset) {
         var steam = S.glow(-2.75, 1.36, -2.62, 0xfff0dd, .28, .10);
@@ -245,7 +260,7 @@
     S.cyl(0.09, 0.07, 0.16, 10, S.toon(0xf6f1e4), 2.30, 0.44, -5.56, {});
     S.box(0.74, 0.10, 0.94, S.toon(0x6a554c), 2.30, 1.66, -6.15, {});
     S.plane(0.60, 0.28, S.basic(0xffffff, { map: S.tex.priceTag('COFFEE', '#e6c18a'), transparent: true, side: T.DoubleSide }), 2.30, 1.86, -5.66, {});
-    S.glow(2.30, 1.20, -5.62, 0xffc98a, 1.6, .18);
+    S.glow(2.30, 1.20, -5.62, 0xffc98a, .3, .04);
 
     /* ---------- magazine rack against the left wall ---------- */
     S.box(0.46, 1.70, 1.70, S.toon(0xb7a98f), -5.88, 0.95, -3.05, { outline: true, outlineOpacity: .3 });

@@ -19,7 +19,7 @@ window.S = window.S || {};
   S.init = function () {
     var canvas = document.getElementById('scene');
     var renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.5));
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 0);
     renderer.shadowMap.enabled = true;
@@ -99,7 +99,7 @@ window.S = window.S || {};
   /* ---------- orbit control: drag = rotate, wheel = zoom, right-drag = pan ---------- */
   S.setQuality = function (quality) {
     S.quality = quality;
-    S.renderer.setPixelRatio(quality === "low" ? 1 : Math.min(window.devicePixelRatio || 1, 1.5));
+    S.renderer.setPixelRatio(quality === "low" ? 1 : Math.min(window.devicePixelRatio || 1, 2));
     S.renderer.shadowMap.enabled = quality !== "low";
     S.scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; });
   };
@@ -146,7 +146,6 @@ window.S = window.S || {};
     var pointers = {}, dragMode = 0, lastX = 0, lastY = 0, lastPinch = 0;
 
     canvas.addEventListener('pointerdown', function (e) {
-      if (S.view !== 'overview') return;
       pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
       canvas.setPointerCapture(e.pointerId);
       lastX = e.clientX; lastY = e.clientY;
@@ -161,6 +160,15 @@ window.S = window.S || {};
     canvas.addEventListener('pointermove', function (e) {
       if (!pointers[e.pointerId]) return;
       pointers[e.pointerId].x = e.clientX; pointers[e.pointerId].y = e.clientY;
+      if (S.view !== 'overview') {
+        var turnX = e.clientX-lastX, turnY = e.clientY-lastY;
+        lastX=e.clientX; lastY=e.clientY;
+        var angles = new T.Euler().setFromQuaternion(S.camera.quaternion,'YXZ');
+        angles.y -= turnX*.004;
+        angles.x = clamp(angles.x-turnY*.004,-1.25,1.25);
+        angles.z=0; S.camera.quaternion.setFromEuler(angles);
+        return;
+      }
       var keys = Object.keys(pointers);
       if (keys.length === 2) {
         var p = keys.map(function (k) { return pointers[k]; });
@@ -197,7 +205,7 @@ window.S = window.S || {};
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();
-      if (S.view !== 'overview') return;
+      if (S.view !== 'overview') { S.walkStep(0,Math.sign(e.deltaY)*.22); return; }
       C.tRadius = clamp(C.tRadius * (1 + Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.0012, 0.16)), 12, 140);
     }, { passive: false });
   }
@@ -220,7 +228,34 @@ window.S = window.S || {};
     // Preserve the night contrast when portrait framing requires a distant camera.
     S.scene.fog.density = .0115 * Math.min(1, 43 / C.radius);
   }
-  S.updateCamera = function (dt) { if (S.view === 'overview') updateCamera(1 - Math.pow(0.001, dt)); };
+  var held = {};
+  window.addEventListener('keydown',function(e){
+    if (/INPUT|SELECT|BUTTON/.test(e.target.tagName)) return;
+    if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.code)>=0) { held[e.code]=true; e.preventDefault(); }
+  });
+  window.addEventListener('keyup',function(e){delete held[e.code];});
+  window.addEventListener('blur',function(){held={};});
+  S.walkStep = function(side,forward) {
+    var direction = new T.Vector3(); S.camera.getWorldDirection(direction); direction.y=0; direction.normalize();
+    var right = new T.Vector3(-direction.z,0,direction.x);
+    var next = S.camera.position.clone().addScaledVector(direction,-forward).addScaledVector(right,side);
+    var indoor = ['interior','bento','drinks','checkout'].indexOf(S.view)>=0;
+    if(!indoor) return;
+    function clear(x,z) {
+      if(x < -5.85 || x > 2.45 || z < -7.65 || z > -1.82) return false;
+      return !S.walkObstacles.some(function(b){return x>b[0]-.18 && x<b[1]+.18 && z>b[2]-.18 && z<b[3]+.18;});
+    }
+    if(clear(next.x,S.camera.position.z)) S.camera.position.x=next.x;
+    if(clear(S.camera.position.x,next.z)) S.camera.position.z=next.z;
+    if(S.refreshAudio) S.refreshAudio();
+  };
+  S.updateCamera = function(dt) {
+    if(S.view === 'overview') { updateCamera(1-Math.pow(.001,dt)); return; }
+    var side = (held.KeyD||held.ArrowRight?1:0)-(held.KeyA||held.ArrowLeft?1:0);
+    var forward = (held.KeyS||held.ArrowDown?1:0)-(held.KeyW||held.ArrowUp?1:0);
+    var norm=Math.max(1,Math.hypot(side,forward));
+    S.walkStep(side*dt*1.5/norm,forward*dt*1.5/norm);
+  };
 
   /* ---------- material factories ---------- */
   S.toon = function (color, o) {
