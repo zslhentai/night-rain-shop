@@ -67,9 +67,9 @@ window.S = window.S || {};
     scene.add(moon.target);
 
     /* warm shop interior — the emotional center of the scene */
-    [[-3.8, 2.9, -5.6, 0xffa863, 1.40, 12],
-     [0.9, 2.9, -4.4, 0xffa05c, 1.25, 11],
-     [-1.6, 2.9, -2.6, 0xffb878, 1.00, 9]].forEach(function (p) {
+    [[-3.8, 2.9, -5.6, 0xffe5c4, 1.15, 12],
+     [0.9, 2.9, -4.4, 0xffe8ce, 1.10, 11],
+     [-1.6, 2.9, -2.6, 0xffcd97, .85, 9]].forEach(function (p) {
       var l = new T.PointLight(p[3], p[4], p[5], 2);
       l.position.set(p[0], p[1], p[2]);
       scene.add(l);
@@ -105,7 +105,10 @@ window.S = window.S || {};
   };
   var views = {
     entrance: { eye: [1.4, 2.4, 3.5], target: [-1.3, 1.55, -1.42] },
-    interior: { eye: [2.42, 2.65, -1.87], target: [-.55, 1.05, -2.82] },
+    interior: { eye: [1.98, 2.65, -1.81], target: [-1.8, 1.15, -4.8], portraitEye: [2.38,2.8,-1.85], portraitTarget: [-.7,1.25,-4.8], fov: 66 },
+    bento: { eye: [2.35,2.25,-2.25], target: [1.75,1,-4.1], portraitEye: [1.78,2.35,-2.12], portraitTarget: [1.75,1,-4.15], fov: 58 },
+    checkout: { eye: [1.8,2.35,-1.79], target: [-.95,1.15,-2.65], portraitEye: [.35,2.55,-1.79], portraitTarget: [-.65,1.18,-2.75], fov: 76 },
+    drinks: { eye: [-3.3,2.65,-5.1], target: [-3.3,1.22,-8.1], portraitEye: [-3.3,2.8,-3.8], portraitTarget: [-3.3,1.22,-8.1], fov: 70 },
     diner: { eye: [-9.1, 2.6, .35], target: [-11.8, 1.35, -4.45] },
     stop: { eye: [13.4, 2.64, 3.8], target: [11.05, 1.25, 6.65] }
   };
@@ -114,9 +117,9 @@ window.S = window.S || {};
     S.portrait = window.innerWidth < window.innerHeight;
     var view = views[S.view];
     if (view) {
-      S.camera.position.fromArray(view.eye);
-      S.camera.fov = S.portrait ? 66 : 48;
-      S.camera.lookAt(new T.Vector3().fromArray(view.target));
+      S.camera.position.fromArray(S.portrait && view.portraitEye || view.eye);
+      S.camera.fov = S.portrait ? 76 : (view.fov || 48);
+      S.camera.lookAt(new T.Vector3().fromArray(S.portrait && view.portraitTarget || view.target));
     } else {
       C.theta = C.tTheta = .55;
       C.phi = C.tPhi = 1.02;

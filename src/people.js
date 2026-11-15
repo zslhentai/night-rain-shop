@@ -38,12 +38,12 @@
   }
   function point(x, z, options) { return Object.assign({ x: x, z: z }, options || {}); }
   S.buildPeople = function () {
-    var entry = S.layout.entrance, stop = S.layout.busStop;
+    var entry = S.layout.entrance, stop = S.layout.busStop, anchors = S.layout.interior;
     var shopper = character(0xac8268, 0xb68d70, [
       point(-8.2, -6.5), point(-8.2, -1.3), point(-6.6, -1.3), point(-6.6, .35), point(-5.6, .35),
       point(entry.x, .35), point(entry.x, -.96, { fold: true, wait: 1.2, action: 'fold' }),
       point(entry.x, -1.89, { door: true, fold: true }), point(1.96, -1.89, { fold: true }),
-      point(1.96, -2.99, { fold: true, wait: 1.4, action: 'pick', face: Math.PI }),
+      point(anchors.pickup[0], anchors.pickup[1], { fold: true, wait: 1.4, action: 'pick', face: Math.PI }),
       point(1.96, -1.89, { fold: true }), point(.55, -1.89, { fold: true }),
       point(.04, -1.89, { fold: true, wait: 3.8, action: 'pay', face: Math.PI }),
       point(entry.x, -1.89, { fold: true }), point(entry.x, -.96, { door: true, fold: true }),
@@ -68,14 +68,46 @@
     clerk.group.position.y = .02;
     clerk.staff = true; clerk.umbrella.visible = false; clerk.bag.visible = false;
     var meal = S.displayMeal, shelf = meal.position.clone();
-    var checkout = new T.Vector3(.04, 1.14, -2.32);
+    var checkout = new T.Vector3().fromArray(anchors.scanner);
     var hand = new T.Vector3();
-    var paid = false;
+    var paid = false, restockIndex = -1, returning = false, stockWait = 0;
+    var replacement = S.makeMeal(); replacement.visible = false;
+    var clerkHand = new T.Vector3(), bagSpot = new T.Vector3().fromArray(anchors.bagging);
+    function restock(dt) {
+      if (restockIndex < 0 && !S.stock.available && shopper.hasBag && shopper.group.position.z > -.8) {
+        restockIndex = 1; returning = false; replacement.visible = true;
+      }
+      if (restockIndex < 0) return;
+      var dest = anchors.restock[restockIndex], pos = clerk.group.position;
+      var dx = dest[0]-pos.x, dz = dest[1]-pos.z, dist = Math.hypot(dx,dz);
+      if(dist > .02) {
+        var step = Math.min(dist, dt*.8);
+        pos.x += dx/dist*step; pos.z += dz/dist*step;
+        clerk.group.rotation.y = Math.atan2(dx,dz);
+        clerk.legs[0].rotation.x = Math.sin(tick*8)*.3;
+        clerk.legs[1].rotation.x = -clerk.legs[0].rotation.x;
+      } else if(!returning && restockIndex === anchors.restock.length-1) {
+        stockWait += dt;
+        clerk.group.rotation.y = -Math.PI/2;
+        replacement.position.copy(clerkHand).lerp(shelf, Math.min(1,stockWait/1.2));
+        if(stockWait >= 1.2) {
+          meal.position.copy(shelf); meal.visible = true;
+          S.stock.available = true; S.stock.restocks++;
+          replacement.visible = false; returning = true; stockWait = 0; restockIndex--;
+        }
+      } else {
+        restockIndex += returning ? -1 : 1;
+        if(restockIndex < 0) { clerk.group.rotation.y=0; clerk.legs.forEach(function(l){l.rotation.x=0;}); }
+      }
+      if(replacement.visible && stockWait===0) replacement.position.copy(clerkHand);
+    }
+    var tick = 0;
     S.addUpdate(function (t, dt) {
+      tick = t;
       S.doorDemand = false;
       S.people.forEach(function (p, personIndex) {
         if (p.staff) {
-          p.group.rotation.y = Math.sin(t * .25) * .12;
+          if(restockIndex < 0) p.group.rotation.y = Math.sin(t * .25) * .12;
           p.arms[0].rotation.x = shopper.action === 'pay' ? -1.05 : -.15 + Math.sin(t * 1.2) * .12;
           p.shadow.position.set(p.group.position.x, .115, p.group.position.z);
           return;
@@ -89,7 +121,7 @@
         p.folding += ((folding ? 0 : 1) - p.folding) * Math.min(1, dt * 4);
         p.umbrella.scale.set(Math.max(.12, p.folding), 1, Math.max(.12, p.folding));
         p.umbrella.visible = p.folding > .08;
-        var blocked = (target.door && S.door.open < .85) || (target.board && !S.bus.canBoard);
+        var blocked = (p === shopper && target.action === 'pick' && !S.stock.available) || (p === shopper && target.action === 'pay' && restockIndex >= 0) || (target.door && S.door.open < .85) || (target.board && !S.bus.canBoard);
         // Once committed to crossing, continue to the opposite curb.
         if (target.crossing && distance > 7.6 && !S.traffic.canEnter) blocked = true;
         S.people.forEach(function (other, otherIndex) {
@@ -115,6 +147,7 @@
           if (p === shopper && p.action === 'reset') {
             paid = false; p.hasMeal = false; p.hasBag = false;
             S.registerScreen.map = S.registerIdle;
+            S.receipt.visible = false;
           }
           if (target.face !== undefined) p.group.rotation.y = target.face;
           p.next = (p.next + 1) % p.route.length;
@@ -138,25 +171,33 @@
       shopper.arms[0].updateWorldMatrix(true, false);
       shopper.arms[0].localToWorld(hand.set(0, -.4, .05));
       if (shopper.action === 'pick') {
+        S.stock.available = false;
         meal.position.copy(shelf).lerp(hand, Math.min(1, progress * 1.6));
         shopper.hasMeal = true;
       } else if (shopper.action === 'pay') {
         meal.position.copy(hand).lerp(checkout, Math.min(1, progress * 3));
         if (!paid && progress >= .48) {
-          paid = true;
+          paid = true; S.stock.scans++;
+          S.receipt.visible = true;
           S.registerScreen.map = S.registerPaid;
           if (S.playSceneSound) S.playSceneSound('scan');
         }
+        S.scannerLight.color.setHex(paid ? 0xc7f9be : 0x7eafa3);
+        if(progress >= .55) meal.position.copy(checkout).lerp(bagSpot,Math.min(1,(progress-.55)/.2));
         if (progress >= .75) { shopper.hasMeal = false; shopper.hasBag = true; }
       } else {
         meal.position.copy(shopper.hasMeal ? hand : shelf);
       }
-      meal.visible = !shopper.hasBag;
+      meal.visible = S.stock.available || (!!shopper.hasMeal && !shopper.hasBag);
       shopper.bag.visible = !!shopper.hasBag;
       if (shopper.hasBag) {
-        shopper.bag.position.copy(hand);
+        shopper.bag.position.copy(shopper.action === 'pay' ? bagSpot.clone().lerp(hand,S.clamp((progress-.75)/.25,0,1)) : hand);
         shopper.bag.rotation.y = shopper.group.rotation.y;
       }
+      clerk.arms[0].rotation.x = restockIndex >= 0 ? -.95 : clerk.arms[0].rotation.x;
+      clerk.arms[0].updateWorldMatrix(true,false);
+      clerk.arms[0].localToWorld(clerkHand.set(0,-.4,.05));
+      restock(dt);
     });
   };
 })(window.S);

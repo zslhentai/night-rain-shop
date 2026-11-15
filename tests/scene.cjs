@@ -14,11 +14,12 @@ for (const name of ['Base','Store','Interior','Street','Neighborhood','Details',
 let meshes = 0; S.world.traverse(o=>{ if(o.isMesh){ meshes++; for(const n of o.geometry.attributes.position.array) assert(Number.isFinite(n)); }});
 assert.equal(S.rainFloor(12.3, 6.1), 3.1);
 assert.equal(S.rainFloor(11.7, 6.1), .04);
-let scans = 0, boardingFrames = 0;
+let scans = 0, boardingFrames = 0, emptyFrames = 0;
 S.playSceneSound = name => { if (name === 'scan') scans++; };
 const visited = S.people.map(()=>new Set());
 for(let frame=0;frame<7200;frame++) {
   let t=frame/30; S.updateTraffic(t); for(const update of S.updaters) update(t,1/30);
+  if (!S.stock.available && S.people[0].hasBag) { emptyFrames++; assert.equal(S.displayMeal.visible,false,'Sold stock reappeared before restocking'); }
   if (S.bus.phase !== 'away' && S.bus.z + 2.29 >= 1.375 && S.bus.z - 2.29 <= 2.925) {
     assert.equal(S.traffic.vehicleLight, 2, 'Bus crossing outside vehicle green');
   }
@@ -38,3 +39,18 @@ S.people.forEach((p,i)=>{if(!p.staff) assert.equal(visited[i].size,p.route.lengt
 assert(scans >= 2, 'Checkout sequence did not repeat');
 assert(boardingFrames > 0 && S.bus.cycles >= 2, 'Bus service did not board and repeat');
 console.log(JSON.stringify({meshes, scans, boardingFrames, busCycles:S.bus.cycles,simulationSeconds:240,routeWaypoints:visited.map(s=>s.size),shelterAndSignals:'pass'}));
+assert(emptyFrames > 30, 'Sold shelf slot must remain empty');
+assert(S.stock.restocks >= 2, 'Clerk must replenish stock between trips');
+assert.equal(S.stock.scans, scans, 'Scan count and sound must agree');
+S.camera = new THREE.PerspectiveCamera(); S.scene.fog = {density:.01};
+for (const size of [[1440,900],[390,844]]) {
+  global.innerWidth=size[0]; global.innerHeight=size[1]; S.camera.aspect=size[0]/size[1];
+  for (const [view, targets] of Object.entries({bento:[[1.75,.98,-3.51],[1.75,1,-4.8]], checkout:[[.04,1.14,-2.32],[-.45,1.3,-2.37]], drinks:[[-4.72,1.1,-8.14],[-1.72,1.1,-8.14]]})) {
+    S.setView(view); S.camera.updateMatrixWorld(true);
+    for (const target of targets) {
+      const projected = new THREE.Vector3(...target).project(S.camera);
+      assert(Math.abs(projected.x)<.95 && projected.y>-.62 && projected.y<.92, `${view} target outside usable frame ${size}: ${projected.toArray()}`);
+    }
+  }
+}
+console.log('PASS: restocking, scan consistency, desktop and portrait detail framing');

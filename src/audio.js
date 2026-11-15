@@ -6,12 +6,12 @@
   var status = document.getElementById('audio-status');
   function volumeLevel() { return Math.pow(Number(volume.value) / 100, 1.6); }
   function level() {
-    var shelter = S.view === 'interior' ? .42 : S.view === 'entrance' ? .76 : S.view === 'stop' ? .85 : 1;
+    var shelter = ['interior', 'bento', 'checkout', 'drinks'].indexOf(S.view) !== -1 ? .42 : S.view === 'entrance' ? .76 : S.view === 'stop' ? .85 : 1;
     return volumeLevel() * shelter * (.55 + .45 * S.rainIntensity);
   }
   S.refreshAudio = function () {
     if (!enabled || !filter) return;
-    var cutoff = S.view === 'interior' ? 680 : S.view === 'entrance' ? 2300 : 5200;
+    var cutoff = ['interior', 'bento', 'checkout', 'drinks'].indexOf(S.view) !== -1 ? 680 : S.view === 'entrance' ? 2300 : 5200;
     filter.frequency.setTargetAtTime(cutoff, context.currentTime, .2);
     fade(level(), .35);
   };
@@ -25,7 +25,7 @@
     voice.frequency.setValueAtTime(drip ? 710 : 1040, now);
     voice.frequency.exponentialRampToValueAtTime(drip ? 370 : 820, now + duration);
     env.gain.setValueAtTime(0, now);
-    env.gain.linearRampToValueAtTime(volumeLevel() * (drip ? .035 * S.rainIntensity : S.view === 'interior' ? .12 : .035), now + .006);
+    env.gain.linearRampToValueAtTime(volumeLevel() * (drip ? .035 * S.rainIntensity : ['interior', 'bento', 'checkout', 'drinks'].indexOf(S.view) !== -1 ? .12 : .035), now + .006);
     env.gain.linearRampToValueAtTime(0, now + duration);
     voice.connect(env); env.connect(context.destination);
     voice.onended = function () { voice.disconnect(); env.disconnect(); };
