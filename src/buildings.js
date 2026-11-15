@@ -70,8 +70,17 @@
     S.box(3.7, 1.8, .08, S.toon(0x293343), 0, 1, 0, { parent: diner });
     label('夜灯食堂', 3.3, .55, 0, 2.45, .1, '#554533', '#e6bd83', diner);
     S.box(4.2, .15, 1.1, S.toon(0x4c655d), 0, 2.15, .4, { parent: diner });
-    for (var c = 0; c < 5; c++) label(c === 2 ? '営業中' : 'おでん', .55, .6, (c - 2) * .65, 1.82, .85, '#635244', '#e0c6a1', diner);
-    S.glow(-11.8, 1.5, -3.8, 0xffc78a, 2.3, .18);
+    var cloth = S.toon(0x846248), stripe = S.toon(0xd4a77b);
+    for (var c = 0; c < 5; c++) {
+      var panel = S.group(diner);
+      panel.position.set((c - 2) * .65, 2.10, .85);
+      S.box(.58, .53, .035, cloth, 0, -.265, 0, { parent: panel });
+      S.box(.58, .025, .040, stripe, 0, -.50, 0, { parent: panel });
+      label(c === 2 ? '食堂' : '夜灯', .37, .18, 0, -.28, .020, '#846248', '#e0c6a1', panel);
+      (function (curtain, offset) {
+        S.addUpdate(function (t) { curtain.rotation.x = .07 * S.rainIntensity * Math.sin(t * 2 + offset); });
+      })(panel, c * .7);
+    }
     S.layout.shelters.push({ x0: -14, x1: -9.6, z0: -4.7, z1: -3.6, height: 2.3 });
     building(-6.3, -11.2, 5.1, 3.2, 5.9, 0x303c50, '月見ハイツ');
     building(.2, -11.3, 5, 3, 7.3, 0x344154, '夜灯');

@@ -47,7 +47,7 @@ window.S = window.S || {};
 
     setupLights(scene);
     setupControls(canvas);
-    updateCamera(1);
+    S.resetView();
     window.addEventListener('resize', onResize);
   };
 
@@ -93,7 +93,7 @@ window.S = window.S || {};
     S.camera.updateProjectionMatrix();
     S.renderer.setSize(window.innerWidth, window.innerHeight);
     var portrait = window.innerWidth < window.innerHeight;
-    if (portrait !== S.portrait) { S.portrait = portrait; S.resetView(); }
+    if (portrait !== S.portrait) S.setView(S.view);
   }
 
   /* ---------- orbit control: drag = rotate, wheel = zoom, right-drag = pan ---------- */
@@ -103,12 +103,34 @@ window.S = window.S || {};
     S.renderer.shadowMap.enabled = quality !== "low";
     S.scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; });
   };
-  S.resetView = function () {
-    S.portrait = window.innerWidth < window.innerHeight;
-    C.tTheta = .55; C.tPhi = 1.02;
-    C.tRadius = window.innerWidth < window.innerHeight ? 112 : 43;
-    C.tTarget.set(0, 1, -.5);
+  var views = {
+    entrance: { eye: [1.4, 2.4, 3.5], target: [-1.3, 1.55, -1.42] },
+    interior: { eye: [2.42, 2.65, -1.87], target: [-.55, 1.05, -2.82] },
+    diner: { eye: [-9.1, 2.6, .35], target: [-11.8, 1.35, -4.45] },
+    stop: { eye: [13.4, 2.64, 3.8], target: [11.05, 1.25, 6.65] }
   };
+  S.setView = function (name) {
+    S.view = views[name] ? name : 'overview';
+    S.portrait = window.innerWidth < window.innerHeight;
+    var view = views[S.view];
+    if (view) {
+      S.camera.position.fromArray(view.eye);
+      S.camera.fov = S.portrait ? 66 : 48;
+      S.camera.lookAt(new T.Vector3().fromArray(view.target));
+    } else {
+      C.theta = C.tTheta = .55;
+      C.phi = C.tPhi = 1.02;
+      C.radius = C.tRadius = S.portrait ? 112 : 43;
+      C.target.set(0, 1, -.5);
+      C.tTarget.copy(C.target);
+      S.camera.fov = 38;
+      updateCamera(1);
+    }
+    S.camera.updateProjectionMatrix();
+    S.scene.fog.density = view ? .0115 : S.scene.fog.density;
+    if (S.refreshAudio) S.refreshAudio();
+  };
+  S.resetView = function () { S.setView('overview'); };
   var C = {
     theta: 0.70, phi: 1.13, radius: 27.5,
     tTheta: 0.70, tPhi: 1.13, tRadius: 27.5,
@@ -121,6 +143,7 @@ window.S = window.S || {};
     var pointers = {}, dragMode = 0, lastX = 0, lastY = 0, lastPinch = 0;
 
     canvas.addEventListener('pointerdown', function (e) {
+      if (S.view !== 'overview') return;
       pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
       canvas.setPointerCapture(e.pointerId);
       lastX = e.clientX; lastY = e.clientY;
@@ -171,6 +194,7 @@ window.S = window.S || {};
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();
+      if (S.view !== 'overview') return;
       C.tRadius = clamp(C.tRadius * (1 + Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.0012, 0.16)), 12, 140);
     }, { passive: false });
   }
@@ -193,7 +217,7 @@ window.S = window.S || {};
     // Preserve the night contrast when portrait framing requires a distant camera.
     S.scene.fog.density = .0115 * Math.min(1, 43 / C.radius);
   }
-  S.updateCamera = function (dt) { updateCamera(1 - Math.pow(0.001, dt)); };
+  S.updateCamera = function (dt) { if (S.view === 'overview') updateCamera(1 - Math.pow(0.001, dt)); };
 
   /* ---------- material factories ---------- */
   S.toon = function (color, o) {

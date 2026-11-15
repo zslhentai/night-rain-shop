@@ -9,6 +9,9 @@
       { x0: 5.5, x1: 9.5, z0: -9.5, z1: -5.4, height: 4.7 }
     ]
   };
+  S.layout.entrance = { x: -.8, threshold: -1.55, sensorFront: -.35, sensorBack: -2.15 };
+  S.layout.busStop = { curbX: 11.5, waitX: 12.3, boardingZ: 6.1, laneX: 10.26 };
+  S.rainIntensity = 1;
   S.people = [];
   S.doorDemand = false;
   S.traffic = { pedestrianGreen: false, canEnter: false, vehicleLight: 0 };
@@ -19,6 +22,7 @@
     S.traffic.pedestrianGreen = phase >= 13 && phase < 22;
   };
   S.groundHeight = function (x, z) {
+    if (x > S.SHOP.x0 && x < S.SHOP.x1 && z > S.SHOP.z0 && z < S.SHOP.z1) return .10;
     if (z > 1.35 && z < 2.95) {
       if (x >= 3.4 && x <= 4.7) return .06 * (4.7 - x) / 1.3;
       if (x >= 10.6 && x <= 11.5) return .085 * (x - 10.6) / .9;

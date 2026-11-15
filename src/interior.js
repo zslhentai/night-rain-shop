@@ -118,11 +118,14 @@
     S.box(1.05, 0.05, 1.88, S.basic(0xfff2da), 1.75, 0.92, -4.15, {});
     var bentoColors = [0xe8b46a, 0x9ec58a, 0xe48d7c, 0x8faed4, 0xf0d595, 0xbfa4cf];
     for (var bb = 0; bb < 12; bb++) {
-      S.box(0.28, 0.075, 0.26, S.toon(bentoColors[bb % bentoColors.length]),
-        1.75 - 0.36 + (bb % 3) * 0.36, 0.98, -4.15 - 0.65 + Math.floor(bb / 3) * 0.43, {});
-      S.box(0.16, 0.012, 0.10, S.basic(0xfff8e6), 1.75 - 0.36 + (bb % 3) * 0.36, 1.023, -4.15 - 0.65 + Math.floor(bb / 3) * 0.43, {});
+      var meal = S.group();
+      meal.position.set(1.39 + (bb % 3) * .36, .98, -4.80 + Math.floor(bb / 3) * .43);
+      S.box(.28, .075, .26, S.toon(bentoColors[bb % bentoColors.length]), 0, 0, 0, { parent: meal });
+      S.box(.16, .012, .10, S.basic(0xfff8e6), 0, .043, 0, { parent: meal });
+      if (bb === 10) S.displayMeal = meal;
     }
-    S.plane(1.10, 1.92, S.glass(0xe5f6ff, 0.16), 1.75, 1.00, -4.15, { rx: -Math.PI / 2 });
+    // An open display lets a customer reach the front row.
+    S.box(1.11, .075, .025, S.glass(0xe5f6ff, .24), 1.75, .99, -3.155, {});
     S.plane(0.72, 0.24, S.basic(0xffffff, { map: S.tex.priceTag('お弁当', '#ffd97a'), transparent: true, side: T.DoubleSide }), 1.75, 1.30, -3.18, {});
     S.glow(1.75, 1.05, -4.15, 0xffe0ae, 2.2, .12);
 
@@ -147,7 +150,10 @@
     S.box(0.42, 0.03, 0.16, S.toon(0xaab5bc), -0.45, 1.10, -2.32, {});
     /* customer facing display */
     S.box(0.55, 0.36, 0.06, frame, 0.95, 1.36, -2.20, {});
-    S.plane(0.50, 0.30, S.basic(0xffffff, { map: S.tex.label('¥ 540', 'ありがとう', '#203a48', '#dff8ff'), transparent: true, opacity: .92 }), 0.95, 1.36, -2.16, {});
+    S.registerIdle = S.tex.label('レジ', 'お会計', '#203a48', '#dff8ff');
+    S.registerPaid = S.tex.label('¥ 540', 'ありがとう', '#203a48', '#dff8ff');
+    S.registerScreen = S.basic(0xffffff, { map: S.registerIdle });
+    S.plane(.50, .30, S.registerScreen, .95, 1.36, -2.16, {});
     /* baskets, bags, small goods */
     S.box(0.34, 0.20, 0.26, S.toon(0x3d6d9c), 1.28, 1.19, -2.60, {});
     S.box(0.30, 0.02, 0.22, S.toon(0x2d5580), 1.28, 1.30, -2.60, {});
@@ -168,8 +174,18 @@
     S.plane(0.50, 0.28, S.basic(0xffffff, { map: S.tex.priceTag('おでん', '#ffcf8a'), transparent: true, side: T.DoubleSide }), -2.75, 1.55, -2.98, {});
     S.box(0.02, 0.38, 0.02, metal, -2.75, 1.36, -2.98, {});
     S.glow(-2.75, 1.30, -2.62, 0xffbb7a, 1.4, .18);
-    var steam = S.glow(-2.75, 1.55, -2.62, 0xfff0dd, 1.0, .10);
-    S.interiorGlows.push(steam);
+    for (var puff = 0; puff < 4; puff++) {
+      (function (offset) {
+        var steam = S.glow(-2.75, 1.36, -2.62, 0xfff0dd, .28, .10);
+        steam.material.blending = T.NormalBlending;
+        S.addUpdate(function (t) {
+          var age = (t * .56 + offset) % 1;
+          steam.position.set(-2.75 + Math.sin(t * 1.1 + offset * 6) * age * .16, 1.33 + .71 * age, -2.62);
+          steam.scale.set(.21 + age * .22, .24 + age * .38, 1);
+          steam.material.opacity = .18 * Math.sin(Math.PI * age);
+        });
+      })(puff / 4);
+    }
 
     /* ---------- coffee machine ---------- */
     S.box(0.70, 1.52, 0.92, S.toon(0x4a3a35), 2.30, 0.86, -6.15, { outline: true, outlineOpacity: .35 });

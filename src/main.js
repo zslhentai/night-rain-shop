@@ -3,7 +3,12 @@
    ============================================================ */
 (function (S) {
   function boot() {
-    S.init();
+    try { S.init(); } catch (error) {
+      document.getElementById('render-error').hidden = false;
+      document.getElementById('controls').hidden = true;
+      console.error(error);
+      return;
+    }
 
     /* build order: ground -> shell -> interior -> street props -> animation */
     S.buildBase();
@@ -13,11 +18,37 @@
     S.buildNeighborhood();
     S.buildDetails();
     S.buildPeople();
+    S.buildBus();
     S.buildEffects();
     S.resetView();
-    document.getElementById("reset-view").onclick = S.resetView;
-    document.getElementById("quality").onchange = function (e) { S.setQuality(e.target.value); };
-    setTimeout(function () { document.getElementById("hint").style.opacity = 0; }, 10000);
+    var views = document.querySelectorAll('[data-view]');
+    views.forEach(function (button) {
+      button.onclick = function () {
+        S.setView(button.dataset.view);
+        views.forEach(function (other) {
+          other.setAttribute('aria-pressed', String(other === button));
+        });
+      };
+    });
+    var quality = document.getElementById('quality');
+    if (window.innerWidth < 650) quality.value = 'low';
+    S.setQuality(quality.value);
+    quality.onchange = function () { S.setQuality(quality.value); };
+    document.getElementById('weather').onchange = function (e) {
+      S.rainIntensity = Number(e.target.value);
+      S.refreshAudio();
+    };
+    document.getElementById('photo').onclick = function () {
+      document.body.classList.add('photo');
+      document.getElementById('exit-photo').focus();
+    };
+    function exitPhoto() {
+      if (!document.body.classList.contains('photo')) return;
+      document.body.classList.remove('photo');
+      document.getElementById('photo').focus();
+    }
+    document.getElementById('exit-photo').onclick = exitPhoto;
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') exitPhoto(); });
 
     /* a very soft cool ambience around the whole model */
     S.glow(0, 1.2, 0, 0x6f9fd8, 26, 0.055);

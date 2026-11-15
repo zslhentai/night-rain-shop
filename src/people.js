@@ -22,7 +22,13 @@
     S.cyl(.014, .014, 1, 6, S.toon(0xb6c5c8), .25, 1.65, .1, { parent: umbrella });
     S.cyl(.03, .67, .27, 10, S.toon(umbrellaColor), .25, 2.22, .1, { parent: umbrella, cast: true });
     S.sphere(.04, dark, .25, 2.38, .1, { parent: umbrella });
-    var bag = S.box(.24, .3, .17, S.toon(0xc4c8ae), -.27, .53, .03, { parent: group });
+    var bag = S.group();
+    var paper = S.toon(0xd5ba90);
+    S.box(.26, .26, .17, paper, 0, -.18, 0, { parent: bag });
+    [-.055, .055].forEach(function (z) {
+      S.tube([[-.078,-.05,z],[-.05,.015,z],[.05,.015,z],[.078,-.05,z]], .009, paper, bag);
+    });
+    bag.visible = false;
     var shadow = S.groundPlane(.6, .6, S.basic(0x101923, { transparent: true, opacity: .3, depthWrite: false }), 0, .092, 0);
     var p = { group: group, torso: torso, umbrella: umbrella, legs: legs, arms: arms, bag: bag, shadow: shadow,
       route: route, next: 1, wait: offset || 0, distance: 0, speed: speed, folding: 1 };
@@ -32,42 +38,58 @@
   }
   function point(x, z, options) { return Object.assign({ x: x, z: z }, options || {}); }
   S.buildPeople = function () {
-    character(0xac8268, 0xb68d70, [
-      point(-8.2, -6.5), point(-8.2, -1.3), point(-6.6, -1.3), point(-6.6, .35), point(-5.6, .35), point(-.8, .35, { wait: 1 }),
-      point(-.8, -1, { fold: true, wait: 1.2 }), point(-.8, -1.95, { door: true, fold: true }), point(.4, -1.95, { fold: true, wait: 6 }), point(-.8, -1.95, { fold: true }),
-      point(-.8, -1, { door: true, fold: true, wait: .5 }), point(-.8, .35, { wait: 1 }),
-      point(-5.6, .35), point(-6.6, .35), point(-6.6, -1.3), point(-8.2, -1.3), point(-8.2, -6.5, { wait: 8 })
+    var entry = S.layout.entrance, stop = S.layout.busStop;
+    var shopper = character(0xac8268, 0xb68d70, [
+      point(-8.2, -6.5), point(-8.2, -1.3), point(-6.6, -1.3), point(-6.6, .35), point(-5.6, .35),
+      point(entry.x, .35), point(entry.x, -.96, { fold: true, wait: 1.2, action: 'fold' }),
+      point(entry.x, -1.89, { door: true, fold: true }), point(1.96, -1.89, { fold: true }),
+      point(1.96, -2.99, { fold: true, wait: 1.4, action: 'pick', face: Math.PI }),
+      point(1.96, -1.89, { fold: true }), point(.55, -1.89, { fold: true }),
+      point(.04, -1.89, { fold: true, wait: 3.8, action: 'pay', face: Math.PI }),
+      point(entry.x, -1.89, { fold: true }), point(entry.x, -.96, { door: true, fold: true }),
+      point(entry.x, -.79, { fold: true, wait: .7, action: 'unfold' }), point(entry.x, .35),
+      point(-5.6, .35), point(-6.6, .35), point(-6.6, -1.3), point(-8.2, -1.3),
+      point(-8.2, -6.5, { wait: 8, action: 'reset' })
     ], .85, 1);
-    character(0x6d8795, 0x778ea8, [
+    // Start the first shopping trip within view of the entrance camera.
+    shopper.next = 5;
+    shopper.group.position.set(-5.6, S.groundHeight(-5.6, .35) - .08, .35);
+    var passenger = character(0x6d8795, 0x778ea8, [
       point(6.6, -4.8), point(4.8, -4.8), point(4.8, -.3), point(4, -.3), point(3.9, 2.15, { wait: .6 }),
-      point(11.7, 2.15, { crossing: true }), point(12.3, 4), point(12.3, 6.1, { wait: 7 }),
-      point(12.3, 4), point(11.7, 2.15), point(3.9, 2.15, { crossing: true }),
-      point(4, -.3), point(4.8, -.3), point(4.8, -4.8), point(6.6, -4.8, { wait: 10 })
+      point(11.7, 2.15, { crossing: true }), point(stop.waitX, 4), point(stop.waitX, stop.boardingZ, { face: -Math.PI / 2 }),
+      point(stop.laneX + .58, stop.boardingZ, { board: true, fold: true, action: 'board' })
     ], 1, 4);
+    S.passenger = passenger;
     character(0x658c7b, 0x748c72, [
       point(-8.6, -5.8), point(-8.6, -1.3), point(-6.8, -1.3), point(-6.8, .65), point(-6, .65), point(3.2, .5),
       point(3.2, .15, { wait: 5, face: Math.PI }), point(3.2, .65), point(-6, .65), point(-6.8, .65), point(-6.8, -1.3), point(-8.6, -1.3), point(-8.6, -5.8, { wait: 12 })
     ], .74, 14);
-    var clerk = character(0x6e9f92, 0x687d89, [point(1.8, -3.4), point(1.8, -3.4)], 0, 0);
+    var clerk = character(0x6e9f92, 0x687d89, [point(-.25, -3.28)], 0, 0);
+    clerk.group.position.y = .02;
     clerk.staff = true; clerk.umbrella.visible = false; clerk.bag.visible = false;
+    var meal = S.displayMeal, shelf = meal.position.clone();
+    var checkout = new T.Vector3(.04, 1.14, -2.32);
+    var hand = new T.Vector3();
+    var paid = false;
     S.addUpdate(function (t, dt) {
       S.doorDemand = false;
       S.people.forEach(function (p, personIndex) {
         if (p.staff) {
-          p.group.rotation.y = -.5 + Math.sin(t * .25) * .3;
-          p.arms[0].rotation.x = -.4 + Math.sin(t * 1.2) * .16;
+          p.group.rotation.y = Math.sin(t * .25) * .12;
+          p.arms[0].rotation.x = shopper.action === 'pay' ? -1.05 : -.15 + Math.sin(t * 1.2) * .12;
           p.shadow.position.set(p.group.position.x, .115, p.group.position.z);
           return;
         }
+        if (p.boarded) return;
         var pos = p.group.position, target = p.route[p.next];
         var dx = target.x - pos.x, dz = target.z - pos.z, distance = Math.hypot(dx, dz);
-        var nearDoor = Math.abs(pos.x + .8) < .75 && pos.z > -2.15 && pos.z < -.35;
+        var nearDoor = Math.abs(pos.x - entry.x) < .65 && pos.z > entry.sensorBack && pos.z < entry.sensorFront;
         if (nearDoor) S.doorDemand = true;
-        var folding = target.fold || pos.z < -.8 && Math.abs(pos.x + .8) < 1;
+        var folding = p.action !== 'unfold' && target.fold && (!target.board || S.bus.canBoard);
         p.folding += ((folding ? 0 : 1) - p.folding) * Math.min(1, dt * 4);
         p.umbrella.scale.set(Math.max(.12, p.folding), 1, Math.max(.12, p.folding));
         p.umbrella.visible = p.folding > .08;
-        var blocked = target.door && S.door.open < .85;
+        var blocked = (target.door && S.door.open < .85) || (target.board && !S.bus.canBoard);
         // Once committed to crossing, continue to the opposite curb.
         if (target.crossing && distance > 7.6 && !S.traffic.canEnter) blocked = true;
         S.people.forEach(function (other, otherIndex) {
@@ -84,19 +106,57 @@
           p.group.rotation.y += delta * Math.min(1, dt * 7);
         } else if (distance <= .02) {
           p.wait = target.wait || 0;
+          p.action = target.action;
+          p.actionDuration = p.wait;
+          if (p.action === 'board') {
+            p.boarded = true;
+            p.group.visible = p.shadow.visible = false;
+          }
+          if (p === shopper && p.action === 'reset') {
+            paid = false; p.hasMeal = false; p.hasBag = false;
+            S.registerScreen.map = S.registerIdle;
+          }
           if (target.face !== undefined) p.group.rotation.y = target.face;
           p.next = (p.next + 1) % p.route.length;
         }
         p.distance += step;
         var stride = step > 0 ? Math.sin(p.distance * 9) * .42 : 0;
         p.legs[0].rotation.x = stride; p.legs[1].rotation.x = -stride;
-        p.arms[0].rotation.x = -stride * .6;
+        p.arms[0].rotation.x = p === shopper && (p.hasMeal || p.action === 'pick' || p.action === 'pay') ? -.95 : -stride * .6;
         p.arms[1].rotation.x = p.umbrella.visible ? -.8 : stride * .6;
         p.torso.position.y = step > 0 ? Math.abs(Math.sin(p.distance * 9)) * .025 : Math.sin(t * 1.5) * .008;
         p.umbrella.rotation.z = Math.sin(t * 2 + p.speed) * .025;
-        pos.y = S.groundHeight(pos.x, pos.z) - .08;
+        var ground = S.groundHeight(pos.x, pos.z);
+        if (target.board && pos.x < stop.laneX + 1.16) {
+          ground = .085 + .88 * S.clamp((stop.laneX + 1.16 - pos.x) / .58, 0, 1);
+        }
+        pos.y = ground - .08;
         p.shadow.position.set(pos.x, S.groundHeight(pos.x, pos.z) + .005, pos.z);
       });
+
+      var progress = shopper.actionDuration ? 1 - shopper.wait / shopper.actionDuration : 0;
+      shopper.arms[0].updateWorldMatrix(true, false);
+      shopper.arms[0].localToWorld(hand.set(0, -.4, .05));
+      if (shopper.action === 'pick') {
+        meal.position.copy(shelf).lerp(hand, Math.min(1, progress * 1.6));
+        shopper.hasMeal = true;
+      } else if (shopper.action === 'pay') {
+        meal.position.copy(hand).lerp(checkout, Math.min(1, progress * 3));
+        if (!paid && progress >= .48) {
+          paid = true;
+          S.registerScreen.map = S.registerPaid;
+          if (S.playSceneSound) S.playSceneSound('scan');
+        }
+        if (progress >= .75) { shopper.hasMeal = false; shopper.hasBag = true; }
+      } else {
+        meal.position.copy(shopper.hasMeal ? hand : shelf);
+      }
+      meal.visible = !shopper.hasBag;
+      shopper.bag.visible = !!shopper.hasBag;
+      if (shopper.hasBag) {
+        shopper.bag.position.copy(hand);
+        shopper.bag.rotation.y = shopper.group.rotation.y;
+      }
     });
   };
 })(window.S);

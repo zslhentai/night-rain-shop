@@ -49,6 +49,29 @@
     plaque('本日の定食', 'おでん・お茶', .52, .7, -10.5, 1.14, -4.48);
     S.box(.66, .14, .36, wood, -13.0, 2.03, -4.38, {});
     S.box(.5, .025, .22, S.basic(0xffd9a3), -13.0, 1.95, -4.36, {});
+    // The service window closes while the door and lamp remain accessible.
+    var windowX = -12.98, windowZ = -4.475, windowY = 1.40;
+    S.box(.99, .93, .08, wood, windowX, windowY, windowZ, {});
+    var pane = S.basic(0xffcc87);
+    S.plane(.87, .79, pane, windowX, windowY, windowZ + .044, {});
+    S.box(.03, .79, .028, wood, windowX, windowY, windowZ + .06, {});
+    S.box(.88, .034, .028, wood, windowX, 1.24, windowZ + .06, {});
+    S.box(1.04, .05, .18, steel, windowX, .92, windowZ + .04, {});
+    var windowGlow = S.glow(windowX, windowY, windowZ + .07, 0xffa65e, 1.9, .18);
+    var shutter = S.group();
+    shutter.position.set(windowX, 1.83, windowZ + .08);
+    S.box(.91, .84, .04, steel, 0, -.42, 0, { parent: shutter });
+    for (var slat = 0; slat < 9; slat++) {
+      S.box(.90, .012, .015, dark, 0, -.04 - slat * .094, .023, { parent: shutter });
+    }
+    S.box(1.04, .13, .12, steel, windowX, 1.86, windowZ + .06, {});
+    S.addUpdate(function (t) {
+      var phase = t % 120;
+      var closed = S.clamp(Math.min((phase - 78) / 4, (118 - phase) / 4), 0, 1);
+      shutter.visible = closed > .01;
+      shutter.scale.y = Math.max(.001, closed);
+      windowGlow.material.opacity = .18 * (1 - closed);
+    });
     // Utility meter and conduit actually terminate at the alley wall.
     S.box(.12, .58, .42, steel, -9.23, 1.5, -5.65, {});
     S.plane(.25, .23, S.basic(0xb2c1bc), -9.159, 1.57, -5.65, { ry: Math.PI / 2 });
@@ -72,6 +95,11 @@
     S.tube([[13.75, 3.05, 8.75], [13.75, .22, 8.75], [13.55, .12, 8.9]], .035, steel);
     grate(13.5, 8.95, .5, .35, .09);
     S.layout.shelters.push({ x0: 11.925, x1: 13.775, z0: 5.2, z1: 8.9, height: 3.1 });
+    var stop = S.layout.busStop;
+    var mark = S.basic(0xc7b479, { transparent: true, opacity: .52 });
+    for (var dash = 0; dash < 7; dash++) {
+      S.groundPlane(.045, .38, mark, stop.curbX - .16, .018, stop.boardingZ - .8 + dash * .62);
+    }
     // Thin runoff bands follow curb edges, without covering the crossing.
     wet(11.4, 7.3, .26, 4.3, .03, .45);
     wet(1.4, .95, 3, .25, .035, .35);

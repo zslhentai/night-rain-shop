@@ -27,7 +27,8 @@
 
     function reset(k, initial) {
       var o = d[k];
-      o.x = r(-14, 14); o.z = r(-14, 14);
+      var bounds = S.layout.bounds;
+      o.x = r(bounds.minX, bounds.maxX); o.z = r(bounds.minZ, bounds.maxZ);
       o.y = initial ? r(0.2, 13) : r(9.5, 13.5);
       o.v = speed * r(0.75, 1.35);
       o.len = maxLen * r(0.45, 1);
@@ -64,9 +65,10 @@
     S.world.add(lines);
 
     S.addUpdate(function (t, dt) {
-      geom.setDrawRange(0, S.quality === "low" ? Math.floor(count * .55) * 2 : count * 2);
+      var visibleCount = Math.floor(count * S.rainIntensity * (S.quality === 'low' ? .55 : 1));
+      geom.setDrawRange(0, visibleCount * 2);
       var pA = geom.attributes.position, cA = geom.attributes.color;
-      for (var k = 0; k < (S.quality === "low" ? Math.floor(count * .55) : count); k++) {
+      for (var k = 0; k < visibleCount; k++) {
         var o = d[k];
         o.floor = S.rainFloor(o.x, o.z);
         o.y -= o.v * dt;
@@ -108,7 +110,8 @@
         d.mesh.position.set(d.x, d.y, d.z);
         d.mesh.scale.set(0.8, 1.5, 0.8);
         if (d.y < S.groundHeight(d.x, d.z) + .02) {
-          d.y = 3.15; d.v = 0; d.wait = r(0.5, 3.2);
+          d.y = 3.15; d.v = 0; d.wait = r(.5, 3.2) / S.rainIntensity;
+          if (Math.abs(d.x + .8) < 1.35 && S.playSceneSound) S.playSceneSound('drip');
           S.spawnRipple(d.x, d.z, 0.55);
         }
       });
@@ -143,7 +146,7 @@
     var acc = 0;
     S.addUpdate(function (t, dt) {
       acc += dt;
-      if (acc > 0.09) {
+      if (acc > .12 / S.rainIntensity) {
         acc = 0;
         var pd = S.puddles[Math.floor(Math.random() * S.puddles.length)];
         if (pd) S.spawnRipple(pd.x + r(-pd.r, pd.r), pd.z + r(-pd.r * 0.7, pd.r * 0.7), r(0.35, 1.0));

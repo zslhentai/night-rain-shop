@@ -6,17 +6,27 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 global.window = global; global.document = {createElement: () => createCanvas(1, 1)};
 global.THREE = require(path.join(root, 'vendor/three.min.js'));
-for (const name of ['core','textures','layout','base','store','interior','street','buildings','details','people','effects'])
+for (const name of ['core','textures','layout','base','store','interior','street','buildings','details','people','bus','effects'])
   vm.runInThisContext(fs.readFileSync(path.join(root, 'src',name+'.js'),'utf8'));
 S.gradientMap = new THREE.DataTexture(new Uint8Array([72,128,190,255]),4,1,THREE.LuminanceFormat);
 S.scene = new THREE.Scene(); S.world = new THREE.Group(); S.scene.add(S.world);
-for (const name of ['Base','Store','Interior','Street','Neighborhood','Details','People','Effects']) S['build'+name]();
+for (const name of ['Base','Store','Interior','Street','Neighborhood','Details','People','Bus','Effects']) S['build'+name]();
 let meshes = 0; S.world.traverse(o=>{ if(o.isMesh){ meshes++; for(const n of o.geometry.attributes.position.array) assert(Number.isFinite(n)); }});
 assert.equal(S.rainFloor(12.3, 6.1), 3.1);
 assert.equal(S.rainFloor(11.7, 6.1), .04);
+let scans = 0, boardingFrames = 0;
+S.playSceneSound = name => { if (name === 'scan') scans++; };
 const visited = S.people.map(()=>new Set());
 for(let frame=0;frame<7200;frame++) {
   let t=frame/30; S.updateTraffic(t); for(const update of S.updaters) update(t,1/30);
+  if (S.bus.phase !== 'away' && S.bus.z + 2.29 >= 1.375 && S.bus.z - 2.29 <= 2.925) {
+    assert.equal(S.traffic.vehicleLight, 2, 'Bus crossing outside vehicle green');
+  }
+  if (S.passenger.boarded) {
+    boardingFrames++;
+    assert.equal(S.passenger.group.visible, false);
+  }
+  if (S.bus.canBoard) assert.equal(S.bus.phase, 'stop');
   assert(!(S.traffic.pedestrianGreen && S.traffic.vehicleLight!==0));
   S.people.forEach((p,i)=>{
     visited[i].add(p.next); assert(Number.isFinite(p.group.position.y));
@@ -25,4 +35,6 @@ for(let frame=0;frame<7200;frame++) {
   });
 }
 S.people.forEach((p,i)=>{if(!p.staff) assert.equal(visited[i].size,p.route.length,'Incomplete pedestrian route '+i);});
-console.log(JSON.stringify({meshes,simulationSeconds:240,routeWaypoints:visited.map(s=>s.size),shelterAndSignals:'pass'}));
+assert(scans >= 2, 'Checkout sequence did not repeat');
+assert(boardingFrames > 0 && S.bus.cycles >= 2, 'Bus service did not board and repeat');
+console.log(JSON.stringify({meshes, scans, boardingFrames, busCycles:S.bus.cycles,simulationSeconds:240,routeWaypoints:visited.map(s=>s.size),shelterAndSignals:'pass'}));
