@@ -66,10 +66,10 @@ window.S = window.S || {};
     scene.add(moon);
     scene.add(moon.target);
 
-    /* warm shop interior — the emotional center of the scene */
-    [[-3.8, 2.9, -5.6, 0xffe5c4, 1.15, 12],
-     [0.9, 2.9, -4.4, 0xffe8ce, 1.10, 11],
-     [-1.6, 2.9, -2.6, 0xffcd97, .85, 9]].forEach(function (p) {
+    /* Shorter light throw keeps fixtures from washing out neighboring aisles. */
+    [[-3.8, 2.9, -5.6, 0xffefdc, .44, 6.4],
+     [0.9, 2.9, -4.4, 0xfff2e3, .46, 6.0],
+     [-1.6, 2.9, -2.6, 0xffdfb7, .34, 5.0]].forEach(function (p) {
       var l = new T.PointLight(p[3], p[4], p[5], 2);
       l.position.set(p[0], p[1], p[2]);
       scene.add(l);
@@ -112,6 +112,10 @@ window.S = window.S || {};
     diner: { eye: [-9.1, 2.6, .35], target: [-11.8, 1.35, -4.45] },
     stop: { eye: [13.4, 2.64, 3.8], target: [11.05, 1.25, 6.65] }
   };
+  function isStoreView(view) {
+    return view === 'interior' || view === 'bento' || view === 'checkout' || view === 'drinks';
+  }
+
   S.setView = function (name) {
     S.view = views[name] ? name : 'overview';
     S.portrait = window.innerWidth < window.innerHeight;
@@ -128,6 +132,11 @@ window.S = window.S || {};
       C.tTarget.copy(C.target);
       S.camera.fov = 38;
       updateCamera(1);
+    }
+    if (S.renderer) {
+      // Compress bright surfaces at close range using the same exposure across indoor views.
+      S.renderer.toneMapping = isStoreView(S.view) ? T.ACESFilmicToneMapping : T.NoToneMapping;
+      S.renderer.toneMappingExposure = isStoreView(S.view) ? .68 : 1;
     }
     S.camera.updateProjectionMatrix();
     S.scene.fog.density = view ? .0115 : S.scene.fog.density;
@@ -239,8 +248,7 @@ window.S = window.S || {};
     var direction = new T.Vector3(); S.camera.getWorldDirection(direction); direction.y=0; direction.normalize();
     var right = new T.Vector3(-direction.z,0,direction.x);
     var next = S.camera.position.clone().addScaledVector(direction,-forward).addScaledVector(right,side);
-    var indoor = ['interior','bento','drinks','checkout'].indexOf(S.view)>=0;
-    if(!indoor) return;
+    if (!isStoreView(S.view)) return;
     function clear(x,z) {
       if(x < -5.85 || x > 2.45 || z < -7.65 || z > -1.82) return false;
       return !S.walkObstacles.some(function(b){return x>b[0]-.18 && x<b[1]+.18 && z>b[2]-.18 && z<b[3]+.18;});

@@ -11,8 +11,8 @@
     var x0 = S.SHOP.x0, x1 = S.SHOP.x1, z0 = S.SHOP.z0, z1 = S.SHOP.z1;
     var W = x1 - x0, D = z1 - z0, cx = (x0 + x1) / 2, cz = (z0 + z1) / 2;
 
-    var wall = S.toon(0xebe5d4);
-    var wallIn = S.toon(0xf2ecdc);
+    var wall = S.toon(0xd6d2c6);
+    var wallIn = S.toon(0xdcd9cf);
     var frame = S.toon(0x33465d);
     var frameHi = S.toon(0x6d809a);
     var roofMat = S.toon(0x465a70);
@@ -24,7 +24,7 @@
     var neonGreen = S.basic(0x76f5d2);
 
     /* ---------- interior floor / ceiling / solid walls ---------- */
-    S.plane(W, D, S.toon(0xffffff, { map: S.tex.shopFloor() }), cx, S.SHOP.floor, cz, { rx: -Math.PI / 2 });
+    S.plane(W, D, S.toon(0xe4e1da, { map: S.tex.shopFloor() }), cx, S.SHOP.floor, cz, { rx: -Math.PI / 2 });
     S.box(W, 0.10, D, wallIn, cx, 3.30, cz, {});
     /* back + left solid walls (double sided via box) */
     S.box(W, 3.28, 0.18, wall, cx, 1.74, z0, { cast: true, outline: true, outlineOpacity: .35 });
@@ -64,7 +64,7 @@
     var zf = z1 + 0.02, xf = x1 + 0.02;
     var glassMat = S.glass(0xc9e6ff, 0.10);
     var glassShade = S.basic(0xffffff, {
-      map: S.tex.windowShade(), transparent: true, opacity: .16,
+      map: S.tex.windowShade(), transparent: true, opacity: .09,
       blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide
     });
     var glassH = 2.76, glassY = 1.52;

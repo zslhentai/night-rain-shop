@@ -18,13 +18,12 @@
     S.cyl(.10,.10,.035,12,S.toon(0xe7e7dd),-.8,3.21,-3.8,{});
     S.sphere(.08,S.toon(0x26343c),2.53,3.12,-1.95,{});
 
-    var cream = S.toon(0xf6e7ca);
-    var white = S.toon(0xeadcc2);
+    var cream = S.toon(0xd8cbb7);
+    var white = S.toon(0xd4d0c4);
     var wood = S.toon(0xb08a67);
     var metal = S.toon(0xc0b39e);
     var frame = S.toon(0x55697c);
     var lamp = S.basic(0xfff2dc);
-    var lampSoft = S.basic(0xffc07d, { transparent: true, opacity: .18 });
     var bottleColors = [0x7fc3d8, 0xf0cf82, 0xe58f92, 0xa5cf96, 0xd7a6e0, 0xeab07c, 0xf3efe0];
 
     var bottleMats = bottleColors.map(function(c) { return S.phong(c, { shininess: 35 }); });
@@ -33,10 +32,9 @@
     [-7.35, -5.55, -3.75, -2.15].forEach(function (z) {
       S.box(8.2, 0.10, 0.30, white, -1.7, 3.19, z, {});
       S.box(7.9, 0.035, 0.20, lamp, -1.7, 3.13, z, {});
-      S.box(7.9, 0.02, 0.24, lampSoft, -1.7, 3.115, z, {});
-      S.glow(-4.9, 3.05, z, 0xffe6c7, .65, .10);
-      S.glow(-1.7, 3.05, z, 0xffe6c7, .65, .10);
-      S.glow(1.5, 3.05, z, 0xffe6c7, .65, .10);
+      S.glow(-4.9, 3.05, z, 0xffe6c7, .45, .05);
+      S.glow(-1.7, 3.05, z, 0xffe6c7, .45, .05);
+      S.glow(1.5, 3.05, z, 0xffe6c7, .45, .05);
     });
     /* hanging promo flags */
     ['#f4c95d', '#e88b8b', '#8bc4a6', '#8fb0dc'].forEach(function (c, i) {
@@ -44,7 +42,6 @@
       S.box(0.012, 0.34, 0.012, frame, -0.9, 2.98, z, {});
       S.box(0.012, 0.34, 0.012, frame, 0.5, 2.98, z, {});
       S.plane(1.4, 0.36, S.basic(0xffffff, { map: S.tex.priceTag('おすすめ', '#ffe9a8'), transparent: true, side: T.DoubleSide }), -0.2, 2.78, z, {});
-      S.glow(-0.2, 2.78, z + 0.02, 0xffdca0, 1.2, .08);
     });
 
     /* ---------- back wall light boxes ---------- */
