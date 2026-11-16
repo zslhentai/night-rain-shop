@@ -44,9 +44,11 @@
     var wood = S.toon(0xb08a67);
     var metal = S.toon(0xc0b39e);
     var frame = S.toon(0x55697c);
-    var bottleColors = [0x7fc3d8, 0xf0cf82, 0xe58f92, 0xa5cf96, 0xd7a6e0, 0xeab07c, 0xf3efe0];
-
-    var bottleMats = bottleColors.map(function(c) { return S.phong(c, { shininess: 24, emissive:c, emissiveIntensity:.10 }); });
+    var shelfMetal=S.shopMaterial(0xbecbc6);
+    function tag(name,price){
+      return S.basic(0xffffff,{map:S.tex.label(name,price,'#eaece1','#344643')});
+    }
+    var fixturesPlan=S.layout.interior.fixtures;
 
     S.buildShopLighting();
 
@@ -58,8 +60,8 @@
     S.plane(1.4, 0.46, S.basic(0xffffff, { map: S.tex.adPanel('お弁当', 'できたて', '#ffe8b9') }), 1.9, 2.62, -8.40, {});
 
     /* ---------- refrigerated drink cabinets along the back wall ---------- */
-    var drinkPrices = S.tex.label('130   150   180   130', '円   冷たい飲料', '#f4f2e9', '#334d58');
-    function drinkCabinet(bx) {
+    var beverages=[['can','juice','milk','coffee'],['tea','soda','water','tea']];
+    function drinkCabinet(bx,bank) {
       // A hollow cabinet: rear panel and jambs leave the stock visible.
       S.box(2.35, 2.22, .06, white, bx, 1.22, -8.50, {});
       [-1.14,1.14].forEach(function (dx) {
@@ -67,20 +69,31 @@
         S.box(.025,1.95,.025,S.basic(0xe5f5ff),bx+dx*.94,1.2,-7.96,{});
       });
       S.box(2.35,.12,.62,frame,bx,.17,-8.22,{});
-      for(var vent=0;vent<18;vent++) S.box(.065,.045,.012,frame,bx-.98+vent*.115,.20,-7.90,{});
       S.plane(.34,.10,S.basic(0xffffff,{map:S.tex.label('4°C','','#183c39','#c3e7cc')}),bx+.78,2.37,-7.88,{});
       var litBack=S.shopMaterial(0xbdc6bc,{emissiveIntensity:.14});
       S.box(2.16,1.91,.022,litBack,bx,1.21,-8.46,{});
-      for (var row = 0; row < 3; row++) {
-        var yy = 0.48 + row * 0.56;
-        S.box(2.12, 0.035, 0.50, metal, bx, yy - 0.17, -8.20, {});
-        S.plane(1.9,.09,S.basic(0xffffff,{map:drinkPrices}),bx,yy-.12,-7.935,{});
-        for (var c = 0; c < 8; c++) {
-          var col = bottleColors[(c + row * 3 + (bx > -3 ? 2 : 0)) % bottleColors.length];
-          S.box(0.17, 0.33, 0.16, bottleMats[bottleColors.indexOf(col)], bx - 0.90 + c * 0.255, yy + 0.01, -8.14, {});
-          S.cyl(.045,.055,.065,10,bottleMats[bottleColors.indexOf(col)],bx-.90+c*.255,yy+.205,-8.14,{});
-          S.cyl(.046,.046,.025,10,frame,bx-.90+c*.255,yy+.25,-8.14,{});
-          S.box(0.13, 0.06, 0.02, S.basic(0xf7f4e8), bx - 0.90 + c * 0.255, yy + 0.06, -8.05, {});
+      var gate=S.shopMaterial(0x869e9c);
+      var panel=S.makeTex(256,32,function(ctx,w,h){
+        ctx.fillStyle='#343e42';ctx.fillRect(0,0,w,h);
+        ctx.fillStyle='#151d20';for(var stripe=4;stripe<w;stripe+=10) ctx.fillRect(stripe,6,6,20);
+      });
+      S.plane(2.12,.095,S.basic(0xffffff,{map:panel}),bx,.197,-7.894,{});
+      for(var row=0;row<4;row++){
+        var yy=.31+row*.465;
+        S.box(2.12,.035,.50,metal,bx,yy,-8.20,{});
+        S.box(2.12,.048,.025,gate,bx,yy+.018,-7.947,{});
+        var picks=beverages[bank];
+        for(var bay=0;bay<4;bay++){
+          var id=picks[(bay+row)%picks.length], product=S.products[id];
+          var localX=bx-.84+bay*.55;
+          var worldX=fixturesPlan.drinks.x+(localX+3.22)*fixturesPlan.drinks.width;
+          S.plane(.26,.048,tag(product.title,'¥'+product.price),localX,yy+.019,-7.932,{});
+          [-.11,.105].forEach(function(dx,slot){
+            if(!(row===1 && bay===2 && slot===0)){
+              S.stockProduct(id,worldX+dx*.8,yy+.019,-8.08,S.range(-.04,.04));
+            }
+            if((bay+row+slot)%3===0) S.stockProduct(id,worldX+dx*.8,yy+.019,-8.29,0);
+          });
         }
       }
       /* Hinged doors share the cabinet transform, including collision geometry. */
@@ -93,100 +106,56 @@
         S.coldDoors.push({hinge:hinge,side:side,open:false,angle:0});
       });
       S.box(2.35, 0.16, 0.66, frame, bx, 2.36, -8.22, {});
-      S.plane(0.72, 0.22, S.basic(0xffffff, { map: S.tex.priceTag('¥130', '#ffdf62') }), bx, 2.36, -7.87, {});
+      S.plane(0.72, 0.22, S.basic(0xffffff, { map: S.tex.label(bank===0?'乳製品・珈琲':'水・お茶','冷蔵','#dae8de','#304c4b') }), bx, 2.36, -7.87, {});
       S.glow(bx, 2.15, -7.92, 0xdcefff, 1.2, .07);
     }
     section('lighting');
-    drinkCabinet(-4.72);
-    drinkCabinet(-1.72);
+    drinkCabinet(-4.72,0);
+    drinkCabinet(-1.72,1);
 
     section('drinks');
-    /* ---------- staff door + lockers ---------- */
-    S.box(0.06, 2.05, 1.05, S.toon(0xa9a394), -6.06, 1.15, -7.55, {});
-    S.plane(0.92, 1.90, S.basic(0xffffff, { map: S.tex.staffDoor() }), -6.02, 1.15, -7.55, { ry: Math.PI / 2 });
-    S.cyl(0.045, 0.045, 0.09, 8, metal, -5.96, 1.10, -7.12, { rx: Math.PI / 2 });
-    /* locker bank */
-    S.box(1.80, 2.05, 0.55, S.toon(0xc9d0d0), 1.85, 1.13, -8.28, { outline: true, outlineOpacity: .3 });
-    for (var l = 0; l < 3; l++) {
-      S.box(0.54, 0.90, 0.02, S.toon(0xdde3e2), 1.30 + l * 0.56, 1.55, -7.99, {});
-      S.box(0.54, 0.90, 0.02, S.toon(0xdde3e2), 1.30 + l * 0.56, 0.60, -7.99, {});
-      S.box(0.12, 0.03, 0.03, metal, 1.48 + l * 0.56, 1.55, -7.97, {});
-    }
-
-    section('staff');
-    /* ---------- three long gondola shelves ---------- */
-    var goods = [
-      {names:['カップ麺','スープ','日用品'], colors:[0xd98660,0x679484,0xd6b671]},
-      {names:['ポテト','ビスケット','菓子'], colors:[0xd0a84d,0xa96158,0x508b83]}
+    /* Four shelf faces are stocked by category, with clear price rails. */
+    var shelfFaces=[
+      [['cup','bowl','noodles'],['soap','care','tissue','paper']],
+      [['chips','crackers','biscuits'],['candy','bread','gum']]
     ];
-    var packShapes=[
-      new T.CylinderGeometry(.132,.102,.25,10),
-      new T.BoxGeometry(.22,.27,.24),
-      new T.BoxGeometry(.19,.24,.20),
-      new T.BoxGeometry(.15,.32,.22)
-    ];
-    var shelfMetal=S.toon(0xb7c7c3);
-    function gondola(sx, variant) {
-      var assortment=goods[variant];
-      S.box(.08,1.26,4.2,cream,sx,.73,-5.25,{});
-      S.box(.94,.06,4.24,shelfMetal,sx,1.36,-5.25,{});
-      [-7.29,-3.21].forEach(function(z){
-        S.box(.92,.11,.07,frame,sx,.17,z,{});
-        S.box(.08,1.21,.075,frame,sx,.74,z,{});
+    function shelf(plan,index){
+      var x=plan.x,z=plan.z;
+      S.box(.055,1.22,2.02,shelfMetal,x,.73,z,{});
+      var steel=S.shopMaterial(0x7d9590);
+      var feet=S.shopMaterial(0x3e5251);
+      var bases=[.24,.575,.91];
+      [-.97,.97].forEach(function(edge){
+        S.box(.86,.10,.10,feet,x,.15,z+edge,{});
+        S.box(.07,1.27,.075,steel,x,.775,z+edge,{});
       });
-      for(var level=0;level<3;level++){
-        var base=.22+level*.37;
-        var kind=level===2 ? (variant===0?0:3) : level+1;
-        var geometry=packShapes[kind];
-        var packHeight=geometry.parameters.height;
-        var material=S.phong(assortment.colors[level],{shininess:13});
-        var strip=S.basic(0xffffff,{map:S.tex.label(assortment.names[level],['¥178','¥248','¥138'][level],'#e6ede7','#394d4a')});
-        S.box(.96,.044,4.22,shelfMetal,sx,base,-5.25,{});
-        [-1,1].forEach(function(side) {
-          var positions=[];
-          for(var slot=0;slot<11;slot++){
-            if((variant+level+slot*3+side+12)%13!==0) positions.push(-7.06+slot*.36);
-          }
-          var packs=new T.InstancedMesh(geometry,material,positions.length);
-          var matrix=new T.Matrix4();
-          positions.forEach(function(z,index) {
-            matrix.makeTranslation(sx+side*.265,base+.023+packHeight/2,z);
-            packs.setMatrixAt(index,matrix);
-          });
-          packs.instanceMatrix.needsUpdate=true;
-          S.world.add(packs);
-          S.box(.02,.065,4.14,cream,sx+side*.48,base-.011,-5.25,{});
-          [-6.55,-5.27,-4.01].forEach(function(z) {
-            S.plane(.38,.065,strip,sx+side*.495,base-.01,z,{ry:side*Math.PI/2});
-          });
-          var label=S.basic(0xffffff,{map:S.tex.label(assortment.names[level],'', '#e5dfc2','#3e554e')});
-          positions.forEach(function(z,index){
-            var labelWidth=kind===0?.13:.17;
-            if(index%2===0) S.plane(labelWidth,.10,label,sx+side*(kind===0?.382:kind===1?.378:kind===2?.363:.343),base+.10,z,{ry:side*Math.PI/2});
+      S.box(.84,.045,2.10,shelfMetal,x,1.36,z,{});
+      bases.forEach(function(y,level){
+        S.box(.89,.039,2.10,shelfMetal,x,y,z,{});
+        [-1,1].forEach(function(side,face){
+          var picks=shelfFaces[index][face];
+          var first=picks[(level+face)%picks.length], second=picks[(level+face+1)%picks.length];
+          S.box(.026,.064,2.10,steel,x+side*.44,y+.018,z,{});
+          [first,second].forEach(function(id,block){
+            var item=S.products[id], front=z-.81+block*.98;
+            S.plane(.37,.052,tag(item.title,'¥'+item.price),x+side*.455,y+.02,front+.26,{ry:side*Math.PI/2});
+            for(var slot=0;slot<4;slot++){
+              if(level===1 && (index+block+face)%3===0 && slot===2) continue;
+              S.stockProduct(id,x+side*.29,y+.027,front+slot*.205+S.range(-.017,.017),side*Math.PI/2+S.range(-.05,.05));
+            }
           });
         });
-      }
-      S.plane(.69,.16,S.basic(0xffffff,{map:S.tex.label(variant===0?'食品・日用品':'お菓子','', '#dfebe2','#344a43')}),sx,1.29,-3.12,{});
+      });
+      // The shallow end cap remains inside the same collision footprint.
+      S.box(.66,.044,.30,shelfMetal,x,.62,z+.84,{});
+      S.plane(.62,.125,tag(index?'今週のおやつ':'新商品','おすすめ'),x,.81,z+1.052,{});
+      S.stockProduct(index?'biscuits':'cup',x-.17,.65,z+.88,0);
+      S.stockProduct(index?'candy':'bowl',x+.15,.65,z+.88,.07);
     }
-    gondola(-4.85, 0);
-    section('shelfLeft');
-    gondola(-2.15, 1);
-    section('shelfRight');
-
-
-    /* rice balls + snacks on the shelf ends */
-    for (var rb = 0; rb < 6; rb++) {
-      var rx = -4.85 + (rb % 3) * 0.28, rz = -3.02 + Math.floor(rb / 3) * 0.30;
-      S.cyl(0.15, 0.15, 0.10, 3, S.toon(0xfaf6e9), rx, 1.56, rz, { ry: 0.5 });
-      S.box(0.10, 0.02, 0.09, S.toon(0x33403c), rx, 1.51, rz, {});
-    }
-    var snackColors = [0xf0c96c, 0xe4938e, 0x8fc0b4, 0xb6a3d8, 0xe8a878];
-    for (var sn = 0; sn < 10; sn++) {
-      S.box(0.16, 0.26, 0.10, S.toon(snackColors[sn % snackColors.length]),
-        -2.15 - 0.28 + (sn % 5) * 0.14, 1.65 + Math.floor(sn / 5) * 0.02, -3.06 + Math.floor(sn / 5) * 0.16, { rz: S.range(-.15, .15) });
-    }
-
-    section('endGoods');
+    // Attach these directly in their planned coordinates.
+    shelf(fixturesPlan.shelfLeft,0);
+    shelf(fixturesPlan.shelfRight,1);
+    section('salesShelves');
     /* ---------- bento cold case ---------- */
     S.box(1.15, 0.86, 2.00, white, 1.75, 0.53, -4.15, { outline: true, outlineOpacity: .3 });
     S.box(1.05,.05,1.88,S.toon(0xdddfd5),1.75,.92,-4.15,{});
@@ -209,26 +178,19 @@
       S.box(.055,.008,.275,sleeve,0,.078,0,{parent:meal});
       return meal;
     };
-    for (var bb = 0; bb < 12; bb++) {
-      if (bb < 7) continue;
-      var meal = S.makeMeal();
-      meal.position.set(1.39+(bb%3)*.36,.98,-4.80+Math.floor(bb/3)*.43);
-      if (bb === 10) { S.displayMeal=meal; meal.position.set(1.75,.98,-3.51); }
-    }
-    var bread = S.toon(0xe4cba4);
-    for(var sandwich=0;sandwich<2;sandwich++) {
-      var x=1.39+sandwich*.36;
-      S.cyl(.13,.13,.06,3,bread,x,1.18,-4.37,{rx:Math.PI/2});
-      S.cyl(.115,.115,.025,3,greens,x,1.18,-4.33,{rx:Math.PI/2});
-      S.cyl(.13,.13,.03,3,rice,x,1.18,-4.30,{rx:Math.PI/2});
-    }
-    S.stock = { available:true, scans:0, restocks:0 };
-    S.plane(.8,.12,S.basic(0xffffff,{map:S.tex.label('540 / 280 / 320','BENTO · SANDWICH','#f4eee0','#36575a')}),1.75,.82,-3.142,{});
-    // Rear row sandwiches and triangular wrapped rice balls.
-    for(var food=0;food<3;food++) {
-      S.cyl(.105,.105,.09,3,rice,1.4+food*.32,1.37,-4.9,{rx:Math.PI/2});
-      S.box(.05,.09,.095,tray,1.4+food*.32,1.34,-4.9,{});
-    }
+    // Separate short-dated product tiers and reserve a real purchasable slot.
+    var fresh=fixturesPlan.bento;
+    [['bento',.948,-3.58],['sandwich',1.056,-4.38],['onigiri',1.267,-4.86]].forEach(function(row){
+      var [id,height,localZ]=row, item=S.products[id];
+      for(var slot=0;slot<5;slot++){
+        if((id==='bento' && slot===2)||(id==='sandwich' && slot===4)) continue;
+        S.stockProduct(id,fresh.x-.63+slot*.313,height,fresh.z+(localZ+4.15)*fresh.depth,S.range(-.05,.05));
+      }
+      S.plane(.34,.062,tag(item.title,'¥'+item.price),1.75,height+.02,localZ+.275,{});
+    });
+    S.displayMeal=S.makeMeal();
+    S.displayMeal.position.set(1.75,.976,-3.51);
+    S.stock={available:true,scans:0,restocks:0};
     // An open display lets a customer reach the front row.
     S.box(1.11, .075, .025, S.glass(0xe5f6ff, .24), 1.75, .99, -3.155, {});
     S.plane(0.72, 0.24, S.basic(0xffffff, { map: S.tex.priceTag('お弁当', '#ffd97a'), transparent: true, side: T.DoubleSide }), 1.75, 1.30, -3.18, {});
@@ -260,7 +222,18 @@
     S.box(.22,.008,.035,S.scannerLight,.04,1.132,-2.32,{});
     S.box(.19,.06,.23,frame,.55,1.13,-2.29,{});
     S.plane(.14,.15,S.basic(0xffffff,{map:S.tex.label('PAY','タッチ','#183b42','#bce1d5')}),.55,1.165,-2.29,{rx:-Math.PI/2});
-    S.receipt = S.plane(.10,.25,S.basic(0xffffff),-.45,1.37,-2.37,{});
+    var printer=S.shopMaterial(0x3f5358);
+    S.box(.20,.14,.22,printer,-.28,1.16,-2.73,{});
+    S.box(.145,.009,.025,frame,-.28,1.234,-2.65,{});
+    S.receipt = S.plane(.11,.154,tag('お買上票','540'),-.28,1.292,-2.638,{rx:-.28});
+    S.box(.36,.045,.21,shelfMetal,1.33,1.107,-2.49,{});
+    S.box(.36,.08,.016,frame,1.33,1.157,-2.38,{});
+    S.box(.30,.21,.22,S.shopMaterial(0x687d77),.45,.74,-2.94,{});
+    S.box(.17,.12,.14,S.shopMaterial(0xc1976c),.45,.91,-3.02,{});
+    var desk=fixturesPlan.checkout;
+    ['gum','candy'].forEach(function(id,i){
+      S.stockProduct(id,desk.x+.02,1.131,desk.z-1.01-i*.15,Math.PI/2);
+    });
     S.receipt.visible = false;
     /* customer facing display */
     S.box(0.55, 0.36, 0.06, frame, 0.95, 1.36, -2.20, {});
@@ -315,7 +288,7 @@
     S.box(.42,.31,.025,S.basic(0x1b2627),2.17,1.20,-6.043,{});
     S.box(.40,.05,.20,coffeeBody,2.17,1.01,-5.96,{});
     S.cyl(.022,.02,.06,8,metal,2.17,1.32,-5.951,{});
-    S.cyl(.062,.048,.13,10,cup,2.17,1.10,-5.95,{});
+    S.stockProduct('paperCup',fixturesPlan.coffee.x+.13,1.036,fixturesPlan.coffee.z-.20,Math.PI);
     S.cyl(.065,.05,.17,10,cup,2.62,1.07,-6.13,{});
     S.plane(.38,.12,S.basic(0xffffff,{map:S.tex.label('COFFEE','¥100','#213c36','#f0e4d0')}),2.17,1.49,-6.042,{});
 
@@ -357,7 +330,6 @@
     S.cyl(0.09, 0.09, 0.42, 8, S.toon(0xd3513f), -5.95, 0.31, -6.75, {});
 
     section('smallProps');
-    fixtures.staff.concat(fixtures.endGoods).forEach(function(o){S.world.remove(o);});
     // Staff-only storage is enclosed behind the cashier, with a real opening.
     var partition=S.toon(0xb9b7aa);
     S.box(2,.10,1.9,partition,-5.05,2.75,-7.5,{});
@@ -379,8 +351,6 @@
     S.box(.31,.016,.29,frame,spare[0],spare[1]-.034,spare[2],{});
     S.plane(.65,.18,S.basic(0xffffff,{map:S.tex.label('STAFF','関係者のみ','#d9d5c7','#3f5356')}),-5.07,2.4,-6.49,{});
     move('drinks',-3.22,-8.22);
-    move('shelfLeft',-4.85,-5.25);
-    move('shelfRight',-2.15,-5.25);
     move('bento',1.75,-4.15);
     // Animated meal follows world-space navigation anchors.
     S.world.updateMatrixWorld(true);
@@ -392,6 +362,7 @@
     move('coffee',2.3,-6.15);
     move('magazines',-5.88,-3.05);
     fixtures.smallProps.forEach(function(o){S.world.remove(o);});
+    S.buildProductBatches();
     var doorCenter=new T.Vector3(), hingePoint=new T.Vector3(), edgePoint=new T.Vector3();
     S.coldDoorBlocks = function(door,x,z) {
       door.hinge.getWorldPosition(hingePoint);
