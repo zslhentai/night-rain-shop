@@ -9,7 +9,8 @@ class Context {
  async decodeAudioData(){return {sampleRate:10,numberOfChannels:2,duration:76,getChannelData(){return new Float32Array(760)}}}
  createBufferSource(){sources++;return {connect(){},start(){}}}
  createBiquadFilter(){return {frequency:{setTargetAtTime(v){cutoff=v}},connect(){}}}
- createGain(){return {gain:{value:0,cancelScheduledValues(){},setValueAtTime(v){this.value=v},linearRampToValueAtTime(v){this.value=v}},connect(){}}}
+ createOscillator(){return {frequency:{value:0},connect(){},start(){}}}
+ createGain(){return {gain:{value:0,setTargetAtTime(v){this.value=v},cancelScheduledValues(){},setValueAtTime(v){this.value=v},linearRampToValueAtTime(v){this.value=v}},connect(){}}}
 }
 const doc={hidden:false,getElementById:id=>elements[id],addEventListener:(name,fn)=>visibility=fn};
 vm.runInNewContext(fs.readFileSync(require('node:path').join(__dirname,'../src/audio.js'),'utf8'),{document:doc,window:{AudioContext:Context,S},fetch:async()=>{loads++;return {ok:!fail,arrayBuffer:async()=>new ArrayBuffer(0)}},setTimeout:fn=>fn()});

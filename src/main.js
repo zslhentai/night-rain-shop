@@ -20,10 +20,13 @@
     S.buildPeople();
     S.buildBus();
     S.buildEffects();
+    S.installShopInteractions();
+    setupJoystick();
     S.resetView();
     var views = document.querySelectorAll('[data-view]');
     views.forEach(function (button) {
       button.onclick = function () {
+        if(document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
         S.setView(button.dataset.view);
         document.getElementById('scene').focus({preventScroll:true});
         refreshWalkControls();
@@ -38,6 +41,7 @@
     var coldDoorButton = document.getElementById('cold-door');
     function refreshWalkControls() {
       walkControls.hidden = !S.isStoreView(S.view);
+      document.getElementById('joystick').hidden=walkControls.hidden;
       var door = walkControls.hidden ? null : S.nearbyColdDoor();
       coldDoorButton.hidden = !door;
       if (door) {
@@ -48,7 +52,28 @@
     S.addUpdate(refreshWalkControls);
     refreshWalkControls();
     coldDoorButton.onclick = function(){ S.toggleColdDoor(); };
+    var canvas=document.getElementById('scene');
+    var lockButton=document.getElementById('mouse-lock');
+    lockButton.hidden=!canvas.requestPointerLock;
+    lockButton.onclick=function(){
+      if(!canvas.requestPointerLock) return;
+      if(document.pointerLockElement===canvas) {document.exitPointerLock();return;}
+      try {
+        var result=canvas.requestPointerLock();
+        if(result && result.catch) result.catch(lockFailed);
+      } catch(error){lockFailed();}
+    };
+    function lockFailed(){lockButton.textContent='可拖动转向';}
+    document.addEventListener('pointerlockerror',lockFailed);
+    document.addEventListener('pointerlockchange',function(){
+      var locked=document.pointerLockElement===canvas;
+      lockButton.setAttribute('aria-pressed',String(locked));
+      lockButton.textContent=locked?'Esc 退出锁定':'锁定鼠标';
+      if(locked) canvas.focus();
+      S.resetWalkInput();
+    });
     var quality = document.getElementById('quality');
+    if(window.matchMedia('(pointer: coarse)').matches) quality.value='low';
 
     S.setQuality(quality.value);
     quality.onchange = function () { S.setQuality(quality.value); };
@@ -57,6 +82,8 @@
       S.refreshAudio();
     };
     document.getElementById('photo').onclick = function () {
+      S.returnProduct();
+      S.resetWalkInput();
       document.body.classList.add('photo');
       document.getElementById('exit-photo').focus();
     };
@@ -81,6 +108,37 @@
       S.renderer.render(S.scene, S.camera);
     }
     frame();
+  }
+
+  function setupJoystick(){
+    var base=document.getElementById('joystick'), knob=base.firstElementChild;
+    var active=null, originX=0, originY=0, limit=29;
+    function move(e){
+      if(active!==e.pointerId) return;
+      var dx=e.clientX-originX, dy=e.clientY-originY;
+      var factor=Math.max(1,Math.hypot(dx,dy)/limit);
+      dx/=factor; dy/=factor;
+      S.walkInput.side=dx/limit; S.walkInput.back=dy/limit;
+      knob.style.transform='translate('+dx+'px,'+dy+'px)';
+    }
+    function reset(){
+      active=null;
+      S.walkInput.side=S.walkInput.back=0;
+      knob.style.transform='';
+    }
+    S.resetJoystick=reset;
+    base.addEventListener('pointerdown',function(e){
+      if(active!==null) return;
+      active=e.pointerId;
+      var r=base.getBoundingClientRect();
+      originX=r.left+r.width/2; originY=r.top+r.height/2;
+      base.setPointerCapture(active);
+      move(e);
+    });
+    base.addEventListener('pointermove',move);
+    ['pointerup','pointercancel','lostpointercapture'].forEach(function(event){
+      base.addEventListener(event,function(e){if(e.pointerId===active) reset();});
+    });
   }
 
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);

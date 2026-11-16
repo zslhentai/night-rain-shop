@@ -113,6 +113,8 @@ window.S = window.S || {};
   };
 
   S.setView = function (name) {
+    if(S.returnProduct) S.returnProduct();
+    if(S.resetWalkInput) S.resetWalkInput();
     S.view = views[name] ? name : 'overview';
     S.portrait = window.innerWidth < window.innerHeight;
     var view = views[S.view];
@@ -144,9 +146,21 @@ window.S = window.S || {};
 
   function setupControls(canvas) {
     var pointers = {}, dragMode = 0, lastX = 0, lastY = 0, lastPinch = 0;
+    var angles=new T.Euler(0,0,0,'YXZ'), start=null;
+    function turn(x,y){
+      angles.setFromQuaternion(S.camera.quaternion,'YXZ');
+      angles.y-=x*.004;
+      angles.x=clamp(angles.x-y*.004,-1.19,1.12);
+      angles.z=0;
+      S.camera.quaternion.setFromEuler(angles);
+    }
+    document.addEventListener('mousemove',function(e){
+      if(document.pointerLockElement===canvas && S.isStoreView(S.view)) turn(e.movementX,e.movementY);
+    });
 
     canvas.addEventListener('pointerdown', function (e) {
       pointers[e.pointerId] = { x: e.clientX, y: e.clientY };
+      start=Object.keys(pointers).length===1 ? {id:e.pointerId,x:e.clientX,y:e.clientY} : null;
       canvas.setPointerCapture(e.pointerId);
       lastX = e.clientX; lastY = e.clientY;
       dragMode = (e.button === 2 || e.shiftKey) ? 2 : 1;
@@ -161,12 +175,12 @@ window.S = window.S || {};
       if (!pointers[e.pointerId]) return;
       pointers[e.pointerId].x = e.clientX; pointers[e.pointerId].y = e.clientY;
       if (S.view !== 'overview') {
-        var turnX = e.clientX-lastX, turnY = e.clientY-lastY;
+        if(start && Math.hypot(e.clientX-start.x,e.clientY-start.y)>7) start.dragged=true;
+        if(Object.keys(pointers).length===1 && document.pointerLockElement!==canvas &&
+            (e.pointerType!=='touch' || !S.isStoreView(S.view) || e.clientX>innerWidth*.42)) {
+          turn(e.clientX-lastX,e.clientY-lastY);
+        }
         lastX=e.clientX; lastY=e.clientY;
-        var angles = new T.Euler().setFromQuaternion(S.camera.quaternion,'YXZ');
-        angles.y -= turnX*.004;
-        angles.x = clamp(angles.x-turnY*.004,-1.25,1.25);
-        angles.z=0; S.camera.quaternion.setFromEuler(angles);
         return;
       }
       var keys = Object.keys(pointers);
@@ -194,6 +208,13 @@ window.S = window.S || {};
     });
 
     function release(e) {
+      if(start && start.id===e.pointerId && !start.dragged && e.type==='pointerup' && e.button===0 &&
+          S.isStoreView(S.view) && S.inspectProduct){
+        var rect=canvas.getBoundingClientRect();
+        var locked=document.pointerLockElement===canvas;
+        S.inspectProduct(locked?0:(e.clientX-rect.left)/rect.width*2-1,locked?0:1-(e.clientY-rect.top)/rect.height*2);
+      }
+      start=null;
       delete pointers[e.pointerId];
       if (Object.keys(pointers).length < 2) lastPinch = 0;
       var remaining = Object.keys(pointers);
@@ -202,6 +223,7 @@ window.S = window.S || {};
     }
     canvas.addEventListener('pointerup', release);
     canvas.addEventListener('pointercancel', release);
+    canvas.addEventListener('lostpointercapture', release);
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();

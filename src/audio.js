@@ -1,35 +1,47 @@
 /* Field-recorded rain. Lazy loaded, quiet by default, no autoplay. */
 (function (S) {
-  var context, source, gain, filter, enabled = false;
+  var context, source, gain, filter, hum, humGain, enabled = false;
+  var stepTime=0;
   var button = document.getElementById('rain-audio');
   var volume = document.getElementById('rain-volume');
   var status = document.getElementById('audio-status');
   function volumeLevel() { return Math.pow(Number(volume.value) / 100, 1.6); }
+  function indoors() {
+    if(S.isStoreView) return S.isStoreView(S.view) && S.camera && S.inShop && S.inShop(S.camera.position);
+    return ['interior','bento','checkout','drinks'].indexOf(S.view)!==-1;
+  }
   function level() {
-    var shelter = ['interior', 'bento', 'checkout', 'drinks'].indexOf(S.view) !== -1 ? .42 : S.view === 'entrance' ? .76 : S.view === 'stop' ? .85 : 1;
+    var shelter = indoors() ? .42 : S.view === 'entrance' ? .76 : S.view === 'stop' ? .85 : 1;
     return volumeLevel() * shelter * (.55 + .45 * S.rainIntensity);
   }
   S.refreshAudio = function () {
     if (!enabled || !filter) return;
-    var cutoff = ['interior', 'bento', 'checkout', 'drinks'].indexOf(S.view) !== -1 ? 680 : S.view === 'entrance' ? 2300 : 5200;
+    var cutoff = indoors() ? 680 : S.view === 'entrance' ? 2300 : 5200;
     filter.frequency.setTargetAtTime(cutoff, context.currentTime, .2);
     fade(level(), .35);
+    if(humGain) humGain.gain.setTargetAtTime(indoors()?volumeLevel()*.011:0,context.currentTime,.3);
   };
   S.playSceneSound = function (name) {
     if (!enabled || document.hidden || context.state !== 'running') return;
     var drip = name === 'drip';
     if (drip && S.view !== 'entrance') return;
     var now = context.currentTime, voice = context.createOscillator(), env = context.createGain();
-    var duration = drip ? .055 : .10;
+    var step=name==='step', door=name==='door';
+    var duration = step?.09:door?.18:drip?.055:.10;
     voice.type = 'sine';
-    voice.frequency.setValueAtTime(drip ? 710 : 1040, now);
-    voice.frequency.exponentialRampToValueAtTime(drip ? 370 : 820, now + duration);
+    voice.frequency.setValueAtTime(step?110:door?640:drip?710:1040,now);
+    voice.frequency.exponentialRampToValueAtTime(step?47:door?880:drip?370:820,now+duration);
     env.gain.setValueAtTime(0, now);
-    env.gain.linearRampToValueAtTime(volumeLevel() * (drip ? .035 * S.rainIntensity : ['interior', 'bento', 'checkout', 'drinks'].indexOf(S.view) !== -1 ? .12 : .035), now + .006);
+    env.gain.linearRampToValueAtTime(volumeLevel() * (step?.038:door?.045:drip?.035*S.rainIntensity:indoors()?.12:.035), now + .006);
     env.gain.linearRampToValueAtTime(0, now + duration);
     voice.connect(env); env.connect(context.destination);
     voice.onended = function () { voice.disconnect(); env.disconnect(); };
     voice.start(now); voice.stop(now + duration);
+  };
+  S.walkAmbience=function(dt){
+    if(!enabled || !indoors()) return;
+    stepTime+=dt;
+    if(stepTime>.48){stepTime=0;S.playSceneSound('step');}
   };
   function fade(value, seconds) {
     var now = context.currentTime;
@@ -57,6 +69,11 @@
     filter.type = 'lowpass';
     source.connect(filter); filter.connect(gain); gain.connect(context.destination);
     source.start(0, 4);
+    hum=context.createOscillator();
+    hum.type='sine';
+    hum.frequency.value=61;
+    humGain=context.createGain();humGain.gain.value=0;
+    hum.connect(humGain);humGain.connect(context.destination);hum.start();
   }
   button.addEventListener('click', async function () {
     button.disabled = true;
@@ -70,6 +87,7 @@
       }
       if (enabled) {
         fade(0, .45);
+        if(humGain) humGain.gain.setTargetAtTime(0,context.currentTime,.13);
         await new Promise(function (resolve) { setTimeout(resolve, 500); });
         await context.suspend(); enabled = false;
       } else {
@@ -83,14 +101,14 @@
       status.textContent = '';
     } catch (error) {
       if (context) { try { await context.close(); } catch (_) {} }
-      context = source = gain = filter = null; enabled = false;
+      context = source = gain = filter = hum = humGain = null; enabled = false;
       button.textContent = '雨声重试'; button.setAttribute('aria-pressed', 'false');
       status.textContent = '雨声暂时无法播放，请重试';
     } finally { button.disabled = false; }
   });
   volume.addEventListener('input', function () {
     volume.setAttribute('aria-valuetext', volume.value + '%');
-    if (gain && enabled) fade(level(), .15);
+    if (gain && enabled) S.refreshAudio();
   });
   document.addEventListener('visibilitychange', async function () {
     if (!context || !enabled) return;

@@ -205,6 +205,7 @@
     S.addUpdate(function (t, dt) {
       doorHold = (S.doorDemand || (S.cameraAtDoor && S.cameraAtDoor())) ? 1.3 : Math.max(0, doorHold - dt);
       var doorTarget = doorHold > 0 ? 1 : 0;
+      if(doorTarget && doorOpen<.08 && doorOpen+dt*4.2*(1-doorOpen)>=.08 && S.playSceneSound) S.playSceneSound('door');
       doorOpen += (doorTarget - doorOpen) * Math.min(1, dt * 4.2);
       if (S.door) {
         S.door.open = doorOpen;
