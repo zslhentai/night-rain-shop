@@ -6,7 +6,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 global.window = global; global.addEventListener = () => {}; global.document = {createElement: () => createCanvas(1, 1)};
 global.THREE = require(path.join(root, 'vendor/three.min.js'));
-for (const name of ['core','textures','layout','navigation','base','store','interior','street','buildings','details','people','bus','effects'])
+for (const name of ['core','textures','layout','navigation','base','store','interior-lighting','interior','street','buildings','details','people','bus','effects'])
   vm.runInThisContext(fs.readFileSync(path.join(root, 'src',name+'.js'),'utf8'));
 S.gradientMap = new THREE.DataTexture(new Uint8Array([72,128,190,255]),4,1,THREE.LuminanceFormat);
 S.scene = new THREE.Scene(); S.world = new THREE.Group(); S.scene.add(S.world);

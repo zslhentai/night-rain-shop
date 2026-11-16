@@ -23,8 +23,9 @@
     var warmLight = S.basic(0xffdca2);
     var neonGreen = S.basic(0x76f5d2);
 
+    var floorMap = S.tex.shopFloor();
     /* ---------- interior floor / ceiling / solid walls ---------- */
-    S.plane(W, D, S.toon(0xe4e1da, { map: S.tex.shopFloor() }), cx, S.SHOP.floor, cz, { rx: -Math.PI / 2 });
+    S.plane(W, D, S.shopMaterial(0xdad7ca, { map: floorMap, emissiveMap: floorMap, emissiveIntensity: .13 }), cx, S.SHOP.floor, cz, { rx: -Math.PI / 2 });
     S.box(W, 0.10, D, wallIn, cx, 3.30, cz, {});
     /* back + left solid walls (double sided via box) */
     S.box(W, 3.28, 0.18, wall, cx, 1.74, z0, { cast: true, outline: true, outlineOpacity: .35 });
@@ -62,7 +63,7 @@
 
     /* ---------- glass facade frames ---------- */
     var zf = z1 + 0.02, xf = x1 + 0.02;
-    var glassMat = S.glass(0xe3eded, 0.045);
+    var glassMat = S.glass(0xe6ede7, 0.045);
     var glassShade = S.basic(0xffffff, {
       map: S.tex.windowShade(), transparent: true, opacity: .045,
       blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide
@@ -138,7 +139,7 @@
     for (var gr = 0; gr < 3; gr++) S.glow(x1 + 0.85, 3.12, -7.2 + gr * 2.4, 0xffdfa6, .95, .085);
     // A little store light reflected on the wet sidewalk just beyond the mat.
     var doorwayReflection = S.basic(0xffffff,{
-      map:S.tex.reflection('#e3f1e0'), transparent:true, opacity:.21,
+      map:S.tex.reflection('#e3f1e0'), transparent:true, opacity:.25,
       blending:T.AdditiveBlending, depthWrite:false
     });
     S.groundPlane(2.5,1.22,doorwayReflection,-.8,.073,-.42);

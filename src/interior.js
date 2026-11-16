@@ -48,26 +48,7 @@
 
     var bottleMats = bottleColors.map(function(c) { return S.phong(c, { shininess: 24, emissive:c, emissiveIntensity:.10 }); });
 
-    function spot(color, intensity, from, to, distance, angle) {
-      var light = new T.SpotLight(color, intensity, distance, angle, .7, 2);
-      light.position.fromArray(from);
-      light.target.position.fromArray(to);
-      S.world.add(light, light.target);
-    }
-
-    // Short luminaires follow the new aisles and aim toward product faces.
-    var diffuser = S.basic(0xfff6e7);
-    var housing = S.toon(0xd2d5d1);
-    [-3.52, -1.18, 1.03].forEach(function(x, aisle) {
-      [-3.03, -5.37].forEach(function(z) {
-        S.box(.25,.07,1.72,housing,x,3.215,z,{});
-        S.box(.17,.024,1.60,diffuser,x,3.167,z,{});
-        spot(0xfff4e5,.43,[x,3.12,z],[x+(aisle===0?.32:-.28),.88,z-.18],4.45,1.00);
-      });
-    });
-    spot(0xe8f6ff,.68,[-1.9,3.10,-6.65],[-1.75,1.25,-8.2],3.6,.94);
-    spot(0xffeddc,.55,[1.25,3.08,-6.82],[1.63,1.10,-7.95],3.6,.86);
-    spot(0xffe1b7,.60,[-3.85,2.97,-3.72],[-4.75,1.14,-3.54],3.5,.94);
+    S.buildShopLighting();
 
     /* ---------- back wall light boxes ---------- */
     S.box(4.3, 0.72, 0.10, frame, -1.7, 2.72, -8.47, {});
@@ -88,7 +69,7 @@
       S.box(2.35,.12,.62,frame,bx,.17,-8.22,{});
       for(var vent=0;vent<18;vent++) S.box(.065,.045,.012,frame,bx-.98+vent*.115,.20,-7.90,{});
       S.plane(.34,.10,S.basic(0xffffff,{map:S.tex.label('4°C','','#183c39','#c3e7cc')}),bx+.78,2.37,-7.88,{});
-      var litBack=S.toon(0xdde6e1,{emissive:0x536d62,emissiveIntensity:.22});
+      var litBack=S.shopMaterial(0xbdc6bc,{emissiveIntensity:.14});
       S.box(2.16,1.91,.022,litBack,bx,1.21,-8.46,{});
       for (var row = 0; row < 3; row++) {
         var yy = 0.48 + row * 0.56;
