@@ -3,7 +3,6 @@
    ============================================================ */
 (function (S) {
   var T = THREE;
-  S.interiorGlows = [];
 
   S.buildInterior = function () {
     var fixtures = {};
@@ -350,6 +349,27 @@
     }
     S.box(.31,.016,.29,frame,spare[0],spare[1]-.034,spare[2],{});
     S.plane(.65,.18,S.basic(0xffffff,{map:S.tex.label('STAFF','関係者のみ','#d9d5c7','#3f5356')}),-5.07,2.4,-6.49,{});
+    var serviceDoor=S.group();
+    serviceDoor.position.set(-5.59,.10,-6.53);
+    S.box(1.00,2.04,.038,S.shopMaterial(0x8b9a93),.50,1.02,0,{parent:serviceDoor});
+    S.box(.16,.035,.05,metal,.84,1.08,.032,{parent:serviceDoor});
+    var serviceAngle=0;
+    S.addUpdate(function(t,dt){
+      var p=S.people.find(function(person){return person.staff;});
+      var near=p && Math.abs(p.group.position.x+5.15)<.59 && Math.abs(p.group.position.z+6.53)<.70;
+      serviceAngle+=((near?-1.50:0)-serviceAngle)*Math.min(1,dt*9);
+      serviceDoor.rotation.y=serviceAngle;
+    });
+
+    var clockFrame=S.shopMaterial(0x36484a);
+    S.cyl(.173,.173,.045,16,clockFrame,-4.29,2.45,-6.48,{rx:Math.PI/2});
+    S.cyl(.145,.145,.012,16,S.basic(0xf1e9d5),-4.29,2.45,-6.45,{rx:Math.PI/2});
+    S.box(.018,.093,.008,clockFrame,-4.31,2.473,-6.437,{rz:.54});
+    S.box(.013,.112,.008,clockFrame,-4.272,2.488,-6.436,{rz:-.38});
+    S.cyl(.078,.078,.37,12,S.shopMaterial(0xb63d36),-5.86,.37,-6.37,{});
+    S.tube([[-5.86,.55,-6.37],[-5.95,.60,-6.37],[-5.98,.40,-6.36]],.013,clockFrame);
+    S.plane(.22,.10,tag('消火器',''),-5.87,.77,-6.498,{});
+
     move('drinks',-3.22,-8.22);
     move('bento',1.75,-4.15);
     // Animated meal follows world-space navigation anchors.

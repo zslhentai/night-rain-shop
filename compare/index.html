@@ -6,14 +6,14 @@
 <style>
   * { box-sizing:border-box; } body { margin:0; height:100dvh; display:grid; grid-template-rows:auto 1fr; background:#101923; color:#eef4ef; font:14px system-ui,sans-serif; }
   header { display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; padding:12px 16px; background:#14212b; }
-  fieldset { border:0; padding:0; margin:0; display:flex; gap:6px; } a { color:#cde9da; }
+  fieldset { flex-wrap:wrap; border:0; padding:0; margin:0; display:flex; gap:6px; } a { color:#cde9da; }
   button { min-height:36px; padding:5px 11px; border:1px solid #536b73; border-radius:7px; background:#1e303a; color:inherit; font:inherit; }
   button[aria-pressed="true"] { background:#cae8da; color:#183129; } button:focus-visible,a:focus-visible { outline:2px solid #f9e8a9; }
   iframe { width:100%; height:100%; border:0; min-height:0; }
 </style>
 <header>
-  <fieldset aria-label="版本"><button type="button" data-version="before" aria-pressed="false">改前</button><button type="button" data-version="after" aria-pressed="true">改后</button></fieldset>
-  <fieldset aria-label="固定机位"><button type="button" data-shot="front" aria-pressed="true">门外正视</button><button type="button" data-shot="angle" aria-pressed="false">门外斜视</button><button type="button" data-shot="inside" aria-pressed="false">店内</button></fieldset>
+  <fieldset aria-label="版本"><button type="button" data-version="before" aria-pressed="false">Preview 基线</button><button type="button" data-version="after" aria-pressed="true">V5.0</button></fieldset>
+  <fieldset aria-label="固定机位"><button type="button" data-shot="front" aria-pressed="true">门外正视</button><button type="button" data-shot="angle" aria-pressed="false">门外斜视</button><button type="button" data-shot="inside" aria-pressed="false">店内</button><button type="button" data-shot="shelves" aria-pressed="false">货架</button><button type="button" data-shot="checkout" aria-pressed="false">收银</button><button type="button" data-shot="cooler" aria-pressed="false">冷柜</button><button type="button" data-shot="fresh" aria-pressed="false">鲜食</button></fieldset>
   <a href="../">返回漫游</a>
 </header>
 <iframe title="同机位三维画面" src="after.html?shot=front"></iframe>

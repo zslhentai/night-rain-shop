@@ -46,7 +46,7 @@
       point(anchors.pickup[0], anchors.pickup[1], { fold: true, wait: 1.4, action: 'pick', face: Math.PI }),
       point(-.8,-6.95,{fold:true}), point(-3.55,-6.95,{fold:true}), point(-3.55,-3,{fold:true}),
       point(-3.55, -3.19, { fold: true, wait: 3.8, action: 'pay', face: -Math.PI/2 }),
-      point(entry.x, -1.89, { fold: true }), point(entry.x, -.96, { door: true, fold: true }),
+      point(-1.35,-2.76,{fold:true}), point(entry.x, -1.89, { fold: true }), point(entry.x, -.96, { door: true, fold: true }),
       point(entry.x, -.79, { fold: true, wait: .7, action: 'unfold' }), point(entry.x, .35),
       point(-5.6, .35), point(-6.6, .35), point(-6.6, -1.3), point(-8.2, -1.3),
       point(-8.2, -6.5, { wait: 8, action: 'reset' })
@@ -70,12 +70,15 @@
     var meal = S.displayMeal, shelf = meal.position.clone();
     var checkout = new T.Vector3().fromArray(anchors.scanner);
     var hand = new T.Vector3();
-    var paid = false, restockIndex = -1, returning = false, stockWait = 0;
-    var replacement = S.makeMeal(); replacement.visible = false;
+    var paid = false, restockIndex = -1, returning = false, stockWait = 0, pickupWait = 0;
+    var sparePosition = new T.Vector3().fromArray(anchors.stockShelf);
+    var replacement = S.makeMeal();
+    replacement.position.copy(sparePosition);
+    var carried = false;
     var clerkHand = new T.Vector3(), bagSpot = new T.Vector3().fromArray(anchors.bagging);
     function restock(dt) {
       if (restockIndex < 0 && !S.stock.available && shopper.hasBag && shopper.group.position.z > -.8) {
-        restockIndex = 1; returning = false; replacement.visible = false;
+        restockIndex = 1; returning = false; pickupWait = 0;
       }
       if (restockIndex < 0) return;
       var dest = anchors.restock[restockIndex], pos = clerk.group.position;
@@ -86,21 +89,30 @@
         clerk.group.rotation.y = Math.atan2(dx,dz);
         clerk.legs[0].rotation.x = Math.sin(tick*8)*.3;
         clerk.legs[1].rotation.x = -clerk.legs[0].rotation.x;
+      } else if(!returning && restockIndex===1) {
+        clerk.group.rotation.y=-Math.PI/2;
+        pickupWait+=dt;
+        replacement.position.copy(sparePosition).lerp(clerkHand, S.clamp((pickupWait-.3)/.55,0,1));
+        if(pickupWait>=.85){ carried=true; restockIndex++; }
+        return;
       } else if(!returning && restockIndex === anchors.restock.length-1) {
         stockWait += dt;
-        clerk.group.rotation.y = -Math.PI/2;
+        clerk.group.rotation.y = Math.PI;
         replacement.position.copy(clerkHand).lerp(shelf, Math.min(1,stockWait/1.2));
         if(stockWait >= 1.2) {
           meal.position.copy(shelf); meal.visible = true;
           S.stock.available = true; S.stock.restocks++;
-          replacement.visible = false; returning = true; stockWait = 0; restockIndex--;
+          replacement.visible = false; carried=false; returning = true; stockWait = 0; restockIndex--;
         }
       } else {
         restockIndex += returning ? -1 : 1;
         if(restockIndex < 0) { clerk.group.rotation.y=Math.PI/2; clerk.legs.forEach(function(l){l.rotation.x=0;}); }
       }
-      if(restockIndex === 2 && !returning) replacement.visible = true;
-      if(replacement.visible && stockWait===0) replacement.position.copy(clerkHand);
+      if(carried && stockWait===0) replacement.position.copy(clerkHand);
+      if(restockIndex<0){
+        replacement.position.copy(sparePosition);
+        replacement.visible=true;
+      }
     }
     var tick = 0;
     S.addUpdate(function (t, dt) {

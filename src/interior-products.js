@@ -36,7 +36,7 @@
   });
 
   function art(){
-    atlas=S.makeTex(1536,1024,function(ctx,w,h){
+    atlas=S.makeTex(2048,1024,function(ctx,w,h){
       ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
       rows.forEach(function(row,index){
         var item=catalog[row[0]];
@@ -72,7 +72,7 @@
       for(var i=0;i<a.position.count;i++){
         pos.push(a.position.getX(i),a.position.getY(i),a.position.getZ(i));
         norm.push(a.normal.getX(i),a.normal.getY(i),a.normal.getZ(i));
-        uv.push(label?(lx+9+a.uv.getX(i)*238)/1536: .998,
+        uv.push(label?(lx+9+a.uv.getX(i)*238)/2048: .998,
           label?1-(ly+191-a.uv.getY(i)*181)/1024:.008);
         colors.push(shade.r,shade.g,shade.b);
       }

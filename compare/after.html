@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>雨夜进店 · 深夜营业</title>
+<title>雨夜便利店 5.0</title>
 <style>
   html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; }
   body {
@@ -33,6 +33,15 @@
   #exit-photo:hover, #exit-photo:focus { opacity:1; }
   .photo #controls { display:none; }
   .photo #exit-photo { display:block; }
+  #joystick { display:none; position:fixed; bottom:140px; left:max(18px,env(safe-area-inset-left)); width:92px; height:92px; border:1px solid #9eb7ac70; border-radius:50%; background:#121f29a3; touch-action:none; align-items:center; justify-content:center; }
+  #joystick span { width:34px; height:34px; border-radius:50%; background:#bfd9c5b3; pointer-events:none; }
+  #product-card { position:fixed; left:50%; top:max(18px,env(safe-area-inset-top)); transform:translateX(-50%); white-space:nowrap; }
+  #product-card strong { color:#f8edce; } #product-note { color:#b6c9c2; }
+  .photo #joystick, .photo #product-card { display:none; }
+  @media(pointer:coarse) {
+    #joystick { display:flex; }
+    #mouse-lock, #walk-forward, #walk-back { display:none; }
+  }
   @media(max-width:600px) {
     #controls { bottom:max(8px, env(safe-area-inset-bottom)); gap:5px; font-size:12px; }
     button, select { min-height:36px; padding-inline:7px; }
@@ -40,19 +49,27 @@
     nav.toolbar button { flex:0 0 auto; }
   }
 </style>
-<style>#controls,#exit-photo{display:none!important}</style><script>window.requestAnimationFrame=function(){return 0;};</script></head>
+<style>#controls,#exit-photo,#joystick{display:none!important}</style><script>window.requestAnimationFrame=function(){return 0;};</script></head>
 <body>
 <canvas id="scene" tabindex="0" aria-label="雨夜便利店三维场景"></canvas>
 <div id="vignette"></div>
+<div id="joystick" role="group" aria-label="触摸移动摇杆" hidden><span aria-hidden="true"></span></div>
+<div id="product-card" class="toolbar" hidden>
+  <strong id="product-title" role="status"></strong><span id="product-note" lang="ja"></span>
+  <button type="button" id="take-product">拿起来</button><button type="button" id="close-product" aria-label="关闭商品信息">关闭</button>
+</div>
 <div id="controls">
   <div class="toolbar" id="walk-controls" aria-label="店内移动" hidden>
     <button type="button" id="walk-forward">向前</button><button type="button" id="walk-back">后退</button>
+    <button type="button" id="inspect-product">查看商品</button>
+    <button type="button" id="mouse-lock" aria-pressed="false">锁定鼠标</button>
     <button type="button" id="cold-door" hidden>打开冷柜</button>
   </div>
   <nav class="toolbar" aria-label="场景镜头">
     <button type="button" data-view="overview" aria-pressed="true">全景</button>
     <button type="button" data-view="entrance" aria-pressed="false">店门口</button>
     <button type="button" data-view="interior" aria-pressed="false">店内</button>
+    <button type="button" data-view="aisle" aria-pressed="false">货架</button>
     <button type="button" data-view="bento" aria-pressed="false">鲜食柜</button>
     <button type="button" data-view="checkout" aria-pressed="false">收银台</button>
     <button type="button" data-view="drinks" aria-pressed="false">饮料柜</button>
@@ -75,8 +92,11 @@
 <script src="../src/core.js"></script>
 <script src="../src/textures.js"></script>
 <script src="../src/layout.js"></script>
+<script src="../src/navigation.js"></script>
 <script src="../src/base.js"></script>
 <script src="../src/store.js"></script>
+<script src="../src/interior-lighting.js"></script>
+<script src="../src/interior-products.js"></script>
 <script src="../src/interior.js"></script>
 <script src="../src/street.js"></script>
 <script src="../src/buildings.js"></script>
@@ -85,6 +105,7 @@
 <script src="../src/bus.js"></script>
 <script src="../src/effects.js"></script>
 <script src="../src/audio.js"></script>
+<script src="../src/interior-interactions.js"></script>
 <script src="../src/main.js"></script>
 <script src="fixed-view.js"></script></body>
 </html>

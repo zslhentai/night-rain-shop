@@ -39,7 +39,7 @@
     queueX: -3.53,
     stockShelf: [-5.56,.76,-6.97],
     clerk: staff,
-    restock: [staff,[-5.15,-6.95],[-5.15,-6.13],[-3.60,-6.13],[-3.60,-6.98],[1.55,-6.98]]
+    restock: [staff,[-5.15,-6.95],[-5.15,-6.24],[-3.60,-6.24],[-3.60,-6.98],[1.55,-6.98]]
   };
   S.walkObstacles = Object.keys(fixtures).map(function(name){return fixtures[name].bounds;});
   // Point-to-rectangle clearance avoids snagging at shelf corners.

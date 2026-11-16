@@ -25,6 +25,8 @@
     views.forEach(function (button) {
       button.onclick = function () {
         S.setView(button.dataset.view);
+        document.getElementById('scene').focus({preventScroll:true});
+        refreshWalkControls();
         views.forEach(function (other) {
           other.setAttribute('aria-pressed', String(other === button));
         });
@@ -32,7 +34,20 @@
     });
     document.getElementById('walk-forward').onclick = function(){ S.walkStep(0,-.25); };
     document.getElementById('walk-back').onclick = function(){ S.walkStep(0,.25); };
-    document.getElementById('cold-door').onclick = function(){ S.toggleColdDoor(); };
+    var walkControls = document.getElementById('walk-controls');
+    var coldDoorButton = document.getElementById('cold-door');
+    function refreshWalkControls() {
+      walkControls.hidden = !S.isStoreView(S.view);
+      var door = walkControls.hidden ? null : S.nearbyColdDoor();
+      coldDoorButton.hidden = !door;
+      if (door) {
+        var label = door.open ? '关闭冷柜' : '打开冷柜';
+        if (coldDoorButton.textContent !== label) coldDoorButton.textContent = label;
+      }
+    }
+    S.addUpdate(refreshWalkControls);
+    refreshWalkControls();
+    coldDoorButton.onclick = function(){ S.toggleColdDoor(); };
     var quality = document.getElementById('quality');
 
     S.setQuality(quality.value);
@@ -52,10 +67,6 @@
     }
     document.getElementById('exit-photo').onclick = exitPhoto;
     document.addEventListener('keydown', function (e) { if (e.key === 'Escape') exitPhoto(); });
-
-    /* a very soft cool ambience around the whole model */
-
-
 
     var clock = new THREE.Clock();
     function frame() {

@@ -102,7 +102,8 @@
       }
     });
     S.addUpdate(function (t, dt) {
-      drops.forEach(function (d) {
+      drops.forEach(function (d,index) {
+        if(S.quality==='low' && index%2){d.mesh.visible=false;return;}
         if (d.wait > 0) { d.wait -= dt; d.mesh.visible = false; return; }
         d.mesh.visible = true;
         d.v += 12 * dt;
@@ -121,9 +122,10 @@
   /* ---------- expanding rings on puddles ---------- */
   var pool = [];
   function ripples() {
+    var ring=new T.RingGeometry(.80,1,24);
     for (var i = 0; i < 34; i++) {
       var m = new T.Mesh(
-        new T.RingGeometry(0.80, 1.0, 24),
+        ring,
         new T.MeshBasicMaterial({ color: 0xbfe0f5, transparent: true, opacity: 0, depthWrite: false, side: T.DoubleSide, blending: T.AdditiveBlending })
       );
       m.rotation.x = -Math.PI / 2;
@@ -132,7 +134,8 @@
       pool.push({ mesh: m, life: 0, dur: 1, size: 1 });
     }
     S.spawnRipple = function (x, z, size) {
-      for (var i = 0; i < pool.length; i++) {
+      var maxRings=S.quality==='low'?12:pool.length;
+      for (var i = 0; i < maxRings; i++) {
         var p = pool[i];
         if (!p.mesh.visible) {
           p.mesh.visible = true;
@@ -146,7 +149,7 @@
     var acc = 0;
     S.addUpdate(function (t, dt) {
       acc += dt;
-      if (acc > .12 / S.rainIntensity) {
+      if (acc > (S.quality==='low'?.22:.12) / S.rainIntensity) {
         acc = 0;
         var pd = S.puddles[Math.floor(Math.random() * S.puddles.length)];
         if (pd) S.spawnRipple(pd.x + r(-pd.r, pd.r), pd.z + r(-pd.r * 0.7, pd.r * 0.7), r(0.35, 1.0));
@@ -225,11 +228,6 @@
       S.signMaterials.forEach(function (m, i) { m.opacity = Math.min(1, breathe * dip + i * 0.004); });
       S.neonExtras.forEach(function (n) {
         n.sprite.material.opacity = n.base * (0.88 + 0.12 * Math.sin(t * 1.7 + n.phase)) * dip;
-      });
-      S.interiorGlows.forEach(function (g, i) {
-        var u = (t * 0.35 + i * 0.3) % 1;
-        g.position.y = 1.42 + u * 0.5;
-        g.material.opacity = 0.13 * Math.sin(Math.PI * u);
       });
     });
 

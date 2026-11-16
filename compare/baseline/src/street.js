@@ -133,7 +133,7 @@
 
   /* ---------- umbrella stand ---------- */
   function umbrellaStand() {
-    var x = -2.55, z = -1.02;
+    var x = S.layout.umbrellaStandX, z = -1.02;
     S.cyl(0.30, 0.30, 0.05, 14, mat(0x39485a), x, 0.09, z, {});
     S.torus(0.27, 0.025, mat(0x8c9aa8), x, 0.62, z, { rx: Math.PI / 2 });
     for (var i = 0; i < 4; i++) S.cyl(0.015, 0.015, 0.55, 6, mat(0x74838f), x + (i % 2 ? 0.13 : -0.13), 0.34, z + (i < 2 ? 0.13 : -0.13), {});
@@ -149,13 +149,13 @@
 
   /* ---------- bins, A-board, plants ---------- */
   function bins() {
-    [[1.65, 0x3f6f9c, '可燃'], [2.25, 0x4f8a6e, 'びん・かん']].forEach(function (b) {
+    [[2.05, 0x3f6f9c, '可燃'], [2.66, 0x4f8a6e, 'びん・かん']].forEach(function (b) {
       S.box(0.52, 0.78, 0.46, mat(b[1]), b[0], 0.45, -1.00, { outline: true, outlineOpacity: .35 });
       S.box(0.56, 0.07, 0.50, mat(0x2c3a49), b[0], 0.87, -1.00, {});
       S.plane(0.40, 0.20, S.basic(0xffffff, { map: S.tex.label(b[2], '', '#f4f8f6', b[1]), transparent: true }), b[0], 0.58, -0.76, {});
     });
     /* menu A-board */
-    var ag = S.group(); ag.position.set(-3.35, 0, -0.72);
+    var ag = S.group(); ag.position.set(-4.66, 0, -0.72);
     [-1, 1].forEach(function (s) {
       S.plane(0.72, 0.96, S.basic(0xffffff, { map: S.tex.poster(s > 0 ? 'bento' : 'coffee'), side: T.DoubleSide, transparent: true }),
         0, 0.62, s * 0.18, { rx: s * 0.22, parent: ag });
@@ -163,7 +163,7 @@
       S.box(0.04, 1.10, 0.04, mat(0x6c5c4a), 0.34, 0.55, s * 0.18, { rz: -s * 0.22, parent: ag });
     });
     /* potted plants */
-    [[-5.85, -1.25], [2.55, -1.25]].forEach(function (p) {
+    [[-5.85, -1.25], [3.12, -1.84]].forEach(function (p) {
       S.cyl(0.20, 0.16, 0.32, 10, mat(0x8c6a55), p[0], 0.22, p[1], {});
       S.sphere(0.26, mat(0x4c7c60), p[0], 0.55, p[1], { scale: [1, .8, 1] });
       S.sphere(0.18, mat(0x5c8c6c), p[0] + 0.12, 0.65, p[1] - 0.06, {});

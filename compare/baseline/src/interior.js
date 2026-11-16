@@ -42,30 +42,34 @@
     var wood = S.toon(0xb08a67);
     var metal = S.toon(0xc0b39e);
     var frame = S.toon(0x55697c);
-    var lamp = S.basic(0xfff2dc);
     var bottleColors = [0x7fc3d8, 0xf0cf82, 0xe58f92, 0xa5cf96, 0xd7a6e0, 0xeab07c, 0xf3efe0];
 
-    var bottleMats = bottleColors.map(function(c) { return S.phong(c, { shininess: 35 }); });
+    var bottleMats = bottleColors.map(function(c) { return S.phong(c, { shininess: 24, emissive:c, emissiveIntensity:.10 }); });
 
-    /* ---------- ceiling light rows ---------- */
-    [-7.35, -5.55, -3.75, -2.15].forEach(function (z) {
-      S.box(8.2, 0.10, 0.30, white, -1.7, 3.19, z, {});
-      S.box(7.9, 0.035, 0.20, lamp, -1.7, 3.13, z, {});
-      S.glow(-4.9, 3.05, z, 0xffe6c7, .45, .05);
-      S.glow(-1.7, 3.05, z, 0xffe6c7, .45, .05);
-      S.glow(1.5, 3.05, z, 0xffe6c7, .45, .05);
+    function spot(color, intensity, from, to, distance, angle) {
+      var light = new T.SpotLight(color, intensity, distance, angle, .7, 2);
+      light.position.fromArray(from);
+      light.target.position.fromArray(to);
+      S.world.add(light, light.target);
+    }
+
+    // Short luminaires follow the new aisles and aim toward product faces.
+    var diffuser = S.basic(0xfff6e7);
+    var housing = S.toon(0xd2d5d1);
+    [-3.52, -1.18, 1.03].forEach(function(x, aisle) {
+      [-3.03, -5.37].forEach(function(z) {
+        S.box(.25,.07,1.72,housing,x,3.215,z,{});
+        S.box(.17,.024,1.60,diffuser,x,3.167,z,{});
+        spot(0xfff4e5,.43,[x,3.12,z],[x+(aisle===0?.32:-.28),.88,z-.18],4.45,1.00);
+      });
     });
-    /* hanging promo flags */
-    ['#f4c95d', '#e88b8b', '#8bc4a6', '#8fb0dc'].forEach(function (c, i) {
-      var z = -6.6 + i * 1.5;
-      S.box(0.012, 0.34, 0.012, frame, -0.9, 2.98, z, {});
-      S.box(0.012, 0.34, 0.012, frame, 0.5, 2.98, z, {});
-      S.plane(1.4, 0.36, S.basic(0xffffff, { map: S.tex.priceTag('おすすめ', '#ffe9a8'), transparent: true, side: T.DoubleSide }), -0.2, 2.78, z, {});
-    });
+    spot(0xe8f6ff,.68,[-1.9,3.10,-6.65],[-1.75,1.25,-8.2],3.6,.94);
+    spot(0xffeddc,.55,[1.25,3.08,-6.82],[1.63,1.10,-7.95],3.6,.86);
+    spot(0xffe1b7,.60,[-3.85,2.97,-3.72],[-4.75,1.14,-3.54],3.5,.94);
 
     /* ---------- back wall light boxes ---------- */
     S.box(4.3, 0.72, 0.10, frame, -1.7, 2.72, -8.47, {});
-    S.plane(4.15, 0.60, S.basic(0xffffff, { map: S.tex.adPanel('挽きたて コーヒー', 'HOT COFFEE  ¥100', '#fff2d6') }), -1.7, 2.72, -8.40, {});
+    S.plane(4.15, 0.60, S.basic(0xffffff, { map: S.tex.adPanel('冷たい飲料', 'WATER · TEA · SODA', '#e4ece5') }), -1.7, 2.72, -8.40, {});
     S.glow(-1.7, 2.72, -8.32, 0xffe3c4, .6, .06);
     S.box(1.5, 0.55, 0.09, frame, 1.9, 2.62, -8.47, {});
     S.plane(1.4, 0.46, S.basic(0xffffff, { map: S.tex.adPanel('お弁当', 'できたて', '#ffe8b9') }), 1.9, 2.62, -8.40, {});
@@ -82,6 +86,8 @@
       S.box(2.35,.12,.62,frame,bx,.17,-8.22,{});
       for(var vent=0;vent<18;vent++) S.box(.065,.045,.012,frame,bx-.98+vent*.115,.20,-7.90,{});
       S.plane(.34,.10,S.basic(0xffffff,{map:S.tex.label('4°C','','#183c39','#c3e7cc')}),bx+.78,2.37,-7.88,{});
+      var litBack=S.toon(0xdde6e1,{emissive:0x536d62,emissiveIntensity:.22});
+      S.box(2.16,1.91,.022,litBack,bx,1.21,-8.46,{});
       for (var row = 0; row < 3; row++) {
         var yy = 0.48 + row * 0.56;
         S.box(2.12, 0.035, 0.50, metal, bx, yy - 0.17, -8.20, {});
@@ -98,10 +104,10 @@
       [-1,1].forEach(function(side) {
         var hinge = S.group();
         hinge.position.set(bx+side*1.1,0,-7.88);
-        var pane=S.plane(1.08,1.98,S.glass(0xdff2ff,.12),-side*.54,1.22,0,{parent:hinge});
+        S.plane(1.08,1.98,S.glass(0xdff2ff,.12),-side*.54,1.22,0,{parent:hinge});
         S.box(.04,1.98,.05,frame,-side*1.08,1.22,0,{parent:hinge});
         S.box(.035,.42,.05,metal,-side*.98,1.25,.05,{parent:hinge});
-        S.coldDoors.push({hinge:hinge,side:side,pane:pane,open:false,angle:0});
+        S.coldDoors.push({hinge:hinge,side:side,open:false,angle:0});
       });
       S.box(2.35, 0.16, 0.66, frame, bx, 2.36, -8.22, {});
       S.plane(0.72, 0.22, S.basic(0xffffff, { map: S.tex.priceTag('¥130', '#ffdf62') }), bx, 2.36, -7.87, {});
@@ -126,28 +132,58 @@
 
     section('staff');
     /* ---------- three long gondola shelves ---------- */
-    var goods0 = S.tex.shelfGoods(0), goods1 = S.tex.shelfGoods(1);
+    var goods = [
+      {names:['カップ麺','スープ','日用品'], colors:[0xd98660,0x679484,0xd6b671]},
+      {names:['ポテト','ビスケット','菓子'], colors:[0xd0a84d,0xa96158,0x508b83]}
+    ];
+    var packShapes=[
+      new T.CylinderGeometry(.132,.102,.25,10),
+      new T.BoxGeometry(.22,.27,.24),
+      new T.BoxGeometry(.19,.24,.20),
+      new T.BoxGeometry(.15,.32,.22)
+    ];
+    var shelfMetal=S.toon(0xb7c7c3);
     function gondola(sx, variant) {
-      var goods = variant % 2 ? goods1 : goods0;
-      S.box(0.08, 1.38, 4.20, cream, sx, 0.79, -5.25, {});
-      S.box(0.94, 0.08, 4.24, S.toon(0xb9b3a3), sx, 1.49, -5.25, {});
-      for (var lv = 0; lv < 3; lv++) {
-        var yy = 0.36 + lv * 0.44;
-        S.box(0.96, 0.045, 4.22, S.toon(0xc3bdae), sx, yy - 0.16, -5.25, {});
-        [-1, 1].forEach(function (s) {
-          var packs = new T.InstancedMesh(new T.BoxGeometry(.25,.28,.22), bottleMats[(variant+lv)%7], 14);
-          var matrix = new T.Matrix4();
-          for(var item=0;item<14;item++) matrix.makeTranslation(sx+s*.28,yy+.005,-7.13+item*.285), packs.setMatrixAt(item,matrix);
-          packs.instanceMatrix.needsUpdate = true;
+      var assortment=goods[variant];
+      S.box(.08,1.26,4.2,cream,sx,.73,-5.25,{});
+      S.box(.94,.06,4.24,shelfMetal,sx,1.36,-5.25,{});
+      [-7.29,-3.21].forEach(function(z){
+        S.box(.92,.11,.07,frame,sx,.17,z,{});
+        S.box(.08,1.21,.075,frame,sx,.74,z,{});
+      });
+      for(var level=0;level<3;level++){
+        var base=.22+level*.37;
+        var kind=level===2 ? (variant===0?0:3) : level+1;
+        var geometry=packShapes[kind];
+        var packHeight=geometry.parameters.height;
+        var material=S.phong(assortment.colors[level],{shininess:13});
+        var strip=S.basic(0xffffff,{map:S.tex.label(assortment.names[level],['¥178','¥248','¥138'][level],'#e6ede7','#394d4a')});
+        S.box(.96,.044,4.22,shelfMetal,sx,base,-5.25,{});
+        [-1,1].forEach(function(side) {
+          var positions=[];
+          for(var slot=0;slot<11;slot++){
+            if((variant+level+slot*3+side+12)%13!==0) positions.push(-7.06+slot*.36);
+          }
+          var packs=new T.InstancedMesh(geometry,material,positions.length);
+          var matrix=new T.Matrix4();
+          positions.forEach(function(z,index) {
+            matrix.makeTranslation(sx+side*.265,base+.023+packHeight/2,z);
+            packs.setMatrixAt(index,matrix);
+          });
+          packs.instanceMatrix.needsUpdate=true;
           S.world.add(packs);
-          S.plane(4.10,.08,S.basic(0xffffff,{map:goods}),sx+s*.49,yy-.11,-5.25,{ry:s*Math.PI/2});
+          S.box(.02,.065,4.14,cream,sx+side*.48,base-.011,-5.25,{});
+          [-6.55,-5.27,-4.01].forEach(function(z) {
+            S.plane(.38,.065,strip,sx+side*.495,base-.01,z,{ry:side*Math.PI/2});
+          });
+          var label=S.basic(0xffffff,{map:S.tex.label(assortment.names[level],'', '#e5dfc2','#3e554e')});
+          positions.forEach(function(z,index){
+            var labelWidth=kind===0?.13:.17;
+            if(index%2===0) S.plane(labelWidth,.10,label,sx+side*(kind===0?.382:kind===1?.378:kind===2?.363:.343),base+.10,z,{ry:side*Math.PI/2});
+          });
         });
       }
-      /* shelf-end promo card */
-      S.plane(0.60, 0.24, S.basic(0xffffff, { map: S.tex.priceTag(['¥100', '¥150', '¥120'][variant % 3], '#ffe06a'), transparent: true, side: T.DoubleSide }), sx, 1.72, -3.10, {});
-      S.box(0.02, 0.30, 0.02, metal, sx, 1.55, -3.10, {});
-      /* category label on top edge */
-      S.plane(0.36, 0.18, S.basic(0xffffff, { map: S.tex.label(['お菓子', '飲料', '日用'][variant % 3], '', '#ffffff', '#4d6b63'), transparent: true, side: T.DoubleSide }), sx, 1.55, -7.39, {});
+      S.plane(.69,.16,S.basic(0xffffff,{map:S.tex.label(variant===0?'食品・日用品':'お菓子','', '#dfebe2','#344a43')}),sx,1.29,-3.12,{});
     }
     gondola(-4.85, 0);
     section('shelfLeft');
@@ -170,7 +206,14 @@
     section('endGoods');
     /* ---------- bento cold case ---------- */
     S.box(1.15, 0.86, 2.00, white, 1.75, 0.53, -4.15, { outline: true, outlineOpacity: .3 });
-    S.box(1.05, 0.05, 1.88, S.basic(0xfff2da), 1.75, 0.92, -4.15, {});
+    S.box(1.05,.05,1.88,S.toon(0xdddfd5),1.75,.92,-4.15,{});
+    S.box(1.08,.07,.48,frame,1.75,1.02,-4.40,{});
+    S.box(1.08,.07,.40,frame,1.75,1.23,-4.86,{});
+    S.box(1.12,.72,.05,white,1.75,1.26,-5.12,{});
+    S.box(1.02,.025,.04,S.basic(0xfff4dd),1.75,1.51,-5.08,{});
+    [-1,1].forEach(function(side){
+      S.box(.027,.51,.55,S.glass(0xe6f1ed,.14),1.75+side*.55,1.19,-4.78,{});
+    });
     var tray = S.phong(0x293537,{shininess:25}), rice = S.toon(0xf5efdc), salmon = S.toon(0xd98d62), greens = S.toon(0x89a66d);
     var lid = S.glass(0xf5ffff,.16), sleeve = S.toon(0xf0e3c7);
     S.makeMeal = function () {
@@ -184,7 +227,7 @@
       return meal;
     };
     for (var bb = 0; bb < 12; bb++) {
-      if (bb < 5 || bb === 6) continue;
+      if (bb < 7) continue;
       var meal = S.makeMeal();
       meal.position.set(1.39+(bb%3)*.36,.98,-4.80+Math.floor(bb/3)*.43);
       if (bb === 10) { S.displayMeal=meal; meal.position.set(1.75,.98,-3.51); }
@@ -192,16 +235,16 @@
     var bread = S.toon(0xe4cba4);
     for(var sandwich=0;sandwich<2;sandwich++) {
       var x=1.39+sandwich*.36;
-      S.cyl(.13,.13,.06,3,bread,x,1.04,-4.37,{rx:Math.PI/2});
-      S.cyl(.115,.115,.025,3,greens,x,1.04,-4.33,{rx:Math.PI/2});
-      S.cyl(.13,.13,.03,3,rice,x,1.04,-4.30,{rx:Math.PI/2});
+      S.cyl(.13,.13,.06,3,bread,x,1.18,-4.37,{rx:Math.PI/2});
+      S.cyl(.115,.115,.025,3,greens,x,1.18,-4.33,{rx:Math.PI/2});
+      S.cyl(.13,.13,.03,3,rice,x,1.18,-4.30,{rx:Math.PI/2});
     }
     S.stock = { available:true, scans:0, restocks:0 };
     S.plane(.8,.12,S.basic(0xffffff,{map:S.tex.label('540 / 280 / 320','BENTO · SANDWICH','#f4eee0','#36575a')}),1.75,.82,-3.142,{});
     // Rear row sandwiches and triangular wrapped rice balls.
     for(var food=0;food<3;food++) {
-      S.cyl(.105,.105,.09,3,rice,1.4+food*.32,1.045,-4.9,{rx:Math.PI/2});
-      S.box(.05,.09,.095,tray,1.4+food*.32,1.02,-4.9,{});
+      S.cyl(.105,.105,.09,3,rice,1.4+food*.32,1.37,-4.9,{rx:Math.PI/2});
+      S.box(.05,.09,.095,tray,1.4+food*.32,1.34,-4.9,{});
     }
     // An open display lets a customer reach the front row.
     S.box(1.11, .075, .025, S.glass(0xe5f6ff, .24), 1.75, .99, -3.155, {});
@@ -281,17 +324,17 @@
 
     section('oden');
     /* ---------- coffee machine ---------- */
-    S.box(0.70, 1.52, 0.92, S.toon(0x4a3a35), 2.30, 0.86, -6.15, { outline: true, outlineOpacity: .35 });
-    S.box(0.60, 0.42, 0.06, S.basic(0x2b2220), 2.30, 1.18, -5.68, {});
-    S.plane(0.50, 0.30, S.basic(0xffffff, { map: S.tex.adPanel('COFFEE', '¥100', '#f6e2bb') }), 2.30, 1.18, -5.64, {});
-    [[2.10, 0.92], [2.50, 0.92], [2.10, 0.72], [2.50, 0.72]].forEach(function (p, i) {
-      S.cyl(0.055, 0.055, 0.02, 10, S.basic([0xff9c6b, 0x8fd7b0, 0xffd67a, 0x9ec6f0][i]), p[0], p[1], -5.66, { rx: Math.PI / 2 });
-    });
-    S.box(0.40, 0.30, 0.30, S.toon(0x28201e), 2.30, 0.45, -5.72, {});
-    S.cyl(0.09, 0.07, 0.16, 10, S.toon(0xf6f1e4), 2.30, 0.44, -5.56, {});
-    S.box(0.74, 0.10, 0.94, S.toon(0x6a554c), 2.30, 1.66, -6.15, {});
-    S.plane(0.60, 0.28, S.basic(0xffffff, { map: S.tex.priceTag('COFFEE', '#e6c18a'), transparent: true, side: T.DoubleSide }), 2.30, 1.86, -5.66, {});
-    S.glow(2.30, 1.20, -5.62, 0xffc98a, .3, .04);
+    var coffeeBody=S.toon(0x384348);
+    var cup=S.toon(0xf1e4d1);
+    S.box(.86,.84,.58,wood,2.30,.52,-6.15,{});
+    S.box(.91,.045,.63,metal,2.30,.96,-6.15,{});
+    S.box(.52,.62,.38,coffeeBody,2.17,1.29,-6.24,{});
+    S.box(.42,.31,.025,S.basic(0x1b2627),2.17,1.20,-6.043,{});
+    S.box(.40,.05,.20,coffeeBody,2.17,1.01,-5.96,{});
+    S.cyl(.022,.02,.06,8,metal,2.17,1.32,-5.951,{});
+    S.cyl(.062,.048,.13,10,cup,2.17,1.10,-5.95,{});
+    S.cyl(.065,.05,.17,10,cup,2.62,1.07,-6.13,{});
+    S.plane(.38,.12,S.basic(0xffffff,{map:S.tex.label('COFFEE','¥100','#213c36','#f0e4d0')}),2.17,1.49,-6.042,{});
 
     section('coffee');
     /* ---------- magazine rack against the left wall ---------- */
@@ -339,10 +382,18 @@
     S.box(.5,2.6,.08,partition,-5.85,1.4,-6.55,{});
     S.box(.55,2.6,.08,partition,-4.32,1.4,-6.55,{});
     S.box(1.22,.5,.08,partition,-5.07,2.45,-6.55,{});
-    S.box(.5,1.5,1.25,frame,-5.7,.85,-7.5,{});
-    for(var stock=0;stock<6;stock++) {
-      S.box(.35,.25,.35,S.toon(0xb19772),-5.65,.35+Math.floor(stock/2)*.42,-7.85+(stock%2)*.55,{});
+    var spare=S.layout.interior.stockShelf;
+    [.24,.715,1.18].forEach(function(y) {
+      S.box(.52,.045,1.35,shelfMetal,-5.69,y,-7.52,{});
+    });
+    [-5.93,-5.45].forEach(function(x) {
+      [-8.17,-6.88].forEach(function(z){S.box(.035,1.22,.035,frame,x,.71,z,{});});
+    });
+    var carton=S.toon(0xb19772);
+    for(var stock=0;stock<5;stock++) {
+      S.box(.35,.25,.35,carton,-5.69,[.387,.862,1.327][Math.floor(stock/2)],-7.96+(stock%2)*.47,{});
     }
+    S.box(.31,.016,.29,frame,spare[0],spare[1]-.034,spare[2],{});
     S.plane(.65,.18,S.basic(0xffffff,{map:S.tex.label('STAFF','関係者のみ','#d9d5c7','#3f5356')}),-5.07,2.4,-6.49,{});
     var drinks = move('drinks',-3.22,-8.22,-1.6,-8.22,0);
     drinks.scale.x=.8;
@@ -357,24 +408,62 @@
     move('checkout',.25,-2.55,-4.45,-3.4,Math.PI/2);
     move('oden',-2.75,-2.62,-4.45,-5.42,Math.PI/2);
     move('freezer',-3.55,-2.3,2.15,-5.85,Math.PI/2);
-    move('coffee',2.3,-6.15,-5.3,-2.4,0);
-    move('magazines',-5.88,-3.05,2.45,-4.1,Math.PI);
+    move('coffee',2.3,-6.15,-2.64,-2.01,Math.PI);
+    move('magazines',-5.88,-3.05,2.45,-4.1,Math.PI).scale.y=.64;
     fixtures.smallProps.forEach(function(o){S.world.remove(o);});
-    S.toggleColdDoor = function() {
-      if(!S.camera) return;
-      var closest=null, distance=1.8;
+    var doorCenter=new T.Vector3(), hingePoint=new T.Vector3(), edgePoint=new T.Vector3();
+    S.coldDoorBlocks = function(door,x,z) {
+      door.hinge.getWorldPosition(hingePoint);
+      door.hinge.localToWorld(edgePoint.set(-door.side*1.08,0,0));
+      var dx=edgePoint.x-hingePoint.x, dz=edgePoint.z-hingePoint.z;
+      var along=S.clamp(((x-hingePoint.x)*dx+(z-hingePoint.z)*dz)/(dx*dx+dz*dz),0,1);
+      return Math.hypot(x-hingePoint.x-dx*along,z-hingePoint.z-dz*along)<.18;
+    };
+    S.nearbyColdDoor = function() {
+      if(!S.camera || !S.isStoreView(S.view)) return null;
+      var closest=null, distance=1.65;
       S.coldDoors.forEach(function(door) {
-        var position=door.pane.getWorldPosition(new T.Vector3());
-        var d=position.distanceTo(S.camera.position);
+        doorCenter.copy(door.hinge.position);
+        doorCenter.x -= door.side*.54;
+        doorCenter.y = 1.22;
+        door.hinge.parent.localToWorld(doorCenter);
+        var d=doorCenter.distanceTo(S.camera.position);
         if(d<distance) { distance=d; closest=door; }
       });
-      if(closest) closest.open=!closest.open;
+      return closest;
+    };
+    S.groundPlane(.26,.10,S.basic(0xc8b888),-3.52,.102,-3.86);
+    S.groundPlane(.26,.10,S.basic(0xc8b888),-3.52,.102,-4.53);
+    for(var basket=0;basket<3;basket++){
+      var basketY=.16+basket*.061;
+      S.box(.35,.028,.25,frame,.82,basketY,-2.04,{});
+      [-1,1].forEach(function(side){
+        S.box(.35,.067,.018,frame,.82,basketY+.033,-2.04+side*.122,{});
+        S.box(.018,.067,.25,frame,.82+side*.167,basketY+.033,-2.04,{});
+      });
+    }
+    var sole=S.basic(0x414e50,{transparent:true,opacity:.12,depthWrite:false});
+    for(var step=0;step<6;step++){
+      S.groundPlane(.075,.17,sole,-.8+(step%2?.11:-.11),.102,-2.1-step*.16,step%2?.1:-.1);
+    }
+    S.toggleColdDoor = function() {
+      var door=S.nearbyColdDoor();
+      if(door) door.open=!door.open;
     };
     S.addUpdate(function(t,dt) {
       S.coldDoors.forEach(function(door) {
-        var target=door.open ? -door.side*1.05 : 0;
-        door.angle += (target-door.angle)*Math.min(1,dt*3);
-        door.hinge.rotation.y=door.angle;
+        var target=door.open ? door.side*1.05 : 0;
+        if (Math.abs(target-door.angle)<.001) return;
+        var turn=door.angle+(target-door.angle)*Math.min(1,dt*3);
+        door.hinge.rotation.y=turn;
+        var viewer=S.camera && S.isStoreView(S.view) ? S.camera.position : null;
+        var shopper=S.people[0] && S.people[0].group.position;
+        if ((viewer && S.coldDoorBlocks(door,viewer.x,viewer.z)) ||
+            (shopper && S.coldDoorBlocks(door,shopper.x,shopper.z))) {
+          door.hinge.rotation.y=door.angle;
+          return;
+        }
+        door.angle=turn;
       });
     });
   };

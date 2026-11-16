@@ -95,7 +95,9 @@ window.S = window.S || {};
     S.quality = quality;
     S.renderer.setPixelRatio(quality === "low" ? 1 : Math.min(window.devicePixelRatio || 1, 2));
     S.renderer.shadowMap.enabled = quality !== "low";
-    S.scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; });
+    var materials=new Set();
+    S.scene.traverse(function(o){if(o.material) materials.add(o.material);});
+    materials.forEach(function(material){material.needsUpdate=true;});
   };
   var views = {
     entrance: { eye: [1.4, 2.4, 3.5], target: [-1.3, 1.55, -1.42],
@@ -103,7 +105,7 @@ window.S = window.S || {};
     interior: { eye: [-.8,1.65,-2.25], target: [-1.28,1.4,-6.5], portraitEye: [-.8,1.65,-2.25], portraitTarget: [-1.28,1.4,-6.5], fov: 66 },
     aisle: { eye: [-1.20,1.7,-4.12], target: [.12,.95,-5.05], fov: 56 },
     bento: { eye: [1.45,1.65,-6.75], target: [1.65,1.02,-7.75], fov: 68 },
-    checkout: { eye: [-2.6,1.65,-2.4], target: [-4.45,1.12,-3.4], fov: 70 },
+    checkout: { eye: [-2.75,1.70,-2.73], target: [-4.45,1.12,-3.4], fov: 70 },
     drinks: { eye: [-.8,1.65,-6.7], target: [-1.6,1.25,-8.1], fov: 74 },
     diner: { eye: [-9.1, 2.6, .35], target: [-11.8, 1.35, -4.45] },
     stop: { eye: [13.4, 2.64, 3.8], target: [11.05, 1.25, 6.65] }
@@ -307,20 +309,26 @@ window.S = window.S || {};
   }
   S.finish = finish;
 
+  // Static primitives are immutable; repeated fasteners, rails and tile details share buffers.
+  var primitives=Object.create(null);
+  function primitive(Ctor,params){
+    var key=Ctor.prototype.constructor.name+':'+params.join(',');
+    return primitives[key] || (primitives[key]=new Ctor(...params));
+  }
   S.box = function (w, h, d, mat, x, y, z, o) {
-    return finish(new T.Mesh(new T.BoxGeometry(w, h, d), mat), x, y, z, o || {});
+    return finish(new T.Mesh(primitive(T.BoxGeometry,[w,h,d]), mat), x, y, z, o || {});
   };
   S.plane = function (w, h, mat, x, y, z, o) {
-    return finish(new T.Mesh(new T.PlaneGeometry(w, h), mat), x, y, z, o || {});
+    return finish(new T.Mesh(primitive(T.PlaneGeometry,[w,h]), mat), x, y, z, o || {});
   };
   S.cyl = function (rt, rb, h, seg, mat, x, y, z, o) {
-    return finish(new T.Mesh(new T.CylinderGeometry(rt, rb, h, seg), mat), x, y, z, o || {});
+    return finish(new T.Mesh(primitive(T.CylinderGeometry,[rt,rb,h,seg]), mat), x, y, z, o || {});
   };
   S.sphere = function (r, mat, x, y, z, o) {
-    return finish(new T.Mesh(new T.SphereGeometry(r, 12, 8), mat), x, y, z, o || {});
+    return finish(new T.Mesh(primitive(T.SphereGeometry,[r,12,8]), mat), x, y, z, o || {});
   };
   S.torus = function (r, tube, mat, x, y, z, o) {
-    return finish(new T.Mesh(new T.TorusGeometry(r, tube, 6, 20), mat), x, y, z, o || {});
+    return finish(new T.Mesh(primitive(T.TorusGeometry,[r,tube,6,20]), mat), x, y, z, o || {});
   };
 
   S.line = function (points, color, opacity, parent) {
