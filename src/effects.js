@@ -203,7 +203,7 @@
     /* automatic door: absolute-time cycle so it stays in sync at any frame rate */
     var doorOpen = 0, doorHold = 0;
     S.addUpdate(function (t, dt) {
-      doorHold = S.doorDemand ? 1.3 : Math.max(0, doorHold - dt);
+      doorHold = (S.doorDemand || (S.cameraAtDoor && S.cameraAtDoor())) ? 1.3 : Math.max(0, doorHold - dt);
       var doorTarget = doorHold > 0 ? 1 : 0;
       doorOpen += (doorTarget - doorOpen) * Math.min(1, dt * 4.2);
       if (S.door) {

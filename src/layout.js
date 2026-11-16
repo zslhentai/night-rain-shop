@@ -12,20 +12,44 @@
   S.layout.entrance = { x: -.8, threshold: -1.55, sensorFront: -.35, sensorBack: -2.15 };
   S.layout.umbrellaStandX = -3.92;
   S.layout.busStop = { curbX: 11.5, waitX: 12.3, boardingZ: 6.1, laneX: 10.26 };
-  // Shared interaction anchors: display, scanner and staff restocking aisle.
-  S.layout.interior = {
-    meal: [1.85,.98,-7.95], pickup: [1.65,-6.95],
-    scanner: [-4.22,1.14,-3.19], bagging: [-4.38,1.25,-3.53],
-    stockShelf: [-5.56,.76,-6.97],
-    clerk: [-5.15,-3.4], restock: [[-5.15,-3.4],[-5.15,-6.95],[-5.15,-6.1],[-3.65,-6.1],[-3.65,-6.95],[1.55,-6.95]]
+  // Coordinates of the fixtures and their collision footprints in the existing shell.
+  var fixtures = {
+    stockroom: {bounds:[-6.1,-4.01,-8.5,-6.5]},
+    checkout:  {x:-4.45,z:-3.42,turn:Math.PI/2,bounds:[-4.87,-4.03,-4.76,-2.08]},
+    oden:      {x:-4.45,z:-5.42,turn:Math.PI/2,bounds:[-4.84,-4.06,-6.05,-4.79]},
+    shelfLeft: {x:-2.54,z:-4.64,depth:.5,bounds:[-3.02,-2.06,-5.70,-3.58]},
+    shelfRight:{x:.12,z:-4.64,depth:.5,bounds:[-.36,.60,-5.70,-3.58]},
+    drinks:    {x:-1.60,z:-8.22,width:.8,bounds:[-3.74,.54,-8.55,-7.88]},
+    bento:     {x:1.65,z:-7.95,width:1.4,depth:.5,bounds:[.845,2.455,-8.45,-7.45]},
+    freezer:   {x:2.15,z:-5.85,turn:Math.PI/2,bounds:[1.69,2.61,-6.65,-5.05]},
+    magazines: {x:2.45,z:-4.10,turn:Math.PI,height:.64,bounds:[2.18,2.72,-4.95,-3.25]},
+    coffee:    {x:-2.64,z:-2.01,turn:Math.PI,bounds:[-3.10,-2.18,-2.33,-1.69]},
+    baskets:   {bounds:[.64,1,-2.17,-1.91]}
   };
-  S.walkObstacles = [
-    [-6.1,-4.01,-8.5,-6.5],[-4.87,-4.03,-4.74,-2.06],
-    [-4.84,-4.06,-6.05,-4.79],[-3.13,-2.17,-5.71,-3.59],
-    [-.33,.63,-5.71,-3.59],[-3.74,.54,-8.55,-7.88],
-    [.845,2.455,-8.45,-7.45],[1.69,2.61,-6.65,-5.05],
-    [2.22,2.68,-4.95,-3.25],[-3.10,-2.18,-2.33,-1.69],[.64,1.0,-2.17,-1.91]
-  ];
+  var checkout = fixtures.checkout;
+  var staff = [checkout.x-.70,checkout.z];
+  S.layout.interior = {
+    fixtures: fixtures,
+    aisleX: (fixtures.shelfLeft.bounds[1]+fixtures.shelfRight.bounds[0])/2,
+    rearZ: -6.98,
+    pickup: [fixtures.bento.x,-6.98],
+    scanner: [checkout.x+.23,1.14,checkout.z+.21],
+    bagging: [checkout.x+.07,1.25,checkout.z-.13],
+    pay: [-3.53,checkout.z+.21],
+    queueX: -3.53,
+    stockShelf: [-5.56,.76,-6.97],
+    clerk: staff,
+    restock: [staff,[-5.15,-6.95],[-5.15,-6.13],[-3.60,-6.13],[-3.60,-6.98],[1.55,-6.98]]
+  };
+  S.walkObstacles = Object.keys(fixtures).map(function(name){return fixtures[name].bounds;});
+  // Point-to-rectangle clearance avoids snagging at shelf corners.
+  S.fixtureBlocks = function(x,z,radius,staffAccess) {
+    return Object.keys(fixtures).some(function(name){
+      if(staffAccess && name==='stockroom') return false;
+      var b=fixtures[name].bounds;
+      return Math.hypot(Math.max(b[0]-x,0,x-b[1]),Math.max(b[2]-z,0,z-b[3]))<radius;
+    });
+  };
   S.rainIntensity = 1;
   S.people = [];
   S.doorDemand = false;

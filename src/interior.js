@@ -13,16 +13,18 @@
       fixtures[name] = S.world.children.slice(startIndex);
       startIndex = S.world.children.length;
     }
-    function move(name, oldX, oldZ, newX, newZ, angle, scaleZ) {
-      var fixture = S.group();
+    function move(name, oldX, oldZ) {
+      var plan=S.layout.interior.fixtures[name];
+      var fixture=S.group();
+      fixture.name=name;
       fixtures[name].forEach(function(object) {
         fixture.add(object);
-        object.position.x -= oldX;
-        object.position.z -= oldZ;
+        object.position.x-=oldX;
+        object.position.z-=oldZ;
       });
-      fixture.position.set(newX,0,newZ);
-      fixture.rotation.y = angle || 0;
-      if(scaleZ) fixture.scale.z = scaleZ;
+      fixture.position.set(plan.x,0,plan.z);
+      fixture.rotation.y=plan.turn||0;
+      fixture.scale.set(plan.width||1,plan.height||1,plan.depth||1);
       return fixture;
     }
     var f = S.SHOP.floor;
@@ -395,21 +397,19 @@
     }
     S.box(.31,.016,.29,frame,spare[0],spare[1]-.034,spare[2],{});
     S.plane(.65,.18,S.basic(0xffffff,{map:S.tex.label('STAFF','関係者のみ','#d9d5c7','#3f5356')}),-5.07,2.4,-6.49,{});
-    var drinks = move('drinks',-3.22,-8.22,-1.6,-8.22,0);
-    drinks.scale.x=.8;
-    move('shelfLeft',-4.85,-5.25,-2.65,-4.65,0,.5);
-    move('shelfRight',-2.15,-5.25,.15,-4.65,0,.5);
-    var freshCase = move('bento',1.75,-4.15,1.65,-7.95,0,.5);
-    freshCase.scale.x = 1.4;
-    // Animated meal keeps world-space coordinates after fixture relocation.
+    move('drinks',-3.22,-8.22);
+    move('shelfLeft',-4.85,-5.25);
+    move('shelfRight',-2.15,-5.25);
+    move('bento',1.75,-4.15);
+    // Animated meal follows world-space navigation anchors.
     S.world.updateMatrixWorld(true);
     S.world.attach(S.displayMeal);
     S.layout.interior.meal=S.displayMeal.position.toArray();
-    move('checkout',.25,-2.55,-4.45,-3.4,Math.PI/2);
-    move('oden',-2.75,-2.62,-4.45,-5.42,Math.PI/2);
-    move('freezer',-3.55,-2.3,2.15,-5.85,Math.PI/2);
-    move('coffee',2.3,-6.15,-2.64,-2.01,Math.PI);
-    move('magazines',-5.88,-3.05,2.45,-4.1,Math.PI).scale.y=.64;
+    move('checkout',.25,-2.55);
+    move('oden',-2.75,-2.62);
+    move('freezer',-3.55,-2.3);
+    move('coffee',2.3,-6.15);
+    move('magazines',-5.88,-3.05);
     fixtures.smallProps.forEach(function(o){S.world.remove(o);});
     var doorCenter=new T.Vector3(), hingePoint=new T.Vector3(), edgePoint=new T.Vector3();
     S.coldDoorBlocks = function(door,x,z) {

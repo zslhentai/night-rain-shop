@@ -42,10 +42,10 @@
     var shopper = character(0xac8268, 0xb68d70, [
       point(-8.2, -6.5), point(-8.2, -1.3), point(-6.6, -1.3), point(-6.6, .35), point(-5.6, .35),
       point(entry.x, .35), point(entry.x, -.96, { fold: true, wait: 1.2, action: 'fold' }),
-      point(entry.x, -1.89, { door: true, fold: true }), point(-.8, -3, { fold: true }), point(-.8,-6.95,{fold:true}),
+      point(entry.x, -1.89, { door: true, fold: true }), point(anchors.aisleX,-3,{fold:true}), point(anchors.aisleX,anchors.rearZ,{fold:true}),
       point(anchors.pickup[0], anchors.pickup[1], { fold: true, wait: 1.4, action: 'pick', face: Math.PI }),
-      point(-.8,-6.95,{fold:true}), point(-3.55,-6.95,{fold:true}), point(-3.55,-3,{fold:true}),
-      point(-3.55, -3.19, { fold: true, wait: 3.8, action: 'pay', face: -Math.PI/2 }),
+      point(anchors.aisleX,anchors.rearZ,{fold:true}), point(anchors.queueX,anchors.rearZ,{fold:true}), point(anchors.queueX,-3.78,{fold:true,wait:.65}),
+      point(anchors.pay[0], anchors.pay[1], { fold: true, wait: 3.8, action: 'pay', face: -Math.PI/2 }),
       point(-1.35,-2.76,{fold:true}), point(entry.x, -1.89, { fold: true }), point(entry.x, -.96, { door: true, fold: true }),
       point(entry.x, -.79, { fold: true, wait: .7, action: 'unfold' }), point(entry.x, .35),
       point(-5.6, .35), point(-6.6, .35), point(-6.6, -1.3), point(-8.2, -1.3),

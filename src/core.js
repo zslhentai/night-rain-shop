@@ -101,6 +101,7 @@ window.S = window.S || {};
     entrance: { eye: [1.4, 2.4, 3.5], target: [-1.3, 1.55, -1.42],
       portraitEye: [.65, 1.98, 4.8], portraitTarget: [-1.25, 1.52, -2.8], fov: 56 },
     interior: { eye: [-.8,1.65,-2.25], target: [-1.28,1.4,-6.5], portraitEye: [-.8,1.65,-2.25], portraitTarget: [-1.28,1.4,-6.5], fov: 66 },
+    aisle: { eye: [-1.20,1.7,-4.12], target: [.12,.95,-5.05], fov: 56 },
     bento: { eye: [1.45,1.65,-6.75], target: [1.65,1.02,-7.75], fov: 68 },
     checkout: { eye: [-2.6,1.65,-2.4], target: [-4.45,1.12,-3.4], fov: 70 },
     drinks: { eye: [-.8,1.65,-6.7], target: [-1.6,1.25,-8.1], fov: 74 },
@@ -108,7 +109,7 @@ window.S = window.S || {};
     stop: { eye: [13.4, 2.64, 3.8], target: [11.05, 1.25, 6.65] }
   };
   S.isStoreView = function(view) {
-    return view === 'interior' || view === 'bento' || view === 'checkout' || view === 'drinks';
+    return view === 'aisle' || view === 'interior' || view === 'bento' || view === 'checkout' || view === 'drinks';
   };
 
   S.setView = function (name) {
@@ -117,7 +118,7 @@ window.S = window.S || {};
     var view = views[S.view];
     if (view) {
       S.camera.position.fromArray(S.portrait && view.portraitEye || view.eye);
-      S.camera.fov = S.portrait ? 76 : (view.fov || 48);
+      S.camera.fov = S.portrait ? (S.isStoreView(S.view) ? 68 : 76) : (view.fov || 48);
       S.camera.lookAt(new T.Vector3().fromArray(S.portrait && view.portraitTarget || view.target));
     } else {
       C.theta = C.tTheta = .55;
@@ -227,35 +228,9 @@ window.S = window.S || {};
     // Preserve the night contrast when portrait framing requires a distant camera.
     S.scene.fog.density = .0115 * Math.min(1, 43 / C.radius);
   }
-  var held = {};
-  window.addEventListener('keydown',function(e){
-    if (/INPUT|SELECT|BUTTON/.test(e.target.tagName)) return;
-    if(['KeyW','KeyA','KeyS','KeyD','ArrowUp','ArrowDown','ArrowLeft','ArrowRight'].indexOf(e.code)>=0) { held[e.code]=true; e.preventDefault(); }
-  });
-  window.addEventListener('keyup',function(e){delete held[e.code];});
-  window.addEventListener('blur',function(){held={};});
-  S.walkStep = function(side,forward) {
-    var direction = new T.Vector3(); S.camera.getWorldDirection(direction); direction.y=0; direction.normalize();
-    var right = new T.Vector3(-direction.z,0,direction.x);
-    var next = S.camera.position.clone().addScaledVector(direction,-forward).addScaledVector(right,side);
-    if (!S.isStoreView(S.view)) return;
-    function clear(x,z) {
-      if(x < -5.85 || x > 2.45 || z < -7.65 || z > -1.82) return false;
-      if(S.coldDoors && S.coldDoors.some(function(door){
-        return Math.abs(door.angle)>.05 && S.coldDoorBlocks(door,x,z);
-      })) return false;
-      return !S.walkObstacles.some(function(b){return x>b[0]-.18 && x<b[1]+.18 && z>b[2]-.18 && z<b[3]+.18;});
-    }
-    if(clear(next.x,S.camera.position.z)) S.camera.position.x=next.x;
-    if(clear(S.camera.position.x,next.z)) S.camera.position.z=next.z;
-    if(S.refreshAudio) S.refreshAudio();
-  };
   S.updateCamera = function(dt) {
-    if(S.view === 'overview') { updateCamera(1-Math.pow(.001,dt)); return; }
-    var side = (held.KeyD||held.ArrowRight?1:0)-(held.KeyA||held.ArrowLeft?1:0);
-    var forward = (held.KeyS||held.ArrowDown?1:0)-(held.KeyW||held.ArrowUp?1:0);
-    var norm=Math.max(1,Math.hypot(side,forward));
-    S.walkStep(side*dt*1.5/norm,forward*dt*1.5/norm);
+    if(S.view === 'overview') updateCamera(1-Math.pow(.001,dt));
+    else S.updateWalk(dt);
   };
 
   /* ---------- material factories ---------- */
