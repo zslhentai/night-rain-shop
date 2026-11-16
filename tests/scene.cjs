@@ -58,3 +58,23 @@ for (const size of [[1440,900],[390,844]]) {
   }
 }
 console.log('PASS: restocking, scan consistency, desktop and portrait detail framing');
+
+// A customer can approach the cooler, and the doors swing into the aisle
+// without losing the interaction target once open.
+S.setView('entrance');
+assert.equal(S.nearbyColdDoor(),null);
+S.setView('drinks');
+const coldDoor=S.nearbyColdDoor();
+assert(coldDoor,'The cooler preset must be within reach');
+const edge=new THREE.Vector3(-coldDoor.side*1.08,0,0);
+const closedZ=coldDoor.hinge.localToWorld(edge.clone()).z;
+S.toggleColdDoor();
+for(let i=0;i<45;i++) S.updaters.forEach(update=>update(241+i/30,1/30));
+const openEdge=coldDoor.hinge.localToWorld(edge.clone());
+assert(openEdge.z>closedZ+.5,'Door must swing out toward the customer');
+assert(S.coldDoorBlocks(coldDoor,openEdge.x,openEdge.z),'The open leaf must block traversal at the edge');
+assert.equal(S.nearbyColdDoor(),coldDoor);
+S.toggleColdDoor();
+for(let i=0;i<45;i++) S.updaters.forEach(update=>update(243+i/30,1/30));
+assert(Math.abs(coldDoor.angle)<.06,'Door must close from the same standing position');
+console.log('PASS: cooler proximity, outward swing, and door collision');

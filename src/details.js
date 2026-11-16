@@ -20,12 +20,13 @@
     plaque('24 HOURS', '年中無休', .65, .3, -3.8, 1.75, -1.455);
     plaque('入口', '足元にご注意', .42, .22, .96, 1.42, -1.455);
     // Drip tray below the existing umbrella stand, with a raised rim.
-    S.box(.72, .035, .72, dark, -2.55, .085, -1.02, {});
+    var standX = S.layout.umbrellaStandX;
+    S.box(.72, .035, .72, dark, standX, .085, -1.02, {});
     [-1, 1].forEach(function (side) {
-      S.box(.74, .06, .025, steel, -2.55, .12, -1.02 + side * .36, {});
-      S.box(.025, .06, .72, steel, -2.55 + side * .36, .12, -1.02, {});
+      S.box(.74, .06, .025, steel, standX, .12, -1.02 + side * .36, {});
+      S.box(.025, .06, .72, steel, standX + side * .36, .12, -1.02, {});
     });
-    wet(-2.55, -1.02, .65, .65, .106, .42);
+    wet(standX, -1.02, .65, .65, .106, .42);
     // Connect the existing downpipe outlet to a covered drain channel.
     grate(-6.38, -.95, .42, .44, .069);
     grate(-6.38, -.11, .16, 1.25, .069);

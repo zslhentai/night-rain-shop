@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>雨夜进店 · 街角店布局更新</title>
+<title>雨夜进店 · 深夜营业</title>
 <style>
   html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; }
   body {
@@ -33,15 +33,22 @@
   #exit-photo:hover, #exit-photo:focus { opacity:1; }
   .photo #controls { display:none; }
   .photo #exit-photo { display:block; }
-  @media(max-width:600px) { #controls { bottom:max(8px, env(safe-area-inset-bottom)); gap:5px; font-size:12px; } button, select { min-height:34px; padding-inline:7px; } }
+  @media(max-width:600px) {
+    #controls { bottom:max(8px, env(safe-area-inset-bottom)); gap:5px; font-size:12px; }
+    button, select { min-height:36px; padding-inline:7px; }
+    nav.toolbar { justify-content:flex-start; flex-wrap:nowrap; max-width:calc(100vw - 26px); overflow-x:auto; scrollbar-width:thin; }
+    nav.toolbar button { flex:0 0 auto; }
+  }
 </style>
 </head>
 <body>
-<canvas id="scene"></canvas>
+<canvas id="scene" tabindex="0" aria-label="雨夜便利店三维场景"></canvas>
 <div id="vignette"></div>
 <div id="controls">
-  <div class="toolbar" aria-label="移动"><button id="walk-forward">向前</button><button id="walk-back">后退</button><button id="cold-door">开关附近冷柜</button></div>
-  <span>店内拖动转头 · WASD / 方向键走动 · 滚轮前后移动</span>
+  <div class="toolbar" id="walk-controls" aria-label="店内移动" hidden>
+    <button type="button" id="walk-forward">向前</button><button type="button" id="walk-back">后退</button>
+    <button type="button" id="cold-door" hidden>打开冷柜</button>
+  </div>
   <nav class="toolbar" aria-label="场景镜头">
     <button type="button" data-view="overview" aria-pressed="true">全景</button>
     <button type="button" data-view="entrance" aria-pressed="false">店门口</button>

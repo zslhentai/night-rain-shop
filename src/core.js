@@ -22,6 +22,9 @@ window.S = window.S || {};
     renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 0);
+    // A fixed shoulder preserves detail when looking through the shop windows.
+    renderer.toneMapping = T.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = .96;
     renderer.shadowMap.enabled = true;
     renderer.shadowMap.type = T.PCFSoftShadowMap;
     S.renderer = renderer;
@@ -66,16 +69,7 @@ window.S = window.S || {};
     scene.add(moon);
     scene.add(moon.target);
 
-    /* Shorter light throw keeps fixtures from washing out neighboring aisles. */
-    [[-3.8, 2.9, -5.6, 0xffefdc, .44, 6.4],
-     [0.9, 2.9, -4.4, 0xfff2e3, .46, 6.0],
-     [-1.6, 2.9, -2.6, 0xffdfb7, .34, 5.0]].forEach(function (p) {
-      var l = new T.PointLight(p[3], p[4], p[5], 2);
-      l.position.set(p[0], p[1], p[2]);
-      scene.add(l);
-    });
-
-    var signGlow = new T.PointLight(0x6df2d0, 0.95, 9, 2);
+    var signGlow = new T.PointLight(0x86ddd0, 0.40, 6, 2);
     signGlow.position.set(-1.5, 4.15, -1.2);
     scene.add(signGlow);
 
@@ -104,17 +98,18 @@ window.S = window.S || {};
     S.scene.traverse(function (o) { if (o.material) o.material.needsUpdate = true; });
   };
   var views = {
-    entrance: { eye: [1.4, 2.4, 3.5], target: [-1.3, 1.55, -1.42] },
-    interior: { eye: [-.8,1.65,-2.25], target: [-.8,1.4,-6.5], portraitEye: [-.8,1.65,-2.25], portraitTarget: [-.8,1.4,-6.5], fov: 66 },
+    entrance: { eye: [1.4, 2.4, 3.5], target: [-1.3, 1.55, -1.42],
+      portraitEye: [.65, 1.98, 4.8], portraitTarget: [-1.25, 1.52, -2.8], fov: 56 },
+    interior: { eye: [-.8,1.65,-2.25], target: [-1.28,1.4,-6.5], portraitEye: [-.8,1.65,-2.25], portraitTarget: [-1.28,1.4,-6.5], fov: 66 },
     bento: { eye: [1.45,1.65,-6.75], target: [1.65,1.02,-7.75], fov: 68 },
     checkout: { eye: [-2.6,1.65,-2.4], target: [-4.45,1.12,-3.4], fov: 70 },
     drinks: { eye: [-.8,1.65,-6.7], target: [-1.6,1.25,-8.1], fov: 74 },
     diner: { eye: [-9.1, 2.6, .35], target: [-11.8, 1.35, -4.45] },
     stop: { eye: [13.4, 2.64, 3.8], target: [11.05, 1.25, 6.65] }
   };
-  function isStoreView(view) {
+  S.isStoreView = function(view) {
     return view === 'interior' || view === 'bento' || view === 'checkout' || view === 'drinks';
-  }
+  };
 
   S.setView = function (name) {
     S.view = views[name] ? name : 'overview';
@@ -132,11 +127,6 @@ window.S = window.S || {};
       C.tTarget.copy(C.target);
       S.camera.fov = 38;
       updateCamera(1);
-    }
-    if (S.renderer) {
-      // Compress bright surfaces at close range using the same exposure across indoor views.
-      S.renderer.toneMapping = isStoreView(S.view) ? T.ACESFilmicToneMapping : T.NoToneMapping;
-      S.renderer.toneMappingExposure = isStoreView(S.view) ? .68 : 1;
     }
     S.camera.updateProjectionMatrix();
     S.scene.fog.density = view ? .0115 : S.scene.fog.density;
@@ -248,15 +238,12 @@ window.S = window.S || {};
     var direction = new T.Vector3(); S.camera.getWorldDirection(direction); direction.y=0; direction.normalize();
     var right = new T.Vector3(-direction.z,0,direction.x);
     var next = S.camera.position.clone().addScaledVector(direction,-forward).addScaledVector(right,side);
-    if (!isStoreView(S.view)) return;
+    if (!S.isStoreView(S.view)) return;
     function clear(x,z) {
       if(x < -5.85 || x > 2.45 || z < -7.65 || z > -1.82) return false;
-      var doorCollision = S.coldDoors && S.coldDoors.some(function(door) {
-        if(Math.abs(door.angle)<.05) return false;
-        var bounds=new T.Box3().setFromObject(door.pane).expandByScalar(.16);
-        return x>bounds.min.x && x<bounds.max.x && z>bounds.min.z && z<bounds.max.z;
-      });
-      if(doorCollision) return false;
+      if(S.coldDoors && S.coldDoors.some(function(door){
+        return Math.abs(door.angle)>.05 && S.coldDoorBlocks(door,x,z);
+      })) return false;
       return !S.walkObstacles.some(function(b){return x>b[0]-.18 && x<b[1]+.18 && z>b[2]-.18 && z<b[3]+.18;});
     }
     if(clear(next.x,S.camera.position.z)) S.camera.position.x=next.x;

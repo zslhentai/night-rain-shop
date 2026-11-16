@@ -10,11 +10,13 @@
     ]
   };
   S.layout.entrance = { x: -.8, threshold: -1.55, sensorFront: -.35, sensorBack: -2.15 };
+  S.layout.umbrellaStandX = -3.92;
   S.layout.busStop = { curbX: 11.5, waitX: 12.3, boardingZ: 6.1, laneX: 10.26 };
   // Shared interaction anchors: display, scanner and staff restocking aisle.
   S.layout.interior = {
     meal: [1.85,.98,-7.95], pickup: [1.65,-6.95],
     scanner: [-4.22,1.14,-3.19], bagging: [-4.38,1.25,-3.53],
+    stockShelf: [-5.56,.76,-6.97],
     clerk: [-5.15,-3.4], restock: [[-5.15,-3.4],[-5.15,-6.95],[-5.15,-6.1],[-3.65,-6.1],[-3.65,-6.95],[1.55,-6.95]]
   };
   S.walkObstacles = [
@@ -22,7 +24,7 @@
     [-4.84,-4.06,-6.05,-4.79],[-3.13,-2.17,-5.71,-3.59],
     [-.33,.63,-5.71,-3.59],[-3.74,.54,-8.55,-7.88],
     [.845,2.455,-8.45,-7.45],[1.69,2.61,-6.65,-5.05],
-    [2.22,2.68,-4.95,-3.25],[-5.67,-4.93,-2.87,-1.93]
+    [2.22,2.68,-4.95,-3.25],[-3.10,-2.18,-2.33,-1.69],[.64,1.0,-2.17,-1.91]
   ];
   S.rainIntensity = 1;
   S.people = [];

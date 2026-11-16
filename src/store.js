@@ -62,9 +62,9 @@
 
     /* ---------- glass facade frames ---------- */
     var zf = z1 + 0.02, xf = x1 + 0.02;
-    var glassMat = S.glass(0xc9e6ff, 0.10);
+    var glassMat = S.glass(0xe3eded, 0.045);
     var glassShade = S.basic(0xffffff, {
-      map: S.tex.windowShade(), transparent: true, opacity: .09,
+      map: S.tex.windowShade(), transparent: true, opacity: .045,
       blending: T.AdditiveBlending, depthWrite: false, side: T.DoubleSide
     });
     var glassH = 2.76, glassY = 1.52;
@@ -103,7 +103,7 @@
 
     /* ---------- automatic sliding door ---------- */
     var doorZ = zf + 0.05;
-    var doorGlass = S.glass(0xd8efff, 0.15);
+    var doorGlass = S.glass(0xe3eded, 0.06);
     function leaf(px, isLeft) {
       var g = S.group();
       g.position.set(px, 0, doorZ);
@@ -134,8 +134,14 @@
     /* warm strip lights under the awning */
     S.box(W + 0.4, 0.035, 0.055, warmLight, cx, 3.15, z1 + 0.82, {});
     S.box(0.055, 0.035, D + 0.4, warmLight, x1 + 0.82, 3.15, cz, {});
-    for (var gl = 0; gl < 5; gl++) S.glow(-5.5 + gl * 2.2, 3.12, z1 + 0.85, 0xffdfa6, 1.4, .18);
-    for (var gr = 0; gr < 3; gr++) S.glow(x1 + 0.85, 3.12, -7.2 + gr * 2.4, 0xffdfa6, 1.4, .18);
+    for (var gl = 0; gl < 5; gl++) S.glow(-5.5 + gl * 2.2, 3.12, z1 + 0.85, 0xffdfa6, .95, .085);
+    for (var gr = 0; gr < 3; gr++) S.glow(x1 + 0.85, 3.12, -7.2 + gr * 2.4, 0xffdfa6, .95, .085);
+    // A little store light reflected on the wet sidewalk just beyond the mat.
+    var doorwayReflection = S.basic(0xffffff,{
+      map:S.tex.reflection('#e3f1e0'), transparent:true, opacity:.21,
+      blending:T.AdditiveBlending, depthWrite:false
+    });
+    S.groundPlane(2.5,1.22,doorwayReflection,-.8,.073,-.42);
     /* awning posts + gutter */
     [[-5.95, z1 + 0.98], [2.62, z1 + 0.98], [x1 + 0.98, -7.9]].forEach(function (p) {
       S.cyl(0.045, 0.05, 3.05, 8, steel, p[0], 1.60, p[1], {});
@@ -161,8 +167,8 @@
     S.box(W + 0.75, 0.035, 0.05, neonGreen, cx, 3.53, z1 + 0.16, {});
     S.box(0.05, 0.035, D + 0.62, neonGreen, x1 + 0.16, 4.35, cz, {});
     S.box(0.05, 0.035, D + 0.62, neonGreen, x1 + 0.16, 3.53, cz, {});
-    for (var sg = 0; sg < 5; sg++) S.glow(-5.6 + sg * 2.2, 3.95, z1 + 0.25, 0x58eac8, 2.6, .20);
-    for (var sg2 = 0; sg2 < 3; sg2++) S.glow(x1 + 0.28, 3.95, -7.4 + sg2 * 2.5, 0x58eac8, 2.4, .18);
+    for (var sg = 0; sg < 5; sg++) S.glow(-5.6 + sg * 2.2, 3.95, z1 + 0.25, 0x58eac8, 1.75, .12);
+    for (var sg2 = 0; sg2 < 3; sg2++) S.glow(x1 + 0.28, 3.95, -7.4 + sg2 * 2.5, 0x58eac8, 1.65, .11);
 
     /* hanging vertical neon sign at the corner */
     var vSign = S.basic(0xffffff, { map: S.tex.neonVertical('おでん', 'コーヒー', '#6a2f58') });
