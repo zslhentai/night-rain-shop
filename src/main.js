@@ -32,6 +32,7 @@
     });
     document.getElementById('walk-forward').onclick = function(){ S.walkStep(0,-.25); };
     document.getElementById('walk-back').onclick = function(){ S.walkStep(0,.25); };
+    document.getElementById('cold-door').onclick = function(){ S.toggleColdDoor(); };
     var quality = document.getElementById('quality');
 
     S.setQuality(quality.value);

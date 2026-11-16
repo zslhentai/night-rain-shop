@@ -30,6 +30,10 @@ for(let frame=0;frame<7200;frame++) {
   if (S.bus.canBoard) assert.equal(S.bus.phase, 'stop');
   assert(!(S.traffic.pedestrianGreen && S.traffic.vehicleLight!==0));
   S.people.forEach((p,i)=>{
+    if(i === 0 && p.group.position.z < -1.82) {
+      const x=p.group.position.x,z=p.group.position.z;
+      assert(!S.walkObstacles.some(b=>x>b[0]-.15 && x<b[1]+.15 && z>b[2]-.15 && z<b[3]+.15),'Shopper intersects fixture');
+    }
     visited[i].add(p.next); assert(Number.isFinite(p.group.position.y));
     if(p.group.position.z>5 && p.group.position.x>11.5 && !p.staff)
       assert(p.group.position.x+.3 < 13.12, 'Person intersects shelter bench');
@@ -45,7 +49,7 @@ assert.equal(S.stock.scans, scans, 'Scan count and sound must agree');
 S.camera = new THREE.PerspectiveCamera(); S.scene.fog = {density:.01};
 for (const size of [[1440,900],[390,844]]) {
   global.innerWidth=size[0]; global.innerHeight=size[1]; S.camera.aspect=size[0]/size[1];
-  for (const [view, targets] of Object.entries({bento:[[1.75,.98,-3.51],[1.75,1,-4.8]], checkout:[[.04,1.14,-2.32],[-.45,1.3,-2.37]], drinks:[[-4.72,1.1,-8.14],[-1.72,1.1,-8.14]]})) {
+  for (const [view, targets] of Object.entries({bento:[S.layout.interior.meal], checkout:[S.layout.interior.scanner], drinks:[[-1.6,1.1,-8.14]]})) {
     S.setView(view); S.camera.updateMatrixWorld(true);
     for (const target of targets) {
       const projected = new THREE.Vector3(...target).project(S.camera);

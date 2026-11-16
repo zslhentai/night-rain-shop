@@ -105,10 +105,10 @@ window.S = window.S || {};
   };
   var views = {
     entrance: { eye: [1.4, 2.4, 3.5], target: [-1.3, 1.55, -1.42] },
-    interior: { eye: [1.98, 2.65, -1.81], target: [-1.8, 1.15, -4.8], portraitEye: [2.38,2.8,-1.85], portraitTarget: [-.7,1.25,-4.8], fov: 66 },
-    bento: { eye: [2.35,2.25,-2.25], target: [1.75,1,-4.1], portraitEye: [1.78,2.35,-2.12], portraitTarget: [1.75,1,-4.15], fov: 58 },
-    checkout: { eye: [1.8,2.35,-1.79], target: [-.95,1.15,-2.65], portraitEye: [.35,2.55,-1.79], portraitTarget: [-.65,1.18,-2.75], fov: 76 },
-    drinks: { eye: [-3.3,2.65,-5.1], target: [-3.3,1.22,-8.1], portraitEye: [-3.3,2.8,-3.8], portraitTarget: [-3.3,1.22,-8.1], fov: 70 },
+    interior: { eye: [-.8,1.65,-2.25], target: [-.8,1.4,-6.5], portraitEye: [-.8,1.65,-2.25], portraitTarget: [-.8,1.4,-6.5], fov: 66 },
+    bento: { eye: [1.45,1.65,-6.75], target: [1.65,1.02,-7.75], fov: 68 },
+    checkout: { eye: [-2.6,1.65,-2.4], target: [-4.45,1.12,-3.4], fov: 70 },
+    drinks: { eye: [-.8,1.65,-6.7], target: [-1.6,1.25,-8.1], fov: 74 },
     diner: { eye: [-9.1, 2.6, .35], target: [-11.8, 1.35, -4.45] },
     stop: { eye: [13.4, 2.64, 3.8], target: [11.05, 1.25, 6.65] }
   };
@@ -251,6 +251,12 @@ window.S = window.S || {};
     if (!isStoreView(S.view)) return;
     function clear(x,z) {
       if(x < -5.85 || x > 2.45 || z < -7.65 || z > -1.82) return false;
+      var doorCollision = S.coldDoors && S.coldDoors.some(function(door) {
+        if(Math.abs(door.angle)<.05) return false;
+        var bounds=new T.Box3().setFromObject(door.pane).expandByScalar(.16);
+        return x>bounds.min.x && x<bounds.max.x && z>bounds.min.z && z<bounds.max.z;
+      });
+      if(doorCollision) return false;
       return !S.walkObstacles.some(function(b){return x>b[0]-.18 && x<b[1]+.18 && z>b[2]-.18 && z<b[3]+.18;});
     }
     if(clear(next.x,S.camera.position.z)) S.camera.position.x=next.x;

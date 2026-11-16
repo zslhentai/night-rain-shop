@@ -42,10 +42,10 @@
     var shopper = character(0xac8268, 0xb68d70, [
       point(-8.2, -6.5), point(-8.2, -1.3), point(-6.6, -1.3), point(-6.6, .35), point(-5.6, .35),
       point(entry.x, .35), point(entry.x, -.96, { fold: true, wait: 1.2, action: 'fold' }),
-      point(entry.x, -1.89, { door: true, fold: true }), point(1.96, -1.89, { fold: true }),
+      point(entry.x, -1.89, { door: true, fold: true }), point(-.8, -3, { fold: true }), point(-.8,-6.95,{fold:true}),
       point(anchors.pickup[0], anchors.pickup[1], { fold: true, wait: 1.4, action: 'pick', face: Math.PI }),
-      point(1.96, -1.89, { fold: true }), point(.55, -1.89, { fold: true }),
-      point(.04, -1.89, { fold: true, wait: 3.8, action: 'pay', face: Math.PI }),
+      point(-.8,-6.95,{fold:true}), point(-3.55,-6.95,{fold:true}), point(-3.55,-3,{fold:true}),
+      point(-3.55, -3.19, { fold: true, wait: 3.8, action: 'pay', face: -Math.PI/2 }),
       point(entry.x, -1.89, { fold: true }), point(entry.x, -.96, { door: true, fold: true }),
       point(entry.x, -.79, { fold: true, wait: .7, action: 'unfold' }), point(entry.x, .35),
       point(-5.6, .35), point(-6.6, .35), point(-6.6, -1.3), point(-8.2, -1.3),
@@ -64,7 +64,7 @@
       point(-8.6, -5.8), point(-8.6, -1.3), point(-6.8, -1.3), point(-6.8, .65), point(-6, .65), point(3.2, .5),
       point(3.2, .15, { wait: 5, face: Math.PI }), point(3.2, .65), point(-6, .65), point(-6.8, .65), point(-6.8, -1.3), point(-8.6, -1.3), point(-8.6, -5.8, { wait: 12 })
     ], .74, 14);
-    var clerk = character(0x6e9f92, 0x687d89, [point(-.25, -3.28)], 0, 0);
+    var clerk = character(0x6e9f92, 0x687d89, [point(anchors.clerk[0],anchors.clerk[1])], 0, 0);
     clerk.group.position.y = .02;
     clerk.staff = true; clerk.umbrella.visible = false; clerk.bag.visible = false;
     var meal = S.displayMeal, shelf = meal.position.clone();
@@ -75,7 +75,7 @@
     var clerkHand = new T.Vector3(), bagSpot = new T.Vector3().fromArray(anchors.bagging);
     function restock(dt) {
       if (restockIndex < 0 && !S.stock.available && shopper.hasBag && shopper.group.position.z > -.8) {
-        restockIndex = 1; returning = false; replacement.visible = true;
+        restockIndex = 1; returning = false; replacement.visible = false;
       }
       if (restockIndex < 0) return;
       var dest = anchors.restock[restockIndex], pos = clerk.group.position;
@@ -97,8 +97,9 @@
         }
       } else {
         restockIndex += returning ? -1 : 1;
-        if(restockIndex < 0) { clerk.group.rotation.y=0; clerk.legs.forEach(function(l){l.rotation.x=0;}); }
+        if(restockIndex < 0) { clerk.group.rotation.y=Math.PI/2; clerk.legs.forEach(function(l){l.rotation.x=0;}); }
       }
+      if(restockIndex === 2 && !returning) replacement.visible = true;
       if(replacement.visible && stockWait===0) replacement.position.copy(clerkHand);
     }
     var tick = 0;
@@ -107,7 +108,7 @@
       S.doorDemand = false;
       S.people.forEach(function (p, personIndex) {
         if (p.staff) {
-          if(restockIndex < 0) p.group.rotation.y = Math.sin(t * .25) * .12;
+          if(restockIndex < 0) p.group.rotation.y = Math.PI/2 + Math.sin(t * .25) * .12;
           p.arms[0].rotation.x = shopper.action === 'pay' ? -1.05 : -.15 + Math.sin(t * 1.2) * .12;
           p.shadow.position.set(p.group.position.x, .115, p.group.position.z);
           return;
