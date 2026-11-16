@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>雨夜进店 · 街角店布局更新</title>
+<style>
+  html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; }
+  body {
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 40%, #2a3757 0%, #18233c 40%, #0d1425 72%, #070a13 100%);
+    cursor: grab;
+    -webkit-user-select: none; user-select: none;
+
+  }
+  body.dragging { cursor: grabbing; }
+  #scene { display:block; width:100%; height:100%; outline:none; touch-action:none; }
+  #vignette {
+    position:fixed; inset:0; pointer-events:none;
+    background: radial-gradient(ellipse 75% 70% at 50% 45%, rgba(0,0,0,0) 45%, rgba(3,6,14,.55) 100%);
+  }
+  [hidden] { display:none !important; }
+  #controls { position:fixed; inset:auto 0 18px; display:grid; justify-items:center; gap:8px; pointer-events:none; color:#e0e9e6; font:13px system-ui; }
+  .toolbar { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; max-width:calc(100vw - 30px); padding:5px; border:1px solid #758e905c; border-radius:12px; background:#0a1621eb; box-shadow:0 5px 20px #03081070; pointer-events:auto; }
+  button, select { background:#182635; color:#e0e9e6; border:1px solid #71859555; border-radius:7px; min-height:36px; padding:5px 9px; font:inherit; cursor:pointer; }
+  button[aria-pressed="true"] { background:#c9e6d8; border-color:#c9e6d8; color:#162a2b; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline:2px solid #fff2b7; outline-offset:2px; }
+  .toolbar label { display:flex; align-items:center; gap:4px; white-space:nowrap; }
+  #rain-volume { width:52px; accent-color:#b0d6c4; }
+  #audio-status { position:absolute; bottom:100%; margin-bottom:8px; }
+  #render-error { position:fixed; inset:15% 24px auto; max-width:25em; margin:auto; background:#101e2c; color:#edf4f2; padding:22px; border-radius:12px; text-align:center; font:15px/1.6 system-ui; }
+  #exit-photo { display:none; position:fixed; right:12px; top:12px; opacity:.25; }
+  #exit-photo:hover, #exit-photo:focus { opacity:1; }
+  .photo #controls { display:none; }
+  .photo #exit-photo { display:block; }
+  @media(max-width:600px) { #controls { bottom:max(8px, env(safe-area-inset-bottom)); gap:5px; font-size:12px; } button, select { min-height:34px; padding-inline:7px; } }
+</style>
+<style>#controls,#exit-photo{display:none!important}</style><script>window.requestAnimationFrame=function(){return 0;};</script></head>
+<body>
+<canvas id="scene"></canvas>
+<div id="vignette"></div>
+<div id="controls">
+  <div class="toolbar" aria-label="移动"><button id="walk-forward">向前</button><button id="walk-back">后退</button><button id="cold-door">开关附近冷柜</button></div>
+  <span>店内拖动转头 · WASD / 方向键走动 · 滚轮前后移动</span>
+  <nav class="toolbar" aria-label="场景镜头">
+    <button type="button" data-view="overview" aria-pressed="true">全景</button>
+    <button type="button" data-view="entrance" aria-pressed="false">店门口</button>
+    <button type="button" data-view="interior" aria-pressed="false">店内</button>
+    <button type="button" data-view="bento" aria-pressed="false">鲜食柜</button>
+    <button type="button" data-view="checkout" aria-pressed="false">收银台</button>
+    <button type="button" data-view="drinks" aria-pressed="false">饮料柜</button>
+    <button type="button" data-view="diner" aria-pressed="false">食堂</button>
+    <button type="button" data-view="stop" aria-pressed="false">公交站</button>
+  </nav>
+  <div class="toolbar">
+    <button id="rain-audio" type="button" aria-pressed="false">雨声：关</button>
+    <input id="rain-volume" type="range" min="0" max="100" value="35" aria-label="雨声音量" aria-valuetext="35%">
+    <select id="weather" aria-label="降雨强度"><option value="1">中雨</option><option value=".46">小雨</option></select>
+    <select id="quality" aria-label="画质"><option value="high">高清</option><option value="low">流畅</option></select>
+    <button id="photo" type="button">拍照模式</button>
+    <span id="audio-status" role="status"></span>
+  </div>
+</div>
+<button id="exit-photo" type="button">退出拍照</button>
+<p id="render-error" role="alert" hidden>3D 场景无法启动。请在支持 WebGL 的浏览器中打开，并确认已开启硬件加速。</p>
+
+<script src="../vendor/three.min.js"></script>
+<script src="baseline/src/core.js"></script>
+<script src="baseline/src/textures.js"></script>
+<script src="baseline/src/layout.js"></script>
+<script src="baseline/src/base.js"></script>
+<script src="baseline/src/store.js"></script>
+<script src="baseline/src/interior.js"></script>
+<script src="baseline/src/street.js"></script>
+<script src="baseline/src/buildings.js"></script>
+<script src="baseline/src/details.js"></script>
+<script src="baseline/src/people.js"></script>
+<script src="baseline/src/bus.js"></script>
+<script src="baseline/src/effects.js"></script>
+<script src="baseline/src/audio.js"></script>
+<script src="baseline/src/main.js"></script>
+<script src="fixed-view.js"></script></body>
+</html>
