@@ -4,6 +4,9 @@
 window.S = window.S || {};
 (function (S) {
   var T = THREE;
+  var options = new URLSearchParams(window.location && window.location.search || '');
+  S.legacyTuning = options.get('tuning') === 'legacy';
+  var profileDpr = options.get('perf') === '1' && Number(options.get('dpr'));
 
   /* ---------- deterministic random (keeps the diorama identical) ---------- */
   var seed = 20261112;
@@ -19,13 +22,17 @@ window.S = window.S || {};
   S.init = function () {
     var canvas = document.getElementById('scene');
     var renderer = new T.WebGLRenderer({ canvas: canvas, antialias: true, alpha: true, powerPreference: 'high-performance' });
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+    S.mobileGraphics = window.matchMedia('(pointer: coarse)').matches;
+    var requestedQuality=options.get('quality');
+    S.initialQuality=requestedQuality==='high'||requestedQuality==='low' ? requestedQuality : (S.mobileGraphics?'low':'high');
+    var initialRenderQuality=S.legacyTuning?'high':S.initialQuality;
+    renderer.setPixelRatio(S.renderPixelRatio(initialRenderQuality));
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.setClearColor(0x000000, 0);
     // A fixed shoulder preserves detail when looking through the shop windows.
     renderer.toneMapping = T.ACESFilmicToneMapping;
     renderer.toneMappingExposure = .96;
-    renderer.shadowMap.enabled = true;
+    renderer.shadowMap.enabled = initialRenderQuality==='high';
     renderer.shadowMap.type = T.PCFSoftShadowMap;
     S.renderer = renderer;
 
@@ -85,16 +92,31 @@ window.S = window.S || {};
   function onResize() {
     S.camera.aspect = window.innerWidth / window.innerHeight;
     S.camera.updateProjectionMatrix();
+    var pixelRatio = S.renderPixelRatio(S.quality);
+    if(S.renderer.getPixelRatio()!==pixelRatio) S.renderer.setPixelRatio(pixelRatio);
     S.renderer.setSize(window.innerWidth, window.innerHeight);
     var portrait = window.innerWidth < window.innerHeight;
     if (portrait !== S.portrait) S.setView(S.view);
   }
 
   /* ---------- orbit control: drag = rotate, wheel = zoom, right-drag = pan ---------- */
+  S.renderPixelRatio = function(quality) {
+    if(quality==='low') return 1;
+    var native = window.devicePixelRatio || 1;
+    if(profileDpr>=1 && profileDpr<=2) return Math.min(native, profileDpr);
+    if(S.mobileGraphics && !S.legacyTuning) {
+      var pixels = window.innerWidth * window.innerHeight;
+      return Math.min(native, 1.6, Math.max(1,Math.sqrt(1050000/pixels)));
+    }
+    return Math.min(native,2);
+  };
   S.setQuality = function (quality) {
     S.quality = quality;
-    S.renderer.setPixelRatio(quality === "low" ? 1 : Math.min(window.devicePixelRatio || 1, 2));
-    S.renderer.shadowMap.enabled = quality !== "low";
+    var pixelRatio = S.renderPixelRatio(quality);
+    if(S.renderer.getPixelRatio()!==pixelRatio) S.renderer.setPixelRatio(pixelRatio);
+    var shadows = quality !== 'low';
+    if(!S.legacyTuning && S.renderer.shadowMap.enabled===shadows) return;
+    S.renderer.shadowMap.enabled = shadows;
     var materials=new Set();
     S.scene.traverse(function(o){if(o.material) materials.add(o.material);});
     materials.forEach(function(material){material.needsUpdate=true;});
@@ -106,12 +128,14 @@ window.S = window.S || {};
     aisle: { eye: [-1.20,1.7,-4.12], target: [.12,.95,-5.05], fov: 56 },
     bento: { eye: [1.45,1.65,-6.75], target: [1.65,1.02,-7.75], fov: 68 },
     checkout: { eye: [-2.75,1.70,-2.73], target: [-4.45,1.12,-3.4], fov: 70 },
+    'cooler-art': {eye:[-.85,1.67,-5.87],target:[-.44,1.31,-7.94],
+      portraitEye:[-1.19,1.64,-4.35],portraitTarget:[-.48,1.23,-7.88],fov:72},
     drinks: { eye: [-.8,1.65,-6.7], target: [-1.6,1.25,-8.1], fov: 74 },
     diner: { eye: [-9.1, 2.6, .35], target: [-11.8, 1.35, -4.45] },
     stop: { eye: [13.4, 2.64, 3.8], target: [11.05, 1.25, 6.65] }
   };
   S.isStoreView = function(view) {
-    return view === 'aisle' || view === 'interior' || view === 'bento' || view === 'checkout' || view === 'drinks';
+    return view === 'cooler-art' || view === 'aisle' || view === 'interior' || view === 'bento' || view === 'checkout' || view === 'drinks';
   };
 
   S.setView = function (name) {

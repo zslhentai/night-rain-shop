@@ -70,14 +70,25 @@
     if (x < -10 || (x < 4.4 && z < .75)) return .06;
     return .008;
   };
-  S.rainFloor = function (x, z) {
+  S.shelterRainFloor = function (x,z) {
     var floor = 0.04;
-    S.layout.shelters.forEach(function (s) {
+    for (var i=0; i<S.layout.shelters.length; i++){
+      var s=S.layout.shelters[i];
       if (x > s.x0 && x < s.x1 && z > s.z0 && z < s.z1) floor = Math.max(floor, s.height);
-    });
-    S.people.forEach(function (p) {
-      if (p.folding > .8 && Math.hypot(x - p.group.position.x - .25 * Math.cos(p.group.rotation.y), z - p.group.position.z + .25 * Math.sin(p.group.rotation.y)) < .65) floor = Math.max(floor, p.group.position.y + 2.2);
-    });
+    }
+    return floor;
+  };
+  S.rainFloor = function (x,z,base) {
+    var floor = base===undefined ? S.shelterRainFloor(x,z) : base;
+    for(var i=0; i<S.people.length; i++){
+      var p=S.people[i];
+      if(!(p.folding>.8)) continue;
+      var dx=x-p.group.position.x, dz=z-p.group.position.z;
+      if(Math.abs(dx)>=.90 || Math.abs(dz)>=.90) continue;
+      dx-=.25*Math.cos(p.group.rotation.y);
+      dz+=.25*Math.sin(p.group.rotation.y);
+      if(dx*dx+dz*dz<.65*.65) floor=Math.max(floor,p.group.position.y+2.2);
+    }
     return floor;
   };
 })(window.S);

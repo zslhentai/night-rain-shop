@@ -33,7 +33,8 @@
       o.v = speed * r(0.75, 1.35);
       o.len = maxLen * r(0.45, 1);
       o.tx = o.len * 0.14; o.tz = o.len * 0.035;
-      o.floor = S.rainFloor(o.x, o.z);
+      o.shelter = S.shelterRainFloor(o.x,o.z);
+      o.floor = S.rainFloor(o.x, o.z, o.shelter);
       if (initial) o.y = Math.max(o.y, o.floor + o.len + .1);
       /* raindrops catch the neon where the lights are */
       var warm = Math.max(0, 1 - Math.hypot(o.x + 1.5, o.z - 1) / 6);
@@ -70,7 +71,7 @@
       var pA = geom.attributes.position, cA = geom.attributes.color;
       for (var k = 0; k < visibleCount; k++) {
         var o = d[k];
-        o.floor = S.rainFloor(o.x, o.z);
+        o.floor = S.rainFloor(o.x, o.z, S.legacyTuning ? undefined : o.shelter);
         o.y -= o.v * dt;
         if (o.y - o.len < o.floor) {
           reset(k, false);

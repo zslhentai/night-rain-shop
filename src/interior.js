@@ -61,6 +61,12 @@
     /* ---------- refrigerated drink cabinets along the back wall ---------- */
     var beverages=[['can','juice','milk','coffee'],['tea','soda','water','tea']];
     function drinkCabinet(bx,bank) {
+      var first=S.world.children.length, originalStock=[], ownHinges=[];
+      function stock(id,x,y,z,angle) {
+        var index=S.products[id].positions.length;
+        S.stockProduct(id,x,y,z,angle);
+        originalStock.push({id:id,index:index});
+      }
       // A hollow cabinet: rear panel and jambs leave the stock visible.
       S.box(2.35, 2.22, .06, white, bx, 1.22, -8.50, {});
       [-1.14,1.14].forEach(function (dx) {
@@ -89,9 +95,9 @@
           S.plane(.26,.048,tag(product.title,'¥'+product.price),localX,yy+.019,-7.932,{});
           [-.11,.105].forEach(function(dx,slot){
             if(!(row===1 && bay===2 && slot===0)){
-              S.stockProduct(id,worldX+dx*.8,yy+.019,-8.08,S.range(-.04,.04));
+              stock(id,worldX+dx*.8,yy+.019,-8.08,S.range(-.04,.04));
             }
-            if((bay+row+slot)%3===0) S.stockProduct(id,worldX+dx*.8,yy+.019,-8.29,0);
+            if((bay+row+slot)%3===0) stock(id,worldX+dx*.8,yy+.019,-8.29,0);
           });
         }
       }
@@ -103,10 +109,16 @@
         S.box(.04,1.98,.05,frame,-side*1.08,1.22,0,{parent:hinge});
         S.box(.035,.42,.05,metal,-side*.98,1.25,.05,{parent:hinge});
         S.coldDoors.push({hinge:hinge,side:side,open:false,angle:0});
+        ownHinges.push(hinge);
       });
       S.box(2.35, 0.16, 0.66, frame, bx, 2.36, -8.22, {});
       S.plane(0.72, 0.22, S.basic(0xffffff, { map: S.tex.label(bank===0?'乳製品・珈琲':'水・お茶','冷蔵','#dae8de','#304c4b') }), bx, 2.36, -7.87, {});
       S.glow(bx, 2.15, -7.92, 0xdcefff, 1.2, .07);
+      if(bank===1) S.coolerFallback={
+        body:S.world.children.slice(first).filter(function(obj){return ownHinges.indexOf(obj)===-1;}),
+        doors:ownHinges,stock:originalStock,widthScale:fixturesPlan.drinks.width,
+        location:[fixturesPlan.drinks.x+(bx+3.22)*fixturesPlan.drinks.width,0,fixturesPlan.drinks.z]
+      };
     }
     section('lighting');
     drinkCabinet(-4.72,0);

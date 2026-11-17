@@ -185,4 +185,27 @@
       batches[id]=mesh;
     });
   };
+  S.removeStockInstances=function(entries){
+    var removed=new Map();
+    entries.forEach(function(entry){
+      if(!removed.has(entry.id)) removed.set(entry.id,new Set());
+      removed.get(entry.id).add(entry.index);
+    });
+    var matrix=new T.Matrix4();
+    removed.forEach(function(indices,id){
+      var mesh=batches[id], next=0;
+      if(!mesh) return;
+      for(var slot=0;slot<mesh.count;slot++){
+        if(indices.has(slot)) continue;
+        if(next!==slot){
+          mesh.getMatrixAt(slot,matrix);
+          mesh.setMatrixAt(next,matrix);
+        }
+        next++;
+      }
+      mesh.count=next;
+      mesh.visible=next>0;
+      mesh.instanceMatrix.needsUpdate=true;
+    });
+  };
 })(window.S);
