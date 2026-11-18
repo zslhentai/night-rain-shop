@@ -25,7 +25,23 @@
 
     var floorMap = S.tex.shopFloor();
     /* ---------- interior floor / ceiling / solid walls ---------- */
-    S.plane(W, D, S.shopMaterial(0xdad7ca, { map: floorMap, emissiveMap: floorMap, emissiveIntensity: .13 }), cx, S.SHOP.floor, cz, { rx: -Math.PI / 2 });
+    // A low-resolution irradiance map provides fixture-aligned diffuse bounce.
+    // UV2 covers the room once; UV0 retains the repeating tile texture.
+    var floorBounce=S.makeTex(192,144,function(ctx,w,h){
+      ctx.fillStyle='#252527';ctx.fillRect(0,0,w,h);
+      var f=S.layout.interior.fixtures;
+      [[f.shelfLeft.x-.80,-4.60],[S.layout.interior.aisleX,-4.60],[f.shelfRight.x+.92,-4.60],
+       [f.bento.x,-6.90],[f.checkout.x+.75,f.checkout.z]].forEach(function(point){
+        var u=(point[0]-x0)/W*w,v=(point[1]-z0)/D*h;
+        var light=ctx.createRadialGradient(u,v,2,u,v,40);
+        light.addColorStop(0,'rgba(184,160,109,.62)');light.addColorStop(1,'rgba(184,160,109,0)');
+        ctx.fillStyle=light;ctx.fillRect(u-40,v-40,80,80);
+      });
+    });
+    var floorMaterial=S.shopMaterial(0xe3dfd0,{map:floorMap,emissiveMap:floorMap,emissiveIntensity:.14,
+      shininess:22,specular:0x29241f,lightMap:floorBounce,lightMapIntensity:.49});
+    var tiles=S.plane(W,D,floorMaterial,cx,S.SHOP.floor,cz,{rx:-Math.PI/2});
+    tiles.geometry.setAttribute('uv2',tiles.geometry.attributes.uv);
     S.box(W, 0.10, D, wallIn, cx, 3.30, cz, {});
     /* back + left solid walls (double sided via box) */
     S.box(W, 3.28, 0.18, wall, cx, 1.74, z0, { cast: true, outline: true, outlineOpacity: .35 });
@@ -137,12 +153,26 @@
     S.box(0.055, 0.035, D + 0.4, warmLight, x1 + 0.82, 3.15, cz, {});
     for (var gl = 0; gl < 5; gl++) S.glow(-5.5 + gl * 2.2, 3.12, z1 + 0.85, 0xffdfa6, .95, .085);
     for (var gr = 0; gr < 3; gr++) S.glow(x1 + 0.85, 3.12, -7.2 + gr * 2.4, 0xffdfa6, .95, .085);
-    // A little store light reflected on the wet sidewalk just beyond the mat.
-    var doorwayReflection = S.basic(0xffffff,{
-      map:S.tex.reflection('#e3f1e0'), transparent:true, opacity:.25,
-      blending:T.AdditiveBlending, depthWrite:false
+    // Reflected warm window light starts at the wet lip of the canopy.
+    // Broken parallel strokes preserve the dry mat and read as wet pavement.
+    var wetLight=S.makeTex(256,192,function(ctx,w,h){
+      for(var row=0;row<60;row++){
+        var v=row/60,spread=15+v*23, y=6+row*3;
+        var fade=Math.sin(Math.PI*Math.sqrt(v))*(1-v);
+        var offset=8*Math.sin(row*2.6)+2*Math.sin(row*.7);
+        for(var pane=0;pane<3;pane++){
+          var u=65+60*pane+offset;
+          var stroke=ctx.createLinearGradient(u-spread,0,u+spread,0);
+          stroke.addColorStop(0,'rgba(234,216,170,0)');
+          stroke.addColorStop(.5,'rgba(234,216,170,'+fade+')');
+          stroke.addColorStop(1,'rgba(234,216,170,0)');
+          ctx.fillStyle=stroke;ctx.fillRect(u-spread,y,spread*2,2);
+        }
+      }
     });
-    S.groundPlane(2.5,1.22,doorwayReflection,-.8,.073,-.42);
+    var doorwayReflection=S.basic(0xffffff,{map:wetLight,transparent:true,opacity:.38,
+      blending:T.AdditiveBlending,depthWrite:false});
+    S.groundPlane(3.1,1.70,doorwayReflection,-.8,.073,.18);
     /* awning posts + gutter */
     [[-5.95, z1 + 0.98], [2.62, z1 + 0.98], [x1 + 0.98, -7.9]].forEach(function (p) {
       S.cyl(0.045, 0.05, 3.05, 8, steel, p[0], 1.60, p[1], {});
@@ -192,7 +222,7 @@
     S.glow(-8.75, 3.1, -0.4, 0x5ce6c6, 3.2, .22);
 
     /* ---------- entrance mat + small forecourt details ---------- */
-    S.plane(2.95, 1.10, S.basic(0xffffff, { map: S.tex.mat(), transparent: true }), -0.8, 0.075, -1.02, { rx: -Math.PI / 2 });
+    S.plane(2.95, 1.10, S.basic(0xffffff, { map: S.tex.mat(), transparent: true }), -0.8, 0.078, -1.02, { rx: -Math.PI / 2 });
     S.box(2.95, 0.012, 1.10, S.toon(0x4b3232), -0.8, 0.070, -1.02, {});
     /* floor guidance arrows inside the doorway */
     var arrow = S.makeTex(128, 128, function (x, w, h) {

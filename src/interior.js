@@ -39,13 +39,26 @@
     S.sphere(.08,S.toon(0x26343c),2.53,3.12,-1.95,{});
 
     var cream = S.toon(0xd8cbb7);
-    var white = S.toon(0xd4d0c4);
+    var white = S.shopMaterial(0xe0dfcf,{shininess:17,emissiveIntensity:.24});
     var wood = S.toon(0xb08a67);
     var metal = S.toon(0xc0b39e);
     var frame = S.toon(0x55697c);
-    var shelfMetal=S.shopMaterial(0xbecbc6);
+    var shelfMetal=S.shopMaterial(0xcad0bd,{shininess:24});
+    var tags=new Map();
     function tag(name,price){
-      return S.basic(0xffffff,{map:S.tex.label(name,price,'#eaece1','#344643')});
+      var key=name+'|'+price;
+      if(!tags.has(key)){
+        var map=S.makeTex(256,48,function(ctx,w,h){
+          ctx.fillStyle='#f3efdf';ctx.fillRect(0,0,w,h);
+          ctx.fillStyle='#24705c';ctx.fillRect(0,0,7,h);
+          ctx.fillStyle='#2c3835';ctx.font='bold 23px '+S.FONT;
+          ctx.fillText(name,14,31,148);
+          ctx.fillStyle='#8b4029';ctx.font='bold 31px '+S.FONT;
+          ctx.textAlign='right';ctx.fillText(price,w-8,34,89);
+        });
+        tags.set(key,S.basic(0xffffff,{map:map}));
+      }
+      return tags.get(key);
     }
     var fixturesPlan=S.layout.interior.fixtures;
 
@@ -125,45 +138,96 @@
     drinkCabinet(-1.72,1);
 
     section('drinks');
-    /* Four shelf faces are stocked by category, with clear price rails. */
-    var shelfFaces=[
-      [['cup','bowl','noodles'],['soap','care','tissue','paper']],
-      [['chips','crackers','biscuits'],['candy','bread','gum']]
+    // Rows run bottom to top. Face zero looks toward decreasing X.
+    var planograms=[
+      [
+        [['paper','tissue'],['tissue','softTissue'],['soap','care']],
+        [['noodles','spicyNoodles'],['bowl','sobaBowl'],['cup','misoCup']]
+      ],[
+        [['crackers','sesameRice'],['biscuits','cocoaBiscuits'],['chips','seaweedChips']],
+        [['bread','crackers'],['candy','citrusCandy'],['gum','biscuits']]
+      ]
     ];
+    var fixtureCoat=S.shopMaterial(0xffffff,{vertexColors:true,emissive:0x29261e,emissiveIntensity:.18,shininess:19});
+    // Bake the fixed steelwork into one opaque mesh per fixture. It remains raycastable.
     function shelf(plan,index){
-      var x=plan.x,z=plan.z;
-      S.box(.055,1.22,2.02,shelfMetal,x,.73,z,{});
-      var steel=S.shopMaterial(0x7d9590);
-      var feet=S.shopMaterial(0x3e5251);
-      var bases=[.24,.575,.91];
-      [-.97,.97].forEach(function(edge){
-        S.box(.86,.10,.10,feet,x,.15,z+edge,{});
-        S.box(.07,1.27,.075,steel,x,.775,z+edge,{});
+      var x=plan.x,z=plan.z, vertices=[],normals=[],colors=[];
+      var unit=new T.BoxGeometry(1,1,1), cube=unit.toNonIndexed();
+      unit.dispose();
+      var pos=cube.attributes.position, normal=cube.attributes.normal, shade=new T.Color();
+      function steelPart(w,h,d,cx,cy,cz,tint){
+        shade.setHex(tint);
+        for(var v=0;v<pos.count;v++){
+          var ny=normal.getY(v), ambient=ny<0?.64:ny>0?1:.9;
+          vertices.push(cx+w*pos.getX(v),cy+h*pos.getY(v),cz+d*pos.getZ(v));
+          normals.push(normal.getX(v),ny,normal.getZ(v));
+          colors.push(shade.r*ambient,shade.g*ambient,shade.b*ambient);
+        }
+      }
+      var enamel=0xe1ddc9, upright=0xb1b8ac, trim=0x385c50;
+      steelPart(.75,.105,1.96,0,.165,0,0x55625b);
+      steelPart(.04,.97,1.78,0,.69,-.10,0xc0c1af);
+      [-.985,-.13,.78].forEach(function(at){
+        steelPart(.08,1.14,.046,0,.77,at,upright);
+        for(var hole=0;hole<8;hole++){
+          [-.041,.041].forEach(function(offset){
+            steelPart(.003,.031,.013,offset,.38+hole*.12,at,0x6c796c);
+          });
+        }
       });
-      S.box(.84,.045,2.10,shelfMetal,x,1.36,z,{});
-      bases.forEach(function(y,level){
-        S.box(.89,.039,2.10,shelfMetal,x,y,z,{});
+      // A shallow crown exposes merchandise on the highest selling shelf.
+      steelPart(.125,.036,1.85,0,1.35,-.10,trim);
+      var levels=[.27,.64,1.01];
+      levels.forEach(function(y,level){
+        steelPart(.87,.03,1.76,0,y,-.12,enamel);
         [-1,1].forEach(function(side,face){
-          var picks=shelfFaces[index][face];
-          var first=picks[(level+face)%picks.length], second=picks[(level+face+1)%picks.length];
-          S.box(.026,.064,2.10,steel,x+side*.44,y+.018,z,{});
-          [first,second].forEach(function(id,block){
-            var item=S.products[id], front=z-.81+block*.98;
-            S.plane(.37,.052,tag(item.title,'¥'+item.price),x+side*.455,y+.02,front+.26,{ry:side*Math.PI/2});
-            for(var slot=0;slot<4;slot++){
-              if(level===1 && (index+block+face)%3===0 && slot===2) continue;
-              S.stockProduct(id,x+side*.29,y+.027,front+slot*.205+S.range(-.017,.017),side*Math.PI/2+S.range(-.05,.05));
+          var picks=planograms[index][face][level];
+          steelPart(.022,.059,1.76,side*.435,y-.008,-.12,trim);
+          steelPart(.009,.010,1.76,side*.446,y+.017,-.12,0xc4c6b6);
+          picks.forEach(function(id,bay){
+            var item=S.products[id], first=-.866+bay*.85;
+            var facings=Math.min(4,Math.floor(.82/(item.w+.018)));
+            var pitch=.82/facings;
+            for(var col=0;col<facings;col++){
+              var slotZ=z+first+col*pitch;
+              if(!(level===1 && bay===0 && col===2)){
+                S.stockProduct(id,x+side*.321,y+.016,slotZ+S.range(-.009,.009),side*Math.PI/2+S.range(-.04,.04));
+              }
+              // Broad cups and bowls need a full diameter between rows.
+              if(col%2===0 && item.d<=.15){
+                S.stockProduct(id,x+side*.133,y+.016,slotZ+.012,side*Math.PI/2);
+              }
             }
+            S.plane(.29,.052,tag(item.title,'¥'+item.price),x+side*.453,y-.007,z+first+.26,{ry:side*Math.PI/2});
           });
         });
       });
-      // The shallow end cap remains inside the same collision footprint.
-      S.box(.66,.044,.30,shelfMetal,x,.62,z+.84,{});
-      S.plane(.62,.125,tag(index?'今週のおやつ':'新商品','おすすめ'),x,.81,z+1.052,{});
-      S.stockProduct(index?'biscuits':'cup',x-.17,.65,z+.88,0);
-      S.stockProduct(index?'candy':'bowl',x+.15,.65,z+.88,.07);
+      // The two front-facing trays fit inside the existing collision footprint.
+      var endIds=index?['crackers','candy']:['misoCup','cup'];
+      [.57,.91].forEach(function(y,i){
+        steelPart(.75,.028,.27,0,y,.91,enamel);
+        steelPart(.75,.047,.018,0,y-.003,1.045,trim);
+        var id=endIds[i], item=S.products[id];
+        [-.22,0,.22].forEach(function(dx){
+          S.stockProduct(id,x+dx,y+.015,z+.90,dx*.12);
+        });
+        S.plane(.29,.041,tag(item.title,'¥'+item.price),x,y-.004,z+1.056,{});
+      });
+      steelPart(.73,.205,.026,0,1.255,.79,trim);
+      var campaign=S.tex.label(index?'夜のおやつ':'夜食の麺',index?'SELECT SNACKS':'RAMEN SELECTION',index?'#eee1b5':'#bd5937',index?'#405b4e':'#fff3d9');
+      S.plane(.70,.178,S.basic(0xffffff,{map:campaign}),x,1.255,z+.808,{});
+      var geometry=new T.BufferGeometry();
+      geometry.setAttribute('position',new T.Float32BufferAttribute(vertices,3));
+      geometry.setAttribute('normal',new T.Float32BufferAttribute(normals,3));
+      geometry.setAttribute('color',new T.Float32BufferAttribute(colors,3));
+      geometry.computeBoundingSphere();
+      var rack=new T.Mesh(geometry,fixtureCoat);
+      rack.name=index?'Snack gondola':'Supper gondola';
+      rack.position.set(x,0,z);
+      rack.receiveShadow=true;
+      S.world.add(rack);
+      cube.dispose();
     }
-    // Attach these directly in their planned coordinates.
     shelf(fixturesPlan.shelfLeft,0);
     shelf(fixturesPlan.shelfRight,1);
     section('salesShelves');
@@ -179,6 +243,7 @@
     });
     var tray = S.phong(0x293537,{shininess:25}), rice = S.toon(0xf5efdc), salmon = S.toon(0xd98d62), greens = S.toon(0x89a66d);
     var lid = S.glass(0xf5ffff,.16), sleeve = S.toon(0xf0e3c7);
+    S.mealVisuals=[];
     S.makeMeal = function () {
       var meal = S.group();
       S.box(.28,.045,.26,tray,0,0,0,{parent:meal});
@@ -187,6 +252,7 @@
       S.box(.09,.03,.07,greens,.065,.035,.065,{parent:meal});
       S.box(.29,.075,.27,lid,0,.036,0,{parent:meal});
       S.box(.055,.008,.275,sleeve,0,.078,0,{parent:meal});
+      S.mealVisuals.push(meal);
       return meal;
     };
     // Separate short-dated product tiers and reserve a real purchasable slot.
@@ -194,17 +260,21 @@
     [['bento',.948,-3.58],['sandwich',1.056,-4.38],['onigiri',1.267,-4.86]].forEach(function(row){
       var [id,height,localZ]=row, item=S.products[id];
       for(var slot=0;slot<5;slot++){
-        if((id==='bento' && slot===2)||(id==='sandwich' && slot===4)) continue;
+        if(id==='sandwich' && slot===4) continue;
         S.stockProduct(id,fresh.x-.63+slot*.313,height,fresh.z+(localZ+4.15)*fresh.depth,S.range(-.05,.05));
       }
-      S.plane(.34,.062,tag(item.title,'¥'+item.price),1.75,height+.02,localZ+.275,{});
+      var lipZ=id==='bento'?-3.162:id==='sandwich'?-4.149:-4.648;
+      S.box(1.075,.049,.012,shelfMetal,1.75,height-.022,lipZ,{});
+      S.plane(.30,.044,tag(item.title,'¥'+item.price),1.48,height-.022,lipZ+.009,{});
     });
     S.displayMeal=S.makeMeal();
-    S.displayMeal.position.set(1.75,.976,-3.51);
+    S.displayMeal.position.set(1.75,.948,-3.58);
     S.stock={available:true,scans:0,restocks:0};
     // An open display lets a customer reach the front row.
     S.box(1.11, .075, .025, S.glass(0xe5f6ff, .24), 1.75, .99, -3.155, {});
-    S.plane(0.72, 0.24, S.basic(0xffffff, { map: S.tex.priceTag('お弁当', '#ffd97a'), transparent: true, side: T.DoubleSide }), 1.75, 1.30, -3.18, {});
+    var header=S.tex.label('夜町の台所','おむすび ・ サンド ・ お弁当','#275448','#fff1ce');
+    S.box(1.12,.16,.04,shelfMetal,1.75,1.64,-5.12,{});
+    S.plane(1.08,.135,S.basic(0xffffff,{map:header}),1.75,1.64,-5.096,{});
     S.glow(1.75, 1.05, -4.15, 0xe5f2ff, .4, .04);
 
     section('bento');
@@ -224,21 +294,42 @@
     S.box(2.68, 0.06, 0.82, S.toon(0xd8c3a4), 0.25, 1.06, -2.55, {});
     S.box(0.86, 0.94, 0.68, wood, -1.32, 0.57, -2.92, {});
     S.box(0.92, 0.06, 0.74, S.toon(0xd8c3a4), -1.32, 1.06, -2.92, {});
-    /* register */
-    S.box(0.46, 0.26, 0.40, S.toon(0x4c5a66), -0.45, 1.22, -2.58, {});
-    S.plane(0.34, 0.20, S.basic(0x7fd8e8), -0.45, 1.30, -2.37, { rx: -0.35 });
-    S.box(0.42, 0.03, 0.16, S.toon(0xaab5bc), -0.45, 1.10, -2.32, {});
-    S.box(.30,.035,.24,frame,.04,1.11,-2.32,{});
-    S.scannerLight = S.basic(0x7eafa3);
-    S.box(.22,.008,.035,S.scannerLight,.04,1.132,-2.32,{});
-    S.box(.19,.06,.23,frame,.55,1.13,-2.29,{});
-    S.plane(.14,.15,S.basic(0xffffff,{map:S.tex.label('PAY','タッチ','#183b42','#bce1d5')}),.55,1.165,-2.29,{rx:-Math.PI/2});
-    var printer=S.shopMaterial(0x3f5358);
-    S.box(.20,.14,.22,printer,-.28,1.16,-2.73,{});
-    S.box(.145,.009,.025,frame,-.28,1.234,-2.65,{});
-    S.receipt = S.plane(.11,.154,tag('お買上票','540'),-.28,1.292,-2.638,{rx:-.28});
-    S.box(.36,.045,.21,shelfMetal,1.33,1.107,-2.49,{});
-    S.box(.36,.08,.016,frame,1.33,1.157,-2.38,{});
+    var obsidian=S.shopMaterial(0x343b3a,{shininess:26});
+    var steelRim=S.shopMaterial(0xabb5ad,{shininess:54});
+    // Staff terminal faces the cashier, its sloped housing and vented back face the queue.
+    S.box(.35,.025,.20,obsidian,-.47,1.105,-2.58,{});
+    S.box(.072,.16,.067,steelRim,-.47,1.175,-2.58,{});
+    S.box(.44,.28,.058,obsidian,-.47,1.348,-2.57,{rx:-.16});
+    var vents=S.makeTex(192,96,function(ctx,w,h){
+      ctx.fillStyle='#45514c';ctx.fillRect(0,0,w,h);
+      ctx.fillStyle='#263630';
+      for(var i=0;i<13;i++) ctx.fillRect(22+i*12,27,5,19);
+      ctx.fillStyle='#d8dfcd';ctx.font='bold 13px sans-serif';ctx.fillText('夜町 POS',66,72);
+    });
+    S.plane(.41,.25,S.shopMaterial(0xffffff,{map:vents}),-.47,1.35,-2.537,{rx:-.16});
+    S.plane(.40,.24,S.basic(0xffffff,{map:S.tex.label('商品登録','POS  01','#23423b','#e3eddb')}),-.47,1.34,-2.606,{ry:Math.PI,rx:.16});
+    S.box(.40,.03,.16,obsidian,-.47,1.11,-2.86,{});
+    // Flush barcode window is directly underneath the animated scanning point.
+    S.box(.31,.026,.24,steelRim,.04,1.103,-2.32,{});
+    S.box(.252,.009,.178,obsidian,.04,1.121,-2.32,{});
+    S.scannerLight=S.basic(0x7eafa3);
+    S.box(.20,.004,.012,S.scannerLight,.04,1.127,-2.32,{});
+    var payPanel=S.makeTex(128,192,function(ctx,w,h){
+      ctx.fillStyle='#36423d';ctx.fillRect(0,0,w,h);
+      ctx.fillStyle='#b9e3ce';ctx.fillRect(10,10,108,65);
+      ctx.fillStyle='#25453b';ctx.textAlign='center';ctx.font='bold 26px sans-serif';ctx.fillText('TAP',64,52);
+      for(var row=0;row<4;row++) for(var col=0;col<3;col++){
+        ctx.fillStyle=row===3?['#ae6152','#d2b86d','#76a78d'][col]:'#82908b';
+        ctx.fillRect(13+36*col,88+24*row,30,17);
+      }
+    });
+    S.box(.19,.069,.26,obsidian,.56,1.13,-2.32,{rx:.12});
+    S.plane(.15,.21,S.basic(0xffffff,{map:payPanel}),.56,1.168,-2.32,{rx:-Math.PI/2+.12});
+    S.box(.19,.13,.21,obsidian,-.14,1.162,-2.78,{});
+    S.box(.16,.013,.024,steelRim,-.14,1.233,-2.72,{});
+    S.receipt=S.plane(.108,.142,tag('お買上票','¥540'),-.14,1.296,-2.708,{rx:-.22});
+    // Bagging pad lies on the clerk side of the terminal, clear of customer payment.
+    S.box(.28,.012,.24,shelfMetal,.38,1.099,-2.48,{});
     S.box(.30,.21,.22,S.shopMaterial(0x687d77),.45,.74,-2.94,{});
     S.box(.17,.12,.14,S.shopMaterial(0xc1976c),.45,.91,-3.02,{});
     var desk=fixturesPlan.checkout;
@@ -248,15 +339,34 @@
     S.receipt.visible = false;
     /* customer facing display */
     S.box(0.55, 0.36, 0.06, frame, 0.95, 1.36, -2.20, {});
-    S.registerIdle = S.tex.label('レジ', 'お会計', '#203a48', '#dff8ff');
-    S.registerPaid = S.tex.label('¥ 540', 'ありがとう', '#203a48', '#dff8ff');
+    S.makeRegisterDisplay=function(line,total,paid){
+      return S.makeTex(320,192,function(ctx,w,h){
+        ctx.fillStyle='#183d34';ctx.fillRect(0,0,w,h);
+        ctx.fillStyle='#bde2bb';ctx.fillRect(0,0,w,32);
+        ctx.fillStyle='#254138';ctx.font='bold 20px '+S.FONT;ctx.fillText('夜町 MART',14,23);
+        ctx.textAlign='right';ctx.fillText('レジ 01',w-13,23);
+        ctx.fillStyle='#fff6dc';ctx.textAlign='left';ctx.font='bold 27px '+S.FONT;
+        ctx.fillText(line,13,78,295);
+        ctx.strokeStyle='#6b8c76';ctx.beginPath();ctx.moveTo(14,95);ctx.lineTo(w-14,95);ctx.stroke();
+        ctx.fillStyle='#d4e7bb';ctx.font='20px '+S.FONT;
+        ctx.fillText(paid?'支払済':'お会計',14,152);
+        ctx.textAlign='right';ctx.font='bold 44px '+S.FONT;
+        ctx.fillText(total===null?'受付中':'¥'+total,w-14,156,169);
+      });
+    };
+    S.registerIdle=S.makeRegisterDisplay('いらっしゃいませ',null,false);
+    S.registerPaid=S.makeRegisterDisplay(S.products.bento.title,S.products.bento.price,true);
     S.registerScreen = S.basic(0xffffff, { map: S.registerIdle });
     S.plane(.50, .30, S.registerScreen, .95, 1.36, -2.16, {});
     /* baskets, bags, small goods */
     S.box(0.34, 0.20, 0.26, S.toon(0x3d6d9c), 1.28, 1.19, -2.60, {});
     S.box(0.30, 0.02, 0.22, S.toon(0x2d5580), 1.28, 1.30, -2.60, {});
-    S.box(0.18, 0.24, 0.12, S.toon(0xf3e7c8), 0.55, 1.21, -2.78, {});
-    S.box(0.18, 0.24, 0.12, S.toon(0xe9d9b4), 0.76, 1.21, -2.78, {});
+    S.box(.31,.025,.18,obsidian,.66,1.105,-2.77,{});
+    [-.12,.12].forEach(function(dx){
+      S.tube([[.66+dx,1.114,-2.81],[.66+dx,1.34,-2.81],[.66+dx,1.34,-2.73]],.011,steelRim);
+    });
+    S.box(.20,.215,.045,S.shopMaterial(0xdacd9e),.66,1.219,-2.77,{});
+    S.plane(.18,.093,S.basic(0xffffff,{map:S.tex.label('夜町','','#d9c99e','#5b6a54')}),.66,1.23,-2.746,{});
     S.plane(0.66, 0.20, S.basic(0xffffff, { map: S.tex.priceTag('レジ', '#ffe8a0'), transparent: true, side: T.DoubleSide }), 0.25, 0.80, -2.17, {});
 
     section('checkout');
@@ -267,12 +377,15 @@
     S.box(0.88, 0.02, 0.48, S.basic(0xe4a461), -2.75, 1.24, -2.62, {});
     [-.15,.15].forEach(function(dx) { S.box(.018,.08,.48,metal,-2.75+dx,1.25,-2.62,{}); });
     S.box(.88,.08,.018,metal,-2.75,1.25,-2.62,{});
-    S.tube([[-2.27,1.32,-2.83],[-2.23,1.34,-2.62],[-2.28,1.32,-2.42]],.012,metal);
-    for (var od = 0; od < 8; od++) {
-      S.cyl(0.09, 0.09, 0.06, 8, S.toon([0xf0dfb5, 0xc79a68, 0xe8e2cd, 0xb98c60][od % 4]),
-        -2.75 - 0.34 + (od % 4) * 0.22, 1.27, -2.62 - 0.13 + Math.floor(od / 4) * 0.26, {});
-    }
-    S.box(0.02, 0.02, 0.42, metal, -2.30, 1.31, -2.62, {});
+    var radish=S.shopMaterial(0xe6d7ab), egg=S.shopMaterial(0xdbc59a), tofu=S.shopMaterial(0xc99b59);
+    [-.11,.11].forEach(function(dz){
+      S.cyl(.072,.064,.052,12,radish,-3.04,1.268,-2.62+dz,{});
+      S.sphere(.067,egg,-2.75,1.275,-2.62+dz,{scale:[.85,.67,1.2],ry:.25});
+      S.box(.16,.058,.115,tofu,-2.46,1.279,-2.62+dz,{ry:dz});
+    });
+    // Folded spring tongs rest above the dry drip tray at the edge of the warmer.
+    S.box(.092,.012,.37,steelRim,-2.22,1.101,-2.64,{});
+    S.tube([[-2.245,1.123,-2.48],[-2.235,1.145,-2.82],[-2.212,1.145,-2.82],[-2.20,1.123,-2.48]],.007,steelRim);
     S.plane(0.50, 0.28, S.basic(0xffffff, { map: S.tex.priceTag('おでん', '#ffcf8a'), transparent: true, side: T.DoubleSide }), -2.75, 1.55, -2.98, {});
     S.box(0.02, 0.38, 0.02, metal, -2.75, 1.36, -2.98, {});
     S.glow(-2.75, 1.30, -2.62, 0xffbb7a, .4, .05);
@@ -387,6 +500,7 @@
     // Animated meal follows world-space navigation anchors.
     S.world.updateMatrixWorld(true);
     S.world.attach(S.displayMeal);
+    S.displayMeal.scale.set(1,1,1);
     S.layout.interior.meal=S.displayMeal.position.toArray();
     move('checkout',.25,-2.55);
     move('oden',-2.75,-2.62);
@@ -426,10 +540,21 @@
         S.box(.018,.067,.25,frame,.82+side*.167,basketY+.033,-2.04,{});
       });
     }
-    var sole=S.basic(0x414e50,{transparent:true,opacity:.12,depthWrite:false});
-    for(var step=0;step<6;step++){
-      S.groundPlane(.075,.17,sole,-.8+(step%2?.11:-.11),.102,-2.1-step*.16,step%2?.1:-.1);
-    }
+    // One decal covers the wet-to-dry trail instead of six rectangular planes.
+    var tracks=S.makeTex(128,384,function(ctx,w,h){
+      for(var step=0;step<5;step++){
+        ctx.save();
+        ctx.translate(step%2?82:46,347-step*74);
+        ctx.rotate(step%2?.14:-.12);
+        ctx.fillStyle='rgba(49,66,69,'+(.28-step*.045)+')';
+        ctx.beginPath();ctx.ellipse(0,0,9,17,0,0,Math.PI*2);ctx.fill();
+        ctx.fillRect(-6,19,12,8);
+        ctx.globalCompositeOperation='destination-out';
+        for(var tread=-12;tread<15;tread+=6) ctx.fillRect(-10,tread,20,2);
+        ctx.restore();
+      }
+    });
+    S.groundPlane(.68,1.42,S.basic(0xffffff,{map:tracks,transparent:true,depthWrite:false}),-.82,.104,-2.74);
     S.toggleColdDoor = function() {
       var door=S.nearbyColdDoor();
       if(door) door.open=!door.open;
