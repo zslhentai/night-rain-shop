@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>雨夜便利店 5.0</title>
+<title>雨夜便利店 6.0 · 雨夜晚班</title>
 <style>
   html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; }
   body {
@@ -63,6 +63,29 @@
     nav.toolbar { justify-content:flex-start; flex-wrap:nowrap; max-width:calc(100vw - 26px); overflow-x:auto; scrollbar-width:thin; }
     nav.toolbar button { flex:0 0 auto; }
   }
+  #dock { gap:8px; }
+  #views-toggle { display:none; }
+  #product-card { flex-wrap:wrap; width:max-content; max-width:calc(100% - 36px); }
+  #product-card strong { font-size:15px; }
+  .inspecting #joystick, .inspecting #walk-controls, .inspecting #view-list, .inspecting #cooler-picker,
+  .inspecting #settings-list, .inspecting #dock, .inspecting #errand { display:none; }
+  #errand { max-width:min(520px,calc(100vw - 28px)); }
+  #errand-message { line-height:1.5; }
+  #vignette { opacity:.70; }
+  @media(max-width:650px), (pointer:coarse) {
+    #views-toggle { display:inline-block; }
+    #view-list:not(.expanded) { display:none; }
+    #controls { bottom:max(8px, env(safe-area-inset-bottom)); gap:4px; }
+    #view-list.expanded { display:flex; flex-wrap:wrap; justify-content:center; }
+    #joystick { bottom:max(118px,calc(94px + env(safe-area-inset-bottom))); width:72px; height:72px; }
+    #cooler-picker { width:max-content; flex-wrap:wrap; gap:3px; font-size:12px; }
+    #cooler-picker a { white-space:nowrap; padding:6px 9px; }
+    #cooler-status { max-width:23em; font-size:11px; }
+    #controls button, #product-card button { min-height:40px; }
+    #product-card { white-space:normal; }
+    .cooler-view #product-card { top:calc(max(12px,env(safe-area-inset-top)) + 84px); }
+    .inspecting #product-card { top:max(16px,env(safe-area-inset-top)); }
+  }
 </style>
 </head>
 <body>
@@ -71,7 +94,7 @@
 <nav id="cooler-picker" class="toolbar" aria-label="同机位对比" hidden>
   <a id="cooler-new" href="?view=cooler-art">Blender 样板</a>
   <a id="cooler-old" href="?view=cooler-art&amp;cooler=original">原版冷柜</a>
-  <button id="perf-toggle" type="button" aria-controls="perf-panel" aria-expanded="false" disabled>性能</button>
+  
   <p id="cooler-status" role="status">正在加载冷柜…</p>
 </nav>
 <section id="perf-panel" aria-label="性能诊断" hidden>
@@ -91,16 +114,22 @@
 <div id="joystick" role="group" aria-label="触摸移动摇杆" hidden><span aria-hidden="true"></span></div>
 <div id="product-card" class="toolbar" hidden>
   <strong id="product-title" role="status"></strong><span id="product-note" lang="ja"></span>
-  <button type="button" id="take-product">拿起来</button><button type="button" id="close-product" aria-label="关闭商品信息">关闭</button>
+  <button type="button" id="basket-add" hidden>放进篮子</button><button type="button" id="take-product">拿起来</button><button type="button" id="close-product" aria-label="关闭商品信息">关闭</button>
 </div>
 <div id="controls" hidden>
+  <section id="errand" class="toolbar" aria-label="夜宵购物" hidden>
+    <span id="errand-message" role="status"></span>
+    <button id="errand-next" type="button" hidden></button>
+    <button id="errand-undo" type="button" hidden>归还一件</button>
+    <button id="errand-exit" type="button">退出</button>
+  </section>
   <div class="toolbar" id="walk-controls" aria-label="店内移动" hidden>
     <button type="button" id="walk-forward">向前</button><button type="button" id="walk-back">后退</button>
     <button type="button" id="inspect-product">查看商品</button>
     <button type="button" id="mouse-lock" aria-pressed="false">锁定鼠标</button>
     <button type="button" id="cold-door" hidden>打开冷柜</button>
   </div>
-  <nav class="toolbar" aria-label="场景镜头">
+  <nav class="toolbar" id="view-list" aria-label="场景镜头">
     <button type="button" data-view="overview" aria-pressed="true">全景</button>
     <button type="button" data-view="entrance" aria-pressed="false">店门口</button>
     <button type="button" data-view="interior" aria-pressed="false">店内</button>
@@ -112,13 +141,19 @@
     <button type="button" data-view="diner" aria-pressed="false">食堂</button>
     <button type="button" data-view="stop" aria-pressed="false">公交站</button>
   </nav>
-  <div class="toolbar">
+  <div id="settings-list" class="toolbar" hidden>
     <button id="rain-audio" type="button" aria-pressed="false">雨声：关</button>
     <input id="rain-volume" type="range" min="0" max="100" value="35" aria-label="雨声音量" aria-valuetext="35%">
     <select id="weather" aria-label="降雨强度"><option value="1">中雨</option><option value=".46">小雨</option></select>
     <select id="quality" aria-label="画质"><option value="high">高清</option><option value="low">流畅</option></select>
+    <button id="perf-toggle" type="button" aria-controls="perf-panel" aria-expanded="false" disabled>性能</button>
     <button id="photo" type="button">拍照模式</button>
     <span id="audio-status" role="status"></span>
+  </div>
+  <div id="dock" class="toolbar">
+    <button type="button" id="views-toggle" aria-expanded="false" aria-controls="view-list">镜头</button>
+    <button type="button" id="errand-start">买份夜宵</button>
+    <button type="button" id="settings-toggle" aria-expanded="false" aria-controls="settings-list">设置</button>
   </div>
 </div>
 <button id="exit-photo" type="button">退出拍照</button>
@@ -204,6 +239,8 @@
 <script src="src/audio.js"></script>
 <script src="src/interior-interactions.js"></script>
 <script src="src/cooler-sample.js"></script>
+<script src="src/night-stock.js"></script>
+<script src="src/night-shopping.js"></script>
 <script src="src/performance.js"></script>
 <script src="src/main.js"></script>
 </body>

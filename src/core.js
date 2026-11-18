@@ -125,9 +125,9 @@ window.S = window.S || {};
     entrance: { eye: [1.4, 2.4, 3.5], target: [-1.3, 1.55, -1.42],
       portraitEye: [.65, 1.98, 4.8], portraitTarget: [-1.25, 1.52, -2.8], fov: 56 },
     interior: { eye: [-.8,1.65,-2.25], target: [-1.28,1.4,-6.5], portraitEye: [-.8,1.65,-2.25], portraitTarget: [-1.28,1.4,-6.5], fov: 66 },
-    aisle: { eye: [-1.20,1.7,-4.12], target: [.12,.95,-5.05], fov: 56 },
-    bento: { eye: [1.45,1.65,-6.75], target: [1.65,1.02,-7.75], fov: 68 },
-    checkout: { eye: [-2.75,1.70,-2.73], target: [-4.45,1.12,-3.4], fov: 70 },
+    aisle: { eye: [-1.35,1.46,-3.10], target: [.05,.85,-4.83], portraitEye: [-1.38,1.46,-3.33], portraitTarget: [.02,.93,-4.78], fov: 58 },
+    bento: { eye: [1.24,1.54,-6.48], target: [1.63,1.11,-7.96], portraitEye: [1.18,1.55,-6.39], portraitTarget: [1.64,1.13,-7.95], fov: 57 },
+    checkout: { eye: [-2.74,1.55,-2.83], target: [-4.44,1.16,-3.61], portraitEye: [-2.61,1.57,-2.70], portraitTarget: [-4.40,1.18,-3.43], fov: 64 },
     'cooler-art': {eye:[-.85,1.67,-5.87],target:[-.44,1.31,-7.94],
       portraitEye:[-1.19,1.64,-4.35],portraitTarget:[-.48,1.23,-7.88],fov:72},
     drinks: { eye: [-.8,1.65,-6.7], target: [-1.6,1.25,-8.1], fov: 74 },
@@ -174,6 +174,7 @@ window.S = window.S || {};
     var pointers = {}, dragMode = 0, lastX = 0, lastY = 0, lastPinch = 0;
     var angles=new T.Euler(0,0,0,'YXZ'), start=null;
     function turn(x,y){
+      if(S.rotateHeld && S.rotateHeld(x,y)) return;
       angles.setFromQuaternion(S.camera.quaternion,'YXZ');
       angles.y-=x*.004;
       angles.x=clamp(angles.x-y*.004,-1.19,1.12);
