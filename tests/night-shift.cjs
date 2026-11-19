@@ -23,10 +23,18 @@ async function run(){
       assert.equal(S.products[id].material,node.material);
       node.geometry.computeBoundingBox();
       assert(Math.abs(node.geometry.boundingBox.min.y)<.002,'Product rests on its shelf');
+      assert(node.geometry.boundingBox.min.toArray().concat(node.geometry.boundingBox.max.toArray()).every(v=>Math.abs(v)<.49),'Authored package exceeds slot bounds');
       materials.add(node.material);count++;
     });
     assert.equal(materials.size,1);assert.equal(count,num);
   }
+  const camera=S.camera, slot=new THREE.Vector3(...S.products.bento.positions[0].slice(0,3));
+  camera.position.copy(slot).add(new THREE.Vector3(0,0,2));camera.lookAt(slot);S.cullStockBatches();
+  assert(S.productBatches.bento.visible,'Aimed-at shelf should draw');
+  camera.lookAt(camera.position.clone().add(new THREE.Vector3(0,0,1)));S.cullStockBatches();
+  assert(!S.productBatches.bento.visible,'Shelf behind viewer should be culled');
+  camera.lookAt(slot);S.cullStockBatches();
+  assert(S.productBatches.bento.visible,'Turning back restores full shelf');
   assert(S.mealVisuals.every(group=>group.children.length===1 && group.children[0].geometry===S.products.bento.geometry));
   const button=id=>document.getElementById(id);
   const advance=(start,n)=>{for(let i=0;i<n;i++)for(const update of S.updaters)update(start+i/30,1/30);};

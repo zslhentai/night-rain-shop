@@ -4,6 +4,18 @@
   var productHits=[], blockerHits=[], active=null, held=null, panel,title,note,action,basket;
   var matrix=new T.Matrix4(), point=new T.Vector3();
   var cellSize=2, reach=1.7;
+  var stockBounds=new Map(), frustum=new T.Frustum(), clip=new T.Matrix4(), lastClip=new T.Matrix4();
+  var boundsChanged=true;
+  // r128 does not cull InstancedMesh. Preserve slot transforms and the local
+  // geometry bounds used by raycasts and by individual items held in the hand.
+  S.cullStockBatches=function(){
+    S.camera.updateMatrixWorld();
+    clip.multiplyMatrices(S.camera.projectionMatrix,S.camera.matrixWorldInverse);
+    if(!boundsChanged && clip.equals(lastClip)) return;
+    boundsChanged=false;lastClip.copy(clip);
+    frustum.setFromProjectionMatrix(clip);
+    stockBounds.forEach(function(box,mesh){mesh.visible=mesh.count>0 && frustum.intersectsBox(box);});
+  };
   function key(x,z){return Math.floor(x/cellSize)+','+Math.floor(z/cellSize);}
   function index(object,products,x0,x1,z0,z1){
     var room=S.SHOP;
@@ -21,10 +33,17 @@
       if(!object.isMesh) return;
       if(object.isInstancedMesh){
         if(!object.userData.productId && !object.userData.product) return;
+        var slotBounds=new T.Box3();
         for(var i=0;i<object.count;i++){
           object.getMatrixAt(i,matrix);
           point.setFromMatrixPosition(matrix).applyMatrix4(object.matrixWorld);
+          slotBounds.expandByPoint(point);
           index(object,true,point.x-.22,point.x+.22,point.z-.22,point.z+.22);
+        }
+        // Authored items and fallback packages fit within 0.5m of their shelf slot.
+        if(!slotBounds.isEmpty()){
+          stockBounds.set(object,slotBounds.expandByScalar(.5));
+          boundsChanged=true;
         }
         return;
       }
@@ -50,7 +69,7 @@
     if(!S.isStoreView(S.view) || !S.inShop(S.camera.position)) return null;
     var cell=cells.get(key(S.camera.position.x,S.camera.position.z));
     if(!cell) return null;
-    S.camera.updateMatrixWorld();
+    S.cullStockBatches();
     ray.setFromCamera(pointer.set(x,y),S.camera);
     ray.far=reach; productHits.length=0;
     cell.products.forEach(function(mesh){

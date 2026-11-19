@@ -167,6 +167,7 @@
           S.updateTraffic(t);
           S.updateCamera(dt);
           for (var i = 0; i < S.updaters.length; i++) S.updaters[i](t, dt);
+          S.cullStockBatches();
           S.renderer.render(S.scene, S.camera);
         } catch(error){
           reportError('3D 渲染失败。请重新加载。',error);
