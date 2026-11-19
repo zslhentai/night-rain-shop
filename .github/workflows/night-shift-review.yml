@@ -1,0 +1,35 @@
+name: Night shift visual review
+on:
+  push:
+    branches: [feat/night-shift-v6]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install test-only browser
+        run: |
+          npm install --prefix "$RUNNER_TEMP/night-qa" --no-save playwright@1.56.1
+          "$RUNNER_TEMP/night-qa/node_modules/.bin/playwright" install --with-deps chromium
+      - name: Capture production HTML and GLB in Chromium
+        env:
+          NODE_PATH: ${{ runner.temp }}/night-qa/node_modules
+        run: |
+          python3 -m http.server 8174 --bind 127.0.0.1 &
+          server=$!
+          trap 'kill "$server"' EXIT
+          node tests/night-visual.cjs http://127.0.0.1:8174/ review-output
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: night-shift-desktop-and-portrait
+          path: review-output/
+          if-no-files-found: error
+          retention-days: 14
