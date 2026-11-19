@@ -7,6 +7,10 @@ permissions:
   contents: read
 jobs:
   render:
+    strategy:
+      fail-fast: false
+      matrix:
+        device: [desktop, portrait]
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -25,11 +29,11 @@ jobs:
           python3 -m http.server 8174 --bind 127.0.0.1 &
           server=$!
           trap 'kill "$server"' EXIT
-          node tests/night-visual.cjs http://127.0.0.1:8174/ review-output
+          node tests/night-visual.cjs http://127.0.0.1:8174/ review-output "${{ matrix.device }}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: night-shift-desktop-and-portrait
+          name: night-shift-${{ matrix.device }}
           path: review-output/
           if-no-files-found: error
           retention-days: 14

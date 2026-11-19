@@ -6,16 +6,27 @@ const assert=require('node:assert/strict');
 const base=new URL(process.argv[2]);
 const output=path.resolve(process.argv[3] || 'review-output');
 fs.mkdirSync(output,{recursive:true});
+const selectedDevice=process.argv[4];
 const result={renderer:'Chromium headless / ANGLE SwiftShader',views:[],errors:[]};
 
 async function run(){
   const browser=await chromium.launch({args:['--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']});
   try{
     for(const [device,width,height] of [['desktop',1440,900],['portrait',390,844]]){
+      if(selectedDevice && selectedDevice!==device) continue;
       for(const release of ['v5','v6']){
         const context=await browser.newContext({viewport:{width,height},hasTouch:device==='portrait',isMobile:device==='portrait'});
         const page=await context.newPage();
-        page.setDefaultTimeout(45000);
+        page.setDefaultTimeout(90000);
+        // SwiftShader can take seconds per HD frame. Step the actual application
+        // loop for stills so the compositor can finish capturing a stable frame.
+        await page.addInitScript(()=>{
+          const schedule=window.requestAnimationFrame.bind(window);
+          window.requestAnimationFrame=function(callback){
+            if(callback.name==='frame'){window.reviewFrame=callback;return 0;}
+            return schedule(callback);
+          };
+        });
         page.on('pageerror',e=>result.errors.push(String(e)));
         page.on('console',e=>{if(e.type()==='error' && !e.location().url.endsWith('favicon.ico')) result.errors.push(e.text());});
         page.on('response',r=>{if(r.status()>=400 && !r.url().endsWith('favicon.ico')) result.errors.push(r.status()+' '+r.url());});
@@ -24,7 +35,12 @@ async function run(){
         await page.goto(url.href);
         await page.waitForFunction(()=>window.S?.coolerSampleState==='ready');
         if(release==='v5') await page.locator('#exit-photo').click();
-        if(release==='v6') await page.waitForFunction(()=>S.stockArtState.aisle==='ready' && S.stockArtState.fresh==='ready');
+        if(release==='v6'){
+          await page.waitForFunction(()=>{
+            S.queueNightStock();
+            return S.stockArtState.aisle==='ready' && S.stockArtState.fresh==='ready';
+          },null,{polling:250});
+        }
         for(const view of ['aisle','bento','checkout','entrance','cooler-art']){
           const button=page.locator('[data-view="'+view+'"]');
           if(!await button.isVisible()) await page.locator('#views-toggle').click();
@@ -32,22 +48,24 @@ async function run(){
           if(release==='v6')await page.locator('#settings-toggle').click();
           await page.locator('#photo').click();
           await page.waitForFunction(v=>S.view===v,view);
-          await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
+          await page.evaluate(()=>window.reviewFrame(performance.now()));
           const stats=await page.evaluate(()=>({calls:S.renderer.info.render.calls,triangles:S.renderer.info.render.triangles,
             eye:S.camera.position.toArray(),fov:S.camera.fov,objects:S.renderer.info.memory.geometries,textures:S.renderer.info.memory.textures}));
           if(view==='aisle' || view==='cooler-art'){
-            const timing=await page.evaluate(()=>new Promise(resolve=>{
-              const intervals=[];let previous=0;
-              function sample(now){
-                if(previous) intervals.push(now-previous);
-                previous=now;
-                if(intervals.length<32){requestAnimationFrame(sample);return;}
-                const mean=intervals.reduce((a,b)=>a+b)/intervals.length;
-                const sorted=intervals.slice().sort((a,b)=>a-b);
-                resolve({frames:intervals.length,meanMs:+mean.toFixed(1),fps:+(1000/mean).toFixed(1),p95Ms:+sorted[Math.ceil(.95*sorted.length)-1].toFixed(1)});
+            const timing=await page.evaluate(async()=>{
+              const intervals=[];
+              for(let i=0;i<9;i++){
+                const start=performance.now();
+                await new Promise(done=>requestAnimationFrame(stamp=>{
+                  window.reviewFrame(stamp);
+                  S.renderer.getContext().finish();
+                  done();
+                }));
+                if(i) intervals.push(performance.now()-start);
               }
-              requestAnimationFrame(sample);
-            }));
+              const mean=intervals.reduce((a,b)=>a+b)/intervals.length;
+              return {frames:intervals.length,meanMs:+mean.toFixed(1),fps:+(1000/mean).toFixed(1),maxMs:+Math.max(...intervals).toFixed(1)};
+            });
             Object.assign(stats,timing);
           }
           console.log(device,release,view,JSON.stringify(stats));
@@ -61,6 +79,7 @@ async function run(){
           if(device==='portrait') await page.locator('#views-toggle').click();
           await page.locator('[data-view="bento"]').click();
           await page.locator('#errand-start').click();
+          await page.evaluate(()=>window.reviewFrame(performance.now()));
           await page.locator('#errand-message').waitFor({state:'visible'});
           await page.screenshot({path:path.join(output,device+'-shopping-ui.jpg'),type:'jpeg',quality:88});
           await page.locator('#errand-exit').click();
