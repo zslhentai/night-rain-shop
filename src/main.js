@@ -153,6 +153,7 @@
     var preset=new URLSearchParams(location.search).get('view');
     var requested=Array.from(views).find(button=>button.dataset.view===preset);
     if(requested) requested.click();
+    if(new URLSearchParams(location.search).get('shot')==='1') document.getElementById('photo').click();
     var clock = new THREE.Clock();
     var firstFrame=true, firstAssetFrame=true;
     function frame(stamp) {
