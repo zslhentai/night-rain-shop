@@ -87,6 +87,26 @@ async function run(){
             assert(joystick && prompt && prompt.y+prompt.height<=joystick.y,'shopping prompt covers movement pad');
           }
           await page.screenshot({path:path.join(output,device+'-shopping-ui.jpg'),type:'jpeg',quality:88});
+          // Tap a stocked slot through the actual canvas, then use the overlay.
+          const target=await page.evaluate(()=>{
+            const point=new THREE.Vector3(), matrix=new THREE.Matrix4();
+            for(const id of ['bento','sandwich','onigiri']){
+              const stock=S.productBatches[id];
+              for(let slot=0;slot<stock.count;slot++){
+                stock.getMatrixAt(slot,matrix);
+                point.set(0,S.products[id].h*.5,0).applyMatrix4(matrix).applyMatrix4(stock.matrixWorld).project(S.camera);
+                if(Math.abs(point.x)>.95 || Math.abs(point.y)>.8) continue;
+                const hit=S.pickProduct(point.x,point.y);
+                if(hit && !hit.behindGlass && S.canBasket(hit.product)) return {x:(point.x+1)*innerWidth/2,y:(1-point.y)*innerHeight/2};
+              }
+            }
+          });
+          assert(target,'Preset must offer a reachable fresh food');
+          if(device==='portrait') await page.touchscreen.tap(target.x,target.y);
+          else await page.mouse.click(target.x,target.y);
+          await page.locator('#basket-add').click();
+          await page.locator('#errand-undo').waitFor({state:'visible'});
+          await page.locator('#errand-undo').click();
           await page.locator('#errand-exit').click();
         }
         await context.close();

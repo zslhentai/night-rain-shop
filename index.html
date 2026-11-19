@@ -82,6 +82,7 @@
     #errand { position:fixed; top:max(12px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); width:max-content; box-sizing:border-box; }
     .cooler-view #errand { top:calc(max(12px,env(safe-area-inset-top)) + 87px); }
     #errand-message { flex:1 1 16em; }
+    #product-card:not([hidden]) ~ #controls #errand { display:none; }
     #cooler-picker { width:max-content; flex-wrap:wrap; gap:3px; font-size:12px; }
     #cooler-picker a { white-space:nowrap; padding:6px 9px; }
     #cooler-status { max-width:23em; font-size:11px; }
