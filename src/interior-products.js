@@ -27,6 +27,20 @@
     ['gum','ミント','薄荷口香糖','gum',.084,.093,.042,0x6aa188,128],
     ['paperCup','ホット珈琲','咖啡纸杯','paperCup',.12,.149,.12,0xb38862,118]
   ];
+  [
+    ['chips','seaweedChips','海苔しお',188,0x357960],
+    ['crackers','sesameRice','黒ごまおかき',158,0x68614e],
+    ['candy','citrusCandy','柚子あめ',148,0xe4a43b],
+    ['biscuits','cocoaBiscuits','ココアサブレ',208,0x845144],
+    ['cup','misoCup','味噌ラーメン',258,0xb64f33],
+    ['bowl','sobaBowl','山菜そば',268,0x73904e],
+    ['noodles','spicyNoodles','辛味まぜそば',178,0xb6473b],
+    ['tissue','softTissue','やわらか紙',268,0x8293ae]
+  ].forEach(function([base,id,name,price,color]){
+    var row=rows.find(function(entry){return entry[0]===base;}).slice();
+    row[0]=id; row[1]=name; row[7]=color; row[8]=price;
+    rows.push(row);
+  });
   var catalog={}, batches={}, atlas, material, matte;
   S.products=catalog;
   S.productBatches=batches;
@@ -40,7 +54,7 @@
       ctx.fillStyle='#fff'; ctx.fillRect(0,0,w,h);
       rows.forEach(function(row,index){
         var item=catalog[row[0]];
-        var x=index%6*256, y=Math.floor(index/6)*204;
+        var x=index%8*256, y=Math.floor(index/8)*204;
         ctx.fillStyle='#eae5d4'; ctx.fillRect(x+4,y+4,248,193);
         ctx.fillStyle='#'+item.color.toString(16).padStart(6,'0');
         ctx.fillRect(x+10,y+10,236,65);
@@ -68,7 +82,7 @@
       g.translate(x||0,y,z||0);
       var flat=g.index?g.toNonIndexed():g;
       var a=flat.attributes, shade=new T.Color(tint);
-      var lx=index%6*256, ly=Math.floor(index/6)*204;
+      var lx=index%8*256, ly=Math.floor(index/8)*204;
       for(var i=0;i<a.position.count;i++){
         pos.push(a.position.getX(i),a.position.getY(i),a.position.getZ(i));
         norm.push(a.normal.getX(i),a.normal.getY(i),a.normal.getZ(i));

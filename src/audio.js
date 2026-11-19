@@ -10,13 +10,21 @@
     if(S.isStoreView) return S.isStoreView(S.view) && S.camera && S.inShop && S.inShop(S.camera.position);
     return ['interior','bento','checkout','drinks'].indexOf(S.view)!==-1;
   }
+  var doorMix=0;
+  S.refreshDoorAudio=function(){
+    if(!enabled || !S.camera || !S.door) return;
+    var entry=S.layout.entrance, pos=S.camera.position;
+    var near=Math.max(0,1-Math.hypot(pos.x-entry.x,pos.z-entry.threshold)/3.2);
+    var next=indoors()?near*S.door.open:0;
+    if(Math.abs(next-doorMix)>.025 || (next===0 && doorMix)){doorMix=next;S.refreshAudio();}
+  };
   function level() {
-    var shelter = indoors() ? .42 : S.view === 'entrance' ? .76 : S.view === 'stop' ? .85 : 1;
+    var shelter = indoors() ? .42+.23*doorMix : S.view === 'entrance' ? .76 : S.view === 'stop' ? .85 : 1;
     return volumeLevel() * shelter * (.55 + .45 * S.rainIntensity);
   }
   S.refreshAudio = function () {
     if (!enabled || !filter) return;
-    var cutoff = indoors() ? 680 : S.view === 'entrance' ? 2300 : 5200;
+    var cutoff = indoors() ? 680+1330*doorMix : S.view === 'entrance' ? 2300 : 5200;
     filter.frequency.setTargetAtTime(cutoff, context.currentTime, .2);
     fade(level(), .35);
     if(humGain) humGain.gain.setTargetAtTime(indoors()?volumeLevel()*.011:0,context.currentTime,.3);

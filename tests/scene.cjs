@@ -6,7 +6,7 @@ const path = require('node:path');
 const root = path.resolve(__dirname, '..');
 global.window = global; global.addEventListener = () => {}; global.document = {createElement: () => createCanvas(1, 1)};
 global.THREE = require(path.join(root, 'vendor/three.min.js'));
-for (const name of ['core','textures','layout','navigation','base','store','interior-lighting','interior-products','interior','street','buildings','details','people','bus','effects','interior-interactions'])
+for (const name of ['core','textures','layout','navigation','base','store','interior-lighting','interior-products','interior','street','buildings','details','people','bus','effects','interior-interactions','night-stock'])
   vm.runInThisContext(fs.readFileSync(path.join(root, 'src',name+'.js'),'utf8'));
 S.gradientMap = new THREE.DataTexture(new Uint8Array([72,128,190,255]),4,1,THREE.LuminanceFormat);
 S.scene = new THREE.Scene(); S.world = new THREE.Group(); S.scene.add(S.world);
@@ -116,11 +116,12 @@ console.log('PASS: aisle widths, camera spawn positions and player-triggered ent
 
 const kinds=Object.values(S.products);
 assert(kinds.length>=20 && kinds.every(item=>item.positions.length>0),'Every catalog item must be stocked');
-assert(new Set(kinds.map(item=>item.geometry.attributes.position.array.join(','))).size===kinds.length,'Catalog silhouettes or construction must differ');
+assert(new Set(kinds.map(item=>item.geometry.attributes.position.array.join(','))).size>=24,'Distinct package constructions preserved');
+assert.equal(new Set(kinds.map(item=>item.geometry.attributes.uv.array.join(','))).size,kinds.length,'Each fallback SKU has its own label UVs');
 assert.equal(new Set(kinds.map(item=>item.material.map)).size,1,'Labels must share the packaging atlas');
 const controls={};
 global.document.getElementById=id=>controls[id]??={hidden:true};
-global.document.body={classList:{contains:()=>false}};
+global.document.body={classList:{contains:()=>false,add(){},remove(){}}};
 S.installShopInteractions();
 S.setView('aisle');
 S.world.updateMatrixWorld(true);
@@ -144,4 +145,4 @@ hit.mesh.getMatrixAt(hit.index,after);
 assert.deepEqual(after.elements,before.elements);
 assert.equal(controls['product-card'].hidden,true);
 assert.equal(document.getElementById('product-title').textContent.includes(selected.item.type),true);
-console.log('PASS: 24 stocked models, single packaging atlas and reversible product pickup');
+console.log('PASS: 32 stocked models, single packaging atlas and reversible product pickup');

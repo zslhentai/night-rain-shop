@@ -24,7 +24,7 @@
   };
 
   S.walkStep=function(side,back){
-    if(!S.isStoreView(S.view) || (!side&&!back)) return;
+    if(S.holdingProduct?.() || !S.isStoreView(S.view) || (!side&&!back)) return;
     S.camera.getWorldDirection(direction);
     direction.y=0; direction.normalize();
     var dx=-direction.x*back-direction.z*side, dz=-direction.z*back+direction.x*side;

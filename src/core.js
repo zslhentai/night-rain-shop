@@ -204,7 +204,7 @@ window.S = window.S || {};
       if (S.view !== 'overview') {
         if(start && Math.hypot(e.clientX-start.x,e.clientY-start.y)>7) start.dragged=true;
         if(Object.keys(pointers).length===1 && document.pointerLockElement!==canvas &&
-            (e.pointerType!=='touch' || !S.isStoreView(S.view) || e.clientX>innerWidth*.42)) {
+            (S.holdingProduct?.() || e.pointerType!=='touch' || !S.isStoreView(S.view) || e.clientX>innerWidth*.42)) {
           turn(e.clientX-lastX,e.clientY-lastY);
         }
         lastX=e.clientX; lastY=e.clientY;

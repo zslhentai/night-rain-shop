@@ -1,104 +1,149 @@
-/* Local, reversible product inspection; shop inventory remains owned by the NPCs. */
+/* World-space partitions are built once. Dynamic door leaves also cover their sweep. */
 (function(S){
-  var T=THREE;
-  var ray=new T.Raycaster(), pointer=new T.Vector2();
-  var saved=new T.Matrix4(), hidden=new T.Matrix4().makeScale(0.00001,0.00001,0.00001);
-  var active=null, held=null, panel, title, note, action, blockers=[];
-  var itemPosition=new T.Vector3(), instanceTransform=new T.Matrix4();
-  var visibleBlockers=[], blockerHits=[], productHits=[];
-
+  var T=THREE, ray=new T.Raycaster(), pointer=new T.Vector2(), cells=new Map();
+  var productHits=[], blockerHits=[], active=null, held=null, panel,title,note,action,basket;
+  var matrix=new T.Matrix4(), point=new T.Vector3();
+  var cellSize=2, reach=1.7;
+  function key(x,z){return Math.floor(x/cellSize)+','+Math.floor(z/cellSize);}
+  function index(object,products,x0,x1,z0,z1){
+    var room=S.SHOP;
+    for(var x=Math.floor(Math.max(room.x0-2,x0-reach)/cellSize);x<=Math.floor(Math.min(room.x1+2,x1+reach)/cellSize);x++)
+      for(var z=Math.floor(Math.max(room.z0-2,z0-reach)/cellSize);z<=Math.floor(Math.min(room.z1+2,z1+reach)/cellSize);z++){
+        var id=x+','+z, cell=cells.get(id);
+        if(!cell){cell={products:new Set(),blockers:new Set()};cells.set(id,cell);}
+        (products?cell.products:cell.blockers).add(object);
+      }
+  }
+  S.addShopBlockers=function(root){
+    root.updateWorldMatrix(true,true);
+    var bounds=new T.Box3();
+    root.traverseVisible(function(object){
+      if(!object.isMesh) return;
+      if(object.isInstancedMesh){
+        if(!object.userData.productId && !object.userData.product) return;
+        for(var i=0;i<object.count;i++){
+          object.getMatrixAt(i,matrix);
+          point.setFromMatrixPosition(matrix).applyMatrix4(object.matrixWorld);
+          index(object,true,point.x-.22,point.x+.22,point.z-.22,point.z+.22);
+        }
+        return;
+      }
+      if(object.material.transparent) return;
+      // Only this mesh, not its descendants. Door positions can vary by one leaf width.
+      if(!object.geometry.boundingBox) object.geometry.computeBoundingBox();
+      bounds.copy(object.geometry.boundingBox).applyMatrix4(object.matrixWorld);
+      var parent=object, sweep=0;
+      while(parent){
+        if(S.coldDoors?.some(function(door){return door.hinge===parent;})) sweep=1.3;
+        if(S.people.some(function(p){return p.group===parent;})) return;
+        parent=parent.parent;
+      }
+      index(object,false,bounds.min.x-sweep,bounds.max.x+sweep,bounds.min.z-sweep,bounds.max.z+sweep);
+    });
+  };
+  function visible(object){
+    for(var parent=object;parent;parent=parent.parent) if(!parent.visible) return false;
+    return true;
+  }
   S.pickProduct=function(x,y){
     if(!S.isStoreView(S.view) || !S.inShop(S.camera.position)) return null;
+    var cell=cells.get(key(S.camera.position.x,S.camera.position.z));
+    if(!cell) return null;
     S.camera.updateMatrixWorld();
-    S.world.updateMatrixWorld(true);
-    pointer.set(x,y);
-    ray.setFromCamera(pointer,S.camera);
-    ray.far=1.70;
-    productHits.length=0;
-    var hit=ray.intersectObjects(Object.values(S.productBatches),false,productHits)[0];
+    ray.setFromCamera(pointer.set(x,y),S.camera);
+    ray.far=reach; productHits.length=0;
+    cell.products.forEach(function(mesh){
+      if(visible(mesh)) ray.intersectObject(mesh,false,productHits);
+    });
+    var hit=productHits.sort(function(a,b){return a.distance-b.distance;}).find(function(h){
+      return !S.slotBusy(h.object,h.instanceId);
+    });
     if(!hit) return null;
-    visibleBlockers.length=0;
-    for(var i=0;i<blockers.length;i++){
-      var parent=blockers[i];
-      while(parent && parent.visible) parent=parent.parent;
-      if(!parent) visibleBlockers.push(blockers[i]);
-    }
-    ray.far=hit.distance-.015;
-    blockerHits.length=0;
-    if(ray.intersectObjects(visibleBlockers,false,blockerHits).length) return null;
-    var meta=hit.object.userData;
-    return {mesh:hit.object,index:hit.instanceId,product:meta.product||S.products[meta.productId]};
+    ray.far=hit.distance-.015; blockerHits.length=0;
+    cell.blockers.forEach(function(mesh){
+      if(!blockerHits.length && visible(mesh)) ray.intersectObject(mesh,false,blockerHits);
+    });
+    if(blockerHits.length) return null;
+    return {mesh:hit.object,index:hit.instanceId,product:hit.object.userData.product || S.products[hit.object.userData.productId]};
   };
 
-  function showInfo(selection){
+  function show(selection){
     active=selection;
     panel.hidden=!selection;
     if(!selection) return;
-    var info=selection.product;
-    title.textContent=info.type+'  ·  ¥'+info.price;
-    note.textContent=info.title;
+    var item=selection.product;
+    title.textContent=item.type+' · ¥'+item.price; note.textContent=item.title;
     action.textContent=held?'归位':'拿起来';
+    basket.hidden=!S.canBasket?.(item);
   }
-  function returnProduct(fromButton){
+  function putBack(fromButton){
     if(held){
       if(fromButton && S.perf) S.perf.interaction('商品归位');
-      held.mesh.setMatrixAt(held.index,saved);
-      held.mesh.instanceMatrix.needsUpdate=true;
+      S.releaseSlot(held.ticket);
       S.camera.remove(held.model);
       held=null;
+      document.body.classList.remove('inspecting');
     }
-    if(panel) showInfo(null);
+    if(panel) show(null);
   }
-  S.returnProduct=returnProduct;
+  S.returnProduct=putBack;
   S.inspectProduct=function(x,y){
-    if(!panel || document.body.classList.contains('photo')) return;
-    if(held) return;
+    if(!panel || held || document.body.classList.contains('photo')) return;
     if(S.perf) S.perf.interaction('查看商品');
-    showInfo(S.pickProduct(x,y));
+    show(S.pickProduct(x,y));
   };
-  function takeProduct(){
-    if(!active || held) { returnProduct(true); return; }
-    if(S.perf) S.perf.interaction('拿取商品');
-    active.mesh.getMatrixAt(active.index,saved);
-    active.mesh.setMatrixAt(active.index,hidden);
-    active.mesh.instanceMatrix.needsUpdate=true;
+  S.rotateHeld=function(dx,dy){
+    if(!held) return false;
+    held.model.rotation.y+=dx*.012;
+    held.model.rotation.x=S.clamp(held.model.rotation.x+dy*.009,-1.48,1.48);
+    return true;
+  };
+  S.refreshHeldArt=function(mesh){
+    if(held && held.ticket.mesh===mesh){
+      held.model.geometry=mesh.geometry;
+      held.model.material=mesh.material;
+    }
+  };
+  function take(){
+    if(held || !active){putBack(true);return;}
+    var ticket=S.reserveSlot(active.mesh,active.index);
+    if(!ticket){show(null);return;}
+    var item=active.product;
     var model=new T.Mesh(active.mesh.geometry,active.mesh.material);
-    model.position.set(.19,-.26,-.53);
-    model.rotation.set(-.15,-.27,.13);
+    var measured=S.products[item.id], extent=Math.max(measured.w,measured.h,measured.d);
+    model.scale.setScalar(.29/extent);
+    model.position.set(0,-measured.h*model.scale.y*.45,-.53);
+    model.rotation.set(.13,-.17,0);
     S.camera.add(model);
-    held=Object.assign({model:model},active);
-    showInfo(held);
+    held={ticket:ticket,model:model};
+    S.resetWalkInput();
+    document.body.classList.add('inspecting');
+    if(S.perf) S.perf.interaction('拿取商品');
+    show(active);
   }
+  S.holdingProduct=function(){return !!held;};
   S.installShopInteractions=function(){
-    panel=document.getElementById('product-card');
-    title=document.getElementById('product-title');
-    note=document.getElementById('product-note');
-    action=document.getElementById('take-product');
-    action.onclick=takeProduct;
-    document.getElementById('close-product').onclick=function(){returnProduct(true);};
+    panel=document.getElementById('product-card'); title=document.getElementById('product-title');
+    note=document.getElementById('product-note'); action=document.getElementById('take-product');
+    basket=document.getElementById('basket-add');
+    action.onclick=take;
+    basket.onclick=function(){
+      if(!active || !S.canBasket(active.product)) return;
+      var ticket=held?held.ticket:S.reserveSlot(active.mesh,active.index);
+      if(!ticket){show(null);return;}
+      if(held){S.camera.remove(held.model);held=null;document.body.classList.remove('inspecting');}
+      S.addBasket(ticket,active.product); show(null);
+    };
+    document.getElementById('close-product').onclick=function(){putBack(true);};
     document.getElementById('inspect-product').onclick=function(){S.inspectProduct(0,0);};
     S.addShopBlockers(S.world);
     S.scene.add(S.camera);
     S.addUpdate(function(){
-      if(active&&!held){
-        active.mesh.getMatrixAt(active.index,instanceTransform);
-        itemPosition.setFromMatrixPosition(instanceTransform);
-        active.mesh.localToWorld(itemPosition);
-        var eye=S.camera.position;
-        if(Math.hypot(itemPosition.x-eye.x,itemPosition.z-eye.z)>1.85) showInfo(null);
-      }
+      if(!active || held) return;
+      active.mesh.getMatrixAt(active.index,matrix);
+      point.setFromMatrixPosition(matrix).applyMatrix4(active.mesh.matrixWorld);
+      if(S.slotBusy(active.mesh,active.index) || point.distanceTo(S.camera.position)>2.1) show(null);
     });
   };
-
-  S.addShopBlockers=function(root){
-    root.traverse(function(object){
-      if(object.isMesh && object.visible && !object.isInstancedMesh && !object.material.transparent){
-        blockers.push(object);
-      }
-    });
-  };
-  S.inShop=function(position){
-    var room=S.SHOP;
-    return position.x>room.x0 && position.x<room.x1 && position.z>room.z0 && position.z<room.z1;
-  };
+  S.inShop=function(p){var room=S.SHOP;return p.x>room.x0 && p.x<room.x1 && p.z>room.z0 && p.z<room.z1;};
 })(window.S);

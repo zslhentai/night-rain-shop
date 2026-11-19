@@ -34,15 +34,24 @@
     S.buildBus();
     S.buildEffects();
     S.installShopInteractions();
+    S.installNightShopping();
     if(S.perf) S.perf.mark('场景组装完成');
     if(S.installPerformancePanel) S.installPerformancePanel(S.renderer);
     if(S.legacyTuning && S.loadCoolerSample) S.loadCoolerSample();
     setupJoystick();
     S.resetView();
+    var settings=document.getElementById('settings-list'), settingsToggle=document.getElementById('settings-toggle');
+    var viewList=document.getElementById('view-list'), viewsToggle=document.getElementById('views-toggle');
+    function closeViews(){viewList.classList.remove('expanded');viewsToggle.setAttribute('aria-expanded','false');}
+    function closeSettings(){settings.hidden=true;settingsToggle.setAttribute('aria-expanded','false');}
+    viewsToggle.onclick=function(){closeSettings();viewsToggle.setAttribute('aria-expanded',String(viewList.classList.toggle('expanded')));};
+    settingsToggle.onclick=function(){closeViews();settings.hidden=!settings.hidden;settingsToggle.setAttribute('aria-expanded',String(!settings.hidden));};
     var views = document.querySelectorAll('[data-view]');
     views.forEach(function (button) {
       button.onclick = function () {
         if(document.pointerLockElement && document.exitPointerLock) document.exitPointerLock();
+        closeViews(); closeSettings();
+        if(!S.isStoreView(button.dataset.view)) S.leaveNightShopping();
         S.setView(button.dataset.view);
         if(S.perf && S.perf.reset) S.perf.reset();
         if(window.rainPreview) window.rainPreview.view(S.view==='cooler-art');
@@ -69,9 +78,16 @@
         if (coldDoorButton.textContent !== label) coldDoorButton.textContent = label;
       }
     }
-    var controlsElapsed=0;
+    var controlsElapsed=0, artElapsed=0;
+    var shopping=document.getElementById('errand-start');
+    shopping.disabled=true;
     S.addUpdate(function(t,dt){
-      controlsElapsed+=dt;
+      controlsElapsed+=dt; artElapsed+=dt;
+      if(artElapsed>.45){
+        S.queueNightStock();artElapsed=0;
+        if(shopping.disabled && ['original','ready','fallback'].includes(S.coolerSampleState)) shopping.disabled=false;
+        if(S.door && S.refreshDoorAudio) S.refreshDoorAudio();
+      }
       if(S.legacyTuning || controlsElapsed>=.08){
         refreshWalkControls();
         controlsElapsed=0;
@@ -132,12 +148,11 @@
       document.getElementById('photo').focus();
     }
     document.getElementById('exit-photo').onclick = exitPhoto;
-    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') exitPhoto(); });
+    document.addEventListener('keydown', function (e) { if (e.key === 'Escape') {exitPhoto();S.returnProduct();closeSettings();closeViews();} });
 
-    if(new URLSearchParams(location.search).get('view')==='cooler-art'){
-      var sampleView=document.querySelector('[data-view="cooler-art"]');
-      if(sampleView) sampleView.click();
-    }
+    var preset=new URLSearchParams(location.search).get('view');
+    var requested=Array.from(views).find(button=>button.dataset.view===preset);
+    if(requested) requested.click();
     var clock = new THREE.Clock();
     var firstFrame=true, firstAssetFrame=true;
     function frame(stamp) {

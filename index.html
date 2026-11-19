@@ -63,6 +63,7 @@
     nav.toolbar { justify-content:flex-start; flex-wrap:nowrap; max-width:calc(100vw - 26px); overflow-x:auto; scrollbar-width:thin; }
     nav.toolbar button { flex:0 0 auto; }
   }
+  #asset-notice {position:fixed;top:8px;left:8px;background:#17282c;color:white;padding:7px;z-index:2;font:12px system-ui;}
   #dock { gap:8px; }
   #views-toggle { display:none; }
   #product-card { flex-wrap:wrap; width:max-content; max-width:calc(100% - 36px); }
@@ -90,6 +91,7 @@
 </head>
 <body>
 <canvas id="scene" tabindex="0" aria-label="雨夜便利店三维场景"></canvas>
+<p id="asset-notice" role="status" hidden></p>
 <div id="vignette"></div>
 <nav id="cooler-picker" class="toolbar" aria-label="同机位对比" hidden>
   <a id="cooler-new" href="?view=cooler-art">Blender 样板</a>
