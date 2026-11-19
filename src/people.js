@@ -4,8 +4,8 @@
   function character(coat, umbrellaColor, route, speed, offset) {
     var group = S.group(), torso = S.group(group);
     var fabric = S.toon(coat), dark = S.toon(0x263243), skin = S.toon(0xd7b69b);
-    S.cyl(.21, .27, .65, 8, fabric, 0, .96, 0, { parent: torso, cast: true });
-    S.sphere(.18, skin, 0, 1.49, 0, { parent: torso });
+    var jacket=S.cyl(.21, .27, .65, 8, fabric, 0, .96, 0, { parent: torso, cast: true });
+    var head=S.sphere(.18, skin, 0, 1.49, 0, { parent: torso });
     S.sphere(.19, dark, 0, 1.57, -.025, { parent: torso, scale: [1, .7, 1] });
     var legs = [], arms = [];
     [-1, 1].forEach(function (side) {
@@ -30,11 +30,38 @@
     });
     bag.visible = false;
     var shadow = S.groundPlane(.6, .6, S.basic(0x101923, { transparent: true, opacity: .3, depthWrite: false }), 0, .092, 0);
-    var p = { group: group, torso: torso, umbrella: umbrella, legs: legs, arms: arms, bag: bag, shadow: shadow,
+    var p = { group: group, torso: torso, head:head, jacket:jacket, umbrella: umbrella, legs: legs, arms: arms, bag: bag, shadow: shadow,
       route: route, next: 1, wait: offset || 0, distance: 0, speed: speed, folding: 1 };
     group.position.set(route[0].x, .1, route[0].z);
     S.people.push(p);
     return p;
+  }
+  // The sphere's forward direction is at one quarter of the texture width.
+  // Keep the expression and uniform on the existing animated geometry.
+  function dressClerk(clerk){
+    var face=S.makeTex(256,128,function(ctx,w,h){
+      ctx.fillStyle='#e8c3a6';ctx.fillRect(0,0,w,h);
+      ctx.strokeStyle='#594538';ctx.lineWidth=1.5;ctx.lineCap='round';
+      [51,76].forEach(function(x){
+        ctx.beginPath();ctx.moveTo(x-3,60);ctx.quadraticCurveTo(x,58.6,x+3,60);ctx.stroke();
+        ctx.fillStyle='#392f29';ctx.beginPath();ctx.ellipse(x,65,1.6,2.1,0,0,Math.PI*2);ctx.fill();
+      });
+      ctx.strokeStyle='#b58c76';ctx.beginPath();ctx.moveTo(64,68);ctx.lineTo(62.5,73);ctx.lineTo(65,73);ctx.stroke();
+      ctx.strokeStyle='#805e51';ctx.beginPath();ctx.moveTo(59,78);ctx.quadraticCurveTo(64,80.2,69,77.5);ctx.stroke();
+    });
+    clerk.head.material=S.shopMaterial(0xfff8ef,{map:face,shininess:5});
+    var uniform=S.makeTex(256,160,function(ctx,w,h){
+      ctx.fillStyle='#507f75';ctx.fillRect(0,0,w,h);
+      ctx.fillStyle='#658f84';ctx.fillRect(0,0,w,49);
+      ctx.fillStyle='#d8ddbb';ctx.fillRect(0,48,w,3);
+      ctx.fillStyle='#254e49';ctx.beginPath();ctx.moveTo(99,0);ctx.lineTo(128,31);ctx.lineTo(155,0);ctx.fill();
+      ctx.fillStyle='#e2dfcc';ctx.beginPath();ctx.moveTo(117,0);ctx.lineTo(128,18);ctx.lineTo(140,0);ctx.fill();
+      ctx.fillStyle='#365f56';ctx.fillRect(127,31,2,h-31);
+      ctx.fillStyle='#f2efdd';ctx.fillRect(140,37,23,9);
+      ctx.fillStyle='#30614f';ctx.fillRect(142,39,4,5);ctx.fillRect(148,40,12,1.6);
+    });
+    clerk.jacket.rotation.y=Math.PI;
+    clerk.jacket.material=S.shopMaterial(0xfffcf3,{map:uniform,shininess:6});
   }
   function point(x, z, options) { return Object.assign({ x: x, z: z }, options || {}); }
   S.buildPeople = function () {
@@ -65,6 +92,7 @@
       point(3.2, .15, { wait: 5, face: Math.PI }), point(3.2, .65), point(-6, .65), point(-6.8, .65), point(-6.8, -1.3), point(-8.6, -1.3), point(-8.6, -5.8, { wait: 12 })
     ], .74, 14);
     var clerk = character(0x6e9f92, 0x687d89, [point(anchors.clerk[0],anchors.clerk[1])], 0, 0);
+    dressClerk(clerk);
     clerk.group.position.y = .02;
     clerk.staff = true; clerk.umbrella.visible = false; clerk.bag.visible = false;
     var meal = S.displayMeal, shelf = meal.position.clone();

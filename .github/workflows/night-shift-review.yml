@@ -20,6 +20,8 @@ jobs:
           node-version: '22'
       - name: Install test-only browser
         run: |
+          sudo apt-get -qq update
+          sudo apt-get -qq install -y fonts-noto-cjk
           npm install --prefix "$RUNNER_TEMP/night-qa" --no-save playwright@1.56.1
           "$RUNNER_TEMP/night-qa/node_modules/.bin/playwright" install chromium --only-shell
       - name: Capture production HTML and GLB in Chromium

@@ -81,6 +81,11 @@ async function run(){
           await page.locator('#errand-start').click();
           await page.evaluate(()=>window.reviewFrame(performance.now()));
           await page.locator('#errand-message').waitFor({state:'visible'});
+          if(device==='portrait'){
+            const joystick=await page.locator('#joystick').boundingBox();
+            const prompt=await page.locator('#errand').boundingBox();
+            assert(joystick && prompt && prompt.y+prompt.height<=joystick.y,'shopping prompt covers movement pad');
+          }
           await page.screenshot({path:path.join(output,device+'-shopping-ui.jpg'),type:'jpeg',quality:88});
           await page.locator('#errand-exit').click();
         }

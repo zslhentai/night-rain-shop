@@ -79,6 +79,9 @@
     #controls { bottom:max(8px, env(safe-area-inset-bottom)); gap:4px; }
     #view-list.expanded { display:flex; flex-wrap:wrap; justify-content:center; }
     #joystick { bottom:max(118px,calc(94px + env(safe-area-inset-bottom))); width:72px; height:72px; }
+    #errand { position:fixed; top:max(12px,env(safe-area-inset-top)); left:50%; transform:translateX(-50%); width:max-content; box-sizing:border-box; }
+    .cooler-view #errand { top:calc(max(12px,env(safe-area-inset-top)) + 87px); }
+    #errand-message { flex:1 1 16em; }
     #cooler-picker { width:max-content; flex-wrap:wrap; gap:3px; font-size:12px; }
     #cooler-picker a { white-space:nowrap; padding:6px 9px; }
     #cooler-status { max-width:23em; font-size:11px; }
@@ -96,7 +99,7 @@
 <nav id="cooler-picker" class="toolbar" aria-label="同机位对比" hidden>
   <a id="cooler-new" href="?view=cooler-art">Blender 样板</a>
   <a id="cooler-old" href="?view=cooler-art&amp;cooler=original">原版冷柜</a>
-  
+
   <p id="cooler-status" role="status">正在加载冷柜…</p>
 </nav>
 <section id="perf-panel" aria-label="性能诊断" hidden>
