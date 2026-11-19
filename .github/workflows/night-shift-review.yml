@@ -20,8 +20,12 @@ jobs:
           node-version: '22'
       - name: Install test-only browser
         run: |
-          sudo apt-get -qq update
-          sudo apt-get -qq install -y fonts-noto-cjk
+          font_dir="$HOME/.local/share/fonts/night-review"
+          mkdir -p "$font_dir"
+          curl --fail --location --retry 2 --max-time 60 \
+            https://raw.githubusercontent.com/notofonts/noto-cjk/523d033d6cb47f4a80c58a35753646f5c3608a78/Sans/OTF/SimplifiedChinese/NotoSansCJKsc-Regular.otf \
+            --output "$font_dir/NotoSansCJKsc-Regular.otf"
+          fc-cache "$font_dir"
           npm install --prefix "$RUNNER_TEMP/night-qa" --no-save playwright@1.56.1
           "$RUNNER_TEMP/night-qa/node_modules/.bin/playwright" install chromium --only-shell
       - name: Capture production HTML and GLB in Chromium
