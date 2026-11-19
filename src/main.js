@@ -98,6 +98,7 @@
       var door=S.nearbyColdDoor();
       if(!door) return;
       if(S.perf) S.perf.interaction(door.open?'关柜门':'开柜门');
+      S.returnProduct();
       S.toggleColdDoor();
       refreshWalkControls();
     };

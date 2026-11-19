@@ -12,6 +12,14 @@ const output = { rooms: [], errors: [] };
 const shots = ['front', 'angle', 'inside', 'shelves', 'checkout', 'cooler', 'fresh'];
 fs.mkdirSync(directory, { recursive: true });
 
+async function chooseView(page,name){
+  const view=page.locator('[data-view="'+name+'"]');
+  if(!await view.isVisible()) await page.locator('#views-toggle').click();
+  await view.click();
+}
+async function settings(page){
+  if(!await page.locator('#quality').isVisible()) await page.locator('#settings-toggle').click();
+}
 async function main() {
   const browser = await chromium.launch({
     executablePath: process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE || undefined,
@@ -45,8 +53,8 @@ async function main() {
 
       await page.goto(base.href);
       await page.waitForFunction(() => Boolean(window.S?.renderer && S.simulationTime > 0), {}, {timeout:12000});
-      assert.equal(await page.title(), '雨夜便利店 5.0');
-      await page.locator('[data-view="interior"]').click();
+      assert.equal(await page.title(), '雨夜便利店 6.0 · 雨夜晚班');
+      await chooseView(page,'interior');
       if (device === 'mobile') assert(await page.locator('#joystick').isVisible());
       else {
         const initial = await page.evaluate(() => S.camera.position.z);
@@ -54,15 +62,16 @@ async function main() {
         try { await page.waitForFunction(z => S.camera.position.z < z-.15, initial, {timeout:3000}); }
         finally { await page.keyboard.up('w'); }
       }
+      await settings(page);
       await page.locator('#photo').click();
       assert(!await page.locator('#controls').isVisible());
       await page.locator('#exit-photo').click();
 
       for (const quality of ['high','low']) {
-        await page.locator('#quality').selectOption(quality);
+        await settings(page);
+      await page.locator('#quality').selectOption(quality);
         for (const view of ['entrance','interior','aisle','checkout','drinks','bento','overview']) {
-          const select=page.locator('[data-view="'+view+'"]');
-          await select.click();
+          await chooseView(page,view);
           await page.evaluate(() => { qaFrames.length=0; });
           await page.waitForFunction(() => qaFrames.length>=35, {}, {timeout:30000});
           output.rooms.push(await page.evaluate(({device,quality,view}) => {
@@ -113,10 +122,12 @@ async function captureCooler(page,device){
       return report?.startupMs['场景首帧提交'] &&
         (S.coolerSampleState==='original' || report.startupMs['冷柜装配后首帧提交']+2000<performance.now());
     });
-    await page.locator('#photo').click();
+    await settings(page);
+      await page.locator('#photo').click();
     await page.screenshot({path:path.join(directory,device+'-cooler-'+variant+'.png')});
     await page.locator('#exit-photo').click();
     for (const quality of ['high','low']) {
+      await settings(page);
       await page.locator('#quality').selectOption(quality);
       await page.waitForFunction(mode=>S.perf.report()?.quality===mode,quality);
       await page.locator('#perf-reset').click();
@@ -125,6 +136,7 @@ async function captureCooler(page,device){
     }
     if (!original) {
       await page.locator('#perf-close').click();
+      await settings(page);
       await page.locator('#quality').selectOption('high');
       const control=page.locator('#cold-door');
       for (let step=0;step<12 && !await control.isVisible();step++) {
@@ -136,6 +148,7 @@ async function captureCooler(page,device){
       }));
       await control.click();
       await page.waitForFunction(() => Math.abs(S.nearbyColdDoor()?.angle)>.98);
+      await settings(page);
       await page.locator('#photo').click();
       await page.screenshot({path:path.join(directory,device+'-cooler-open-'+variant+'.png')});
     }

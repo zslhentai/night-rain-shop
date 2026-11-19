@@ -6,7 +6,7 @@ const select=document.querySelector('select'),frame=document.querySelector('ifra
 let version='v6';
 function show(){
   for(const id of ['v5','v6'])document.getElementById(id).setAttribute('aria-pressed',String(id===version));
-  frame.src=(version==='v5'?'../v5/':'../')+'?view='+select.value+'&shot=1&quality=high';
+  frame.src=(version==='v5'?'night-v5.html':'../')+'?view='+select.value+'&shot=1&quality=high';
 }
 for(const id of ['v5','v6'])document.getElementById(id).onclick=()=>{version=id;show();};
 select.onchange=show;show();

@@ -28,16 +28,17 @@
         }
         return;
       }
-      if(object.material.transparent) return;
+
       // Only this mesh, not its descendants. Door positions can vary by one leaf width.
       if(!object.geometry.boundingBox) object.geometry.computeBoundingBox();
       bounds.copy(object.geometry.boundingBox).applyMatrix4(object.matrixWorld);
       var parent=object, sweep=0;
       while(parent){
         if(S.coldDoors?.some(function(door){return door.hinge===parent;})) sweep=1.3;
-        if(S.people.some(function(p){return p.group===parent;})) return;
+        if(S.mealVisuals.includes(parent) || S.people.some(function(p){return p.group===parent;})) return;
         parent=parent.parent;
       }
+      if(object.material.transparent && !sweep) return;
       index(object,false,bounds.min.x-sweep,bounds.max.x+sweep,bounds.min.z-sweep,bounds.max.z+sweep);
     });
   };
@@ -61,10 +62,10 @@
     if(!hit) return null;
     ray.far=hit.distance-.015; blockerHits.length=0;
     cell.blockers.forEach(function(mesh){
-      if(!blockerHits.length && visible(mesh)) ray.intersectObject(mesh,false,blockerHits);
+      if(visible(mesh)) ray.intersectObject(mesh,false,blockerHits);
     });
-    if(blockerHits.length) return null;
-    return {mesh:hit.object,index:hit.instanceId,product:hit.object.userData.product || S.products[hit.object.userData.productId]};
+    if(blockerHits.some(h=>!h.object.material.transparent)) return null;
+    return {behindGlass:blockerHits.length>0,mesh:hit.object,index:hit.instanceId,product:hit.object.userData.product || S.products[hit.object.userData.productId]};
   };
 
   function show(selection){
@@ -73,8 +74,9 @@
     if(!selection) return;
     var item=selection.product;
     title.textContent=item.type+' · ¥'+item.price; note.textContent=item.title;
-    action.textContent=held?'归位':'拿起来';
-    basket.hidden=!S.canBasket?.(item);
+    action.disabled=!!selection.behindGlass;
+    action.textContent=held?'归位':selection.behindGlass?'请先打开柜门':'拿起来';
+    basket.hidden=selection.behindGlass || !S.canBasket?.(item);
   }
   function putBack(fromButton){
     if(held){
@@ -106,6 +108,7 @@
   };
   function take(){
     if(held || !active){putBack(true);return;}
+    if(active.behindGlass) return;
     var ticket=S.reserveSlot(active.mesh,active.index);
     if(!ticket){show(null);return;}
     var item=active.product;
@@ -128,7 +131,7 @@
     basket=document.getElementById('basket-add');
     action.onclick=take;
     basket.onclick=function(){
-      if(!active || !S.canBasket(active.product)) return;
+      if(!active || active.behindGlass || !S.canBasket(active.product)) return;
       var ticket=held?held.ticket:S.reserveSlot(active.mesh,active.index);
       if(!ticket){show(null);return;}
       if(held){S.camera.remove(held.model);held=null;document.body.classList.remove('inspecting');}

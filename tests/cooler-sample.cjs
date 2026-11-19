@@ -113,6 +113,19 @@ async function verify(){
   assert(selection && selection.mesh.name.startsWith('Blender SKU'),'Inspect must resolve imported products');
   assert.equal(selection.product.title,'天然水');
   assert.equal(selection.product.price,118);
+  // Inspect through glass, but pickup must pass through the actual open leaf.
+  if(selection.behindGlass){
+    S.inspectProduct(0,0);
+    assert.equal(document.getElementById('take-product').disabled,true);
+    const opposite=S.coldDoors.slice(2).find(d=>d!==door);
+    opposite.open=true;
+    S.camera.position.z=-6.27;
+    for(let i=0;i<70;i++) S.updaters.forEach(update=>update(250+i/30,1/30));
+    S.camera.position.set(bank.location[0],1.63,-7.07);
+    S.camera.lookAt(bottle.x,bottle.y+.13,bottle.z);
+    S.world.updateMatrixWorld(true);
+    assert.equal(S.pickProduct(0,0)?.behindGlass,false,'Correct door clears the line of reach');
+  }
   const original=new THREE.Matrix4();
   selection.mesh.getMatrixAt(selection.index,original);
   S.inspectProduct(0,0);

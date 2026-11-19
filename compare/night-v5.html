@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<base href="../">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>雨夜便利店 5.0</title>
+<style>
+  html, body { width:100%; height:100%; margin:0; padding:0; overflow:hidden; }
+  body {
+    background:
+      radial-gradient(ellipse 70% 60% at 50% 40%, #2a3757 0%, #18233c 40%, #0d1425 72%, #070a13 100%);
+    cursor: grab;
+    -webkit-user-select: none; user-select: none;
+
+  }
+  body.dragging { cursor: grabbing; }
+  #scene { display:block; width:100%; height:100%; outline:none; touch-action:none; }
+  #vignette {
+    position:fixed; inset:0; pointer-events:none;
+    background: radial-gradient(ellipse 75% 70% at 50% 45%, rgba(0,0,0,0) 45%, rgba(3,6,14,.55) 100%);
+  }
+  [hidden] { display:none !important; }
+  #controls { position:fixed; inset:auto 0 18px; display:grid; justify-items:center; gap:8px; pointer-events:none; color:#e0e9e6; font:13px system-ui; }
+  .toolbar { display:flex; align-items:center; justify-content:center; flex-wrap:wrap; gap:5px; max-width:calc(100vw - 30px); padding:5px; border:1px solid #758e905c; border-radius:12px; background:#0a1621eb; box-shadow:0 5px 20px #03081070; pointer-events:auto; }
+  button, select { background:#182635; color:#e0e9e6; border:1px solid #71859555; border-radius:7px; min-height:36px; padding:5px 9px; font:inherit; cursor:pointer; }
+  button[aria-pressed="true"] { background:#c9e6d8; border-color:#c9e6d8; color:#162a2b; }
+  button:focus-visible, select:focus-visible, input:focus-visible { outline:2px solid #fff2b7; outline-offset:2px; }
+  .toolbar label { display:flex; align-items:center; gap:4px; white-space:nowrap; }
+  #rain-volume { width:52px; accent-color:#b0d6c4; }
+  #audio-status { position:absolute; bottom:100%; margin-bottom:8px; }
+  #render-error { position:fixed; inset:15% 24px auto; max-width:25em; margin:auto; background:#101e2c; color:#edf4f2; padding:22px; border-radius:12px; text-align:center; font:15px/1.6 system-ui; }
+  #render-error p { margin:0; }
+  #render-retry { display:inline-block; margin-top:10px; color:#c9e6d8; }
+  .cooler-view #render-error { top:27%; }
+  #cooler-picker { position:fixed; z-index:2; inset:max(12px,env(safe-area-inset-top)) 0 auto; width:max-content; max-width:calc(100% - 40px); margin:auto; font:13px/1.4 system-ui; color:#e0e9e6; }
+  #cooler-picker a { padding:8px 12px; text-decoration:none; color:#e0e9e6; border-radius:7px; }
+  #cooler-picker a[aria-current="page"] { background:#c9e6d8; color:#162a2b; }
+  #cooler-status { flex-basis:100%; text-align:center; margin:0 4px 3px; }
+  #perf-panel { position:fixed; inset:auto 10px 139px auto; z-index:3; box-sizing:border-box; width:min(330px,calc(100% - 20px)); max-height:50%; overflow:auto; padding:10px; border:1px solid #78958f73; border-radius:10px; background:#14242bf5; color:#e9f2ee; font:12px/1.45 system-ui; }
+  #perf-panel pre { margin:6px 0; white-space:pre-wrap; font:12px/1.45 ui-monospace,monospace; font-variant-numeric:tabular-nums; }
+  #perf-panel a { color:#b2e9d1; }
+  #perf-panel header, #perf-panel nav { display:flex; flex-wrap:wrap; align-items:center; gap:8px; }
+  #perf-close { margin-left:auto; }
+  #perf-graph, #perf-export { width:100%; box-sizing:border-box; }
+  #exit-photo { display:none; position:fixed; right:12px; top:12px; opacity:.25; }
+  #exit-photo:hover, #exit-photo:focus { opacity:1; }
+  .photo #controls { display:none; }
+  .photo #exit-photo { display:block; }
+  #joystick { display:none; position:fixed; bottom:140px; left:max(18px,env(safe-area-inset-left)); width:92px; height:92px; border:1px solid #9eb7ac70; border-radius:50%; background:#121f29a3; touch-action:none; align-items:center; justify-content:center; }
+  #joystick span { width:34px; height:34px; border-radius:50%; background:#bfd9c5b3; pointer-events:none; }
+  #product-card { position:fixed; left:50%; top:max(18px,env(safe-area-inset-top)); transform:translateX(-50%); white-space:nowrap; }
+  .cooler-view #product-card { top:calc(max(12px,env(safe-area-inset-top)) + 107px); }
+  #product-card strong { color:#f8edce; } #product-note { color:#b6c9c2; }
+  .photo #joystick, .photo #product-card, .photo #cooler-picker, .photo #perf-panel { display:none; }
+  @media(pointer:coarse) {
+    #joystick { display:flex; }
+    #mouse-lock, #walk-forward, #walk-back { display:none; }
+    .cooler-view #walk-forward, .cooler-view #walk-back { display:inline-block; }
+  }
+  @media(max-width:600px) {
+    #controls { bottom:max(8px, env(safe-area-inset-bottom)); gap:5px; font-size:12px; }
+    button, select { min-height:36px; padding-inline:7px; }
+    nav.toolbar { justify-content:flex-start; flex-wrap:nowrap; max-width:calc(100vw - 26px); overflow-x:auto; scrollbar-width:thin; }
+    nav.toolbar button { flex:0 0 auto; }
+  }
+</style>
+</head>
+<body>
+<canvas id="scene" tabindex="0" aria-label="雨夜便利店三维场景"></canvas>
+<div id="vignette"></div>
+<nav id="cooler-picker" class="toolbar" aria-label="同机位对比" hidden>
+  <a id="cooler-new" href="?view=cooler-art">Blender 样板</a>
+  <a id="cooler-old" href="?view=cooler-art&amp;cooler=original">原版冷柜</a>
+  <button id="perf-toggle" type="button" aria-controls="perf-panel" aria-expanded="false" disabled>性能</button>
+  <p id="cooler-status" role="status">正在加载冷柜…</p>
+</nav>
+<section id="perf-panel" aria-label="性能诊断" hidden>
+  <header><strong>性能诊断</strong><label><input id="perf-show-graph" type="checkbox"> 帧时间图</label><button id="perf-close" type="button">关闭</button></header>
+  <pre id="perf-readout"></pre>
+  <canvas id="perf-graph" width="300" height="64" aria-label="最近帧时间波动，参考线 16.7 与 33.3 毫秒" hidden></canvas>
+  <details><summary>启动与交互计时</summary><pre id="perf-marks"></pre></details>
+  <nav aria-label="高清同机位测量">
+    <a href="?view=cooler-art&amp;perf=1&amp;quality=high&amp;tuning=legacy&amp;cooler=original">原柜</a>
+    <a href="?view=cooler-art&amp;perf=1&amp;quality=high&amp;tuning=legacy">新版优化前</a>
+    <a href="?view=cooler-art&amp;perf=1&amp;quality=high">新版优化后</a>
+  </nav>
+  <button id="perf-reset" type="button">重置采样</button>
+  <button id="perf-copy" type="button">复制结果</button>
+  <textarea id="perf-export" aria-label="性能结果" rows="4" readonly hidden></textarea>
+</section>
+<div id="joystick" role="group" aria-label="触摸移动摇杆" hidden><span aria-hidden="true"></span></div>
+<div id="product-card" class="toolbar" hidden>
+  <strong id="product-title" role="status"></strong><span id="product-note" lang="ja"></span>
+  <button type="button" id="take-product">拿起来</button><button type="button" id="close-product" aria-label="关闭商品信息">关闭</button>
+</div>
+<div id="controls" hidden>
+  <div class="toolbar" id="walk-controls" aria-label="店内移动" hidden>
+    <button type="button" id="walk-forward">向前</button><button type="button" id="walk-back">后退</button>
+    <button type="button" id="inspect-product">查看商品</button>
+    <button type="button" id="mouse-lock" aria-pressed="false">锁定鼠标</button>
+    <button type="button" id="cold-door" hidden>打开冷柜</button>
+  </div>
+  <nav class="toolbar" aria-label="场景镜头">
+    <button type="button" data-view="overview" aria-pressed="true">全景</button>
+    <button type="button" data-view="entrance" aria-pressed="false">店门口</button>
+    <button type="button" data-view="interior" aria-pressed="false">店内</button>
+    <button type="button" data-view="aisle" aria-pressed="false">货架</button>
+    <button type="button" data-view="bento" aria-pressed="false">鲜食柜</button>
+    <button type="button" data-view="checkout" aria-pressed="false">收银台</button>
+    <button type="button" data-view="cooler-art" aria-pressed="false">冷柜样板</button>
+    <button type="button" data-view="drinks" aria-pressed="false">饮料柜</button>
+    <button type="button" data-view="diner" aria-pressed="false">食堂</button>
+    <button type="button" data-view="stop" aria-pressed="false">公交站</button>
+  </nav>
+  <div class="toolbar">
+    <button id="rain-audio" type="button" aria-pressed="false">雨声：关</button>
+    <input id="rain-volume" type="range" min="0" max="100" value="35" aria-label="雨声音量" aria-valuetext="35%">
+    <select id="weather" aria-label="降雨强度"><option value="1">中雨</option><option value=".46">小雨</option></select>
+    <select id="quality" aria-label="画质"><option value="high">高清</option><option value="low">流畅</option></select>
+    <button id="photo" type="button">拍照模式</button>
+    <span id="audio-status" role="status"></span>
+  </div>
+</div>
+<button id="exit-photo" type="button">退出拍照</button>
+<div id="render-error" role="status"><p id="render-message">正在加载 3D 场景…</p><a id="render-retry" href="" hidden>重新加载</a></div>
+<noscript>此预览需要 JavaScript。请在 Safari 设置中开启 JavaScript 后重新打开。</noscript>
+
+<script>
+(function(){
+  var feedback=document.getElementById('render-error');
+  var message=document.getElementById('render-message');
+  var retry=document.getElementById('render-retry');
+  var picker=document.getElementById('cooler-picker');
+  var params=new URLSearchParams(location.search);
+  var original=params.get('cooler')==='original';
+  var failed=false;
+  var compare=false;
+  var coolerFailed=false;
+  document.getElementById(original?'cooler-old':'cooler-new').setAttribute('aria-current','page');
+  window.rainPreview={
+    view:function(isCompare){
+      compare=isCompare;
+      picker.hidden=!(compare||coolerFailed);
+      document.body.classList.toggle('cooler-view',compare);
+    },
+    ready:function(){
+      clearTimeout(startup);
+      if(failed) return;
+      feedback.hidden=true;
+      document.getElementById('controls').hidden=false;
+    },
+    fail:function(reason){
+      clearTimeout(startup);
+      failed=true;
+      document.getElementById('controls').hidden=true;
+      message.textContent=reason;
+      retry.hidden=false;
+      feedback.hidden=false;
+    },
+    cooler:function(state){
+      coolerFailed=state==='fallback';
+      picker.hidden=!(compare||coolerFailed);
+      document.getElementById('cooler-status').textContent={
+        loading:'正在加载 Blender 冷柜…',
+        ready:'向前靠近后可开关柜门，轻点饮料可查看或拿取',
+        original:'当前为原版。向前靠近后可开关柜门',
+        fallback:'新版资源加载失败，已显示原版。可刷新重试。'
+      }[state];
+    }
+  };
+  var startup=setTimeout(function(){
+    window.rainPreview.fail('3D 场景加载超时。请检查网络后重试。');
+  },25000);
+  window.rainPreview.view(params.get('view')==='cooler-art');
+  window.addEventListener('error',function(event){
+    var script=event.target;
+    if(script.tagName==='SCRIPT' && !script.hasAttribute('data-cooler-loader')){
+      window.rainPreview.fail('页面脚本加载失败。请检查网络后重试。');
+    }
+  },true);
+  document.getElementById('scene').addEventListener('webglcontextlost',function(){
+    window.rainPreview.fail('3D 渲染已中断。请关闭其他网页，再重新加载。');
+  });
+})();
+</script>
+
+<script src="vendor/three.min.js"></script>
+<script src="vendor/GLTFLoader-r128.js" defer data-cooler-loader></script>
+<script src="compare/night-v5-runtime.js"></script>
+<script>
+var query=new URLSearchParams(location.search);
+if(query.has('archived')) document.write('<script src="compare/fixed-view.js"><'+'/script>');
+else addEventListener('load',function(){
+  var btn=Array.from(document.querySelectorAll('[data-view]')).find(b=>b.dataset.view===query.get('view'));
+  if(btn) btn.click();
+  document.getElementById('photo').click();
+});
+</script></body></html>

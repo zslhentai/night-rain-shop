@@ -74,10 +74,11 @@
     var sparePosition = new T.Vector3().fromArray(anchors.stockShelf);
     var replacement = S.makeMeal();
     replacement.position.copy(sparePosition);
-    var carried = false;
+    var carried = false, replacingNpcMeal=false;
     var clerkHand = new T.Vector3(), bagSpot = new T.Vector3().fromArray(anchors.bagging);
     function restock(dt) {
       if (restockIndex < 0 && !S.checkoutClaimed && ((!S.stock.available && shopper.hasBag && shopper.group.position.z > -.8) || (S.stock.available && S.hasPurchasedStock?.() && shopper.action!=='pay'))) {
+        replacingNpcMeal=!S.stock.available && shopper.hasBag;
         restockIndex = 1; returning = false; pickupWait = 0;
       }
       if (restockIndex < 0) return;
@@ -103,9 +104,13 @@
         clerk.group.rotation.y = Math.PI;
         replacement.position.copy(clerkHand).lerp(shelf, Math.min(1,stockWait/1.2));
         if(stockWait >= 1.2) {
-          meal.position.copy(shelf); meal.visible = true;
-          S.stock.available = true; S.stock.restocks++;
-          if(S.releaseSlot){S.releaseSlot(ticket); ticket=null; S.restockPurchases('fresh');}
+          if(replacingNpcMeal){
+            meal.position.copy(shelf); meal.visible = true;
+            S.stock.available = true;
+            if(S.releaseSlot){S.releaseSlot(ticket);ticket=null;}
+          }
+          S.stock.restocks++;
+          if(S.restockPurchases) S.restockPurchases('fresh');
           replacement.visible = false; carried=false; returning = true; stockWait = 0; restockIndex--;
         }
       } else {
