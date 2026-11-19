@@ -7,7 +7,7 @@ permissions:
   contents: read
 jobs:
   render:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
@@ -17,7 +17,7 @@ jobs:
       - name: Install test-only browser
         run: |
           npm install --prefix "$RUNNER_TEMP/night-qa" --no-save playwright@1.56.1
-          "$RUNNER_TEMP/night-qa/node_modules/.bin/playwright" install --with-deps chromium
+          "$RUNNER_TEMP/night-qa/node_modules/.bin/playwright" install chromium --only-shell
       - name: Capture production HTML and GLB in Chromium
         env:
           NODE_PATH: ${{ runner.temp }}/night-qa/node_modules

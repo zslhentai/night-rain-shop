@@ -17,7 +17,7 @@ async function run(){
         const page=await context.newPage();
         page.setDefaultTimeout(45000);
         page.on('pageerror',e=>result.errors.push(String(e)));
-        page.on('console',e=>{if(e.type()==='error') result.errors.push(e.text());});
+        page.on('console',e=>{if(e.type()==='error' && !e.location().url.endsWith('favicon.ico')) result.errors.push(e.text());});
         page.on('response',r=>{if(r.status()>=400 && !r.url().endsWith('favicon.ico')) result.errors.push(r.status()+' '+r.url());});
         const url=new URL(release==='v5'?'compare/night-v5.html':'./',base);
         url.search='?view=aisle&quality=high';
@@ -35,6 +35,22 @@ async function run(){
           await page.evaluate(()=>new Promise(done=>requestAnimationFrame(()=>requestAnimationFrame(done))));
           const stats=await page.evaluate(()=>({calls:S.renderer.info.render.calls,triangles:S.renderer.info.render.triangles,
             eye:S.camera.position.toArray(),fov:S.camera.fov,objects:S.renderer.info.memory.geometries,textures:S.renderer.info.memory.textures}));
+          if(view==='aisle' || view==='cooler-art'){
+            const timing=await page.evaluate(()=>new Promise(resolve=>{
+              const intervals=[];let previous=0;
+              function sample(now){
+                if(previous) intervals.push(now-previous);
+                previous=now;
+                if(intervals.length<32){requestAnimationFrame(sample);return;}
+                const mean=intervals.reduce((a,b)=>a+b)/intervals.length;
+                const sorted=intervals.slice().sort((a,b)=>a-b);
+                resolve({frames:intervals.length,meanMs:+mean.toFixed(1),fps:+(1000/mean).toFixed(1),p95Ms:+sorted[Math.ceil(.95*sorted.length)-1].toFixed(1)});
+              }
+              requestAnimationFrame(sample);
+            }));
+            Object.assign(stats,timing);
+          }
+          console.log(device,release,view,JSON.stringify(stats));
           assert(stats.calls>0 && stats.triangles>1000);
           await page.screenshot({path:path.join(output,[device,release,view].join('-')+'.jpg'),type:'jpeg',quality:88});
           result.views.push({device,release,view,...stats});
