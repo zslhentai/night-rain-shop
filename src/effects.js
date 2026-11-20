@@ -239,7 +239,7 @@
         r.mesh.scale.y = 1 + 0.035 * Math.sin(t * 1.9 + r.phase);
       });
       S.puddles.forEach(function (p, i) {
-        if (p.mesh) p.mesh.material.opacity = 0.86 + 0.14 * Math.sin(t * 0.9 + i);
+        if (p.mesh) p.mesh.material.opacity = 0.39 + 0.07 * Math.sin(t * 0.9 + i);
       });
     });
 

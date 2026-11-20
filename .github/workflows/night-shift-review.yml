@@ -1,7 +1,7 @@
 name: Night shift visual review
 on:
   push:
-    branches: [feat/night-shift-v6]
+    branches: [feat/night-shift-v6, feat/minamo-fusion]
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,6 +15,11 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        if: github.ref_name == 'feat/minamo-fusion'
+        with:
+          ref: bfcd66b3c39fbb48337812b1048b289f5403a622
+          path: baseline-v6
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -35,7 +40,9 @@ jobs:
           python3 -m http.server 8174 --bind 127.0.0.1 &
           server=$!
           trap 'kill "$server"' EXIT
-          node tests/night-visual.cjs http://127.0.0.1:8174/ review-output "${{ matrix.device }}"
+          qa_script=tests/night-visual.cjs
+          if [[ "$GITHUB_REF_NAME" == "feat/minamo-fusion" ]]; then qa_script=tests/minamo-visual.cjs; fi
+          node "$qa_script" http://127.0.0.1:8174/ review-output "${{ matrix.device }}"
       - uses: actions/upload-artifact@v4
         if: always()
         with:

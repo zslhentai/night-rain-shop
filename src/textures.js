@@ -44,49 +44,25 @@
   var tex = S.tex = {};
 
   /* ---------- main store sign ---------- */
-  tex.brandWide = function () {
-    return S.makeTex(2048, 160, function (x, w, h) {
-      x.fillStyle = grad(x, 0, 0, 0, h, [[0, '#13726a'], [0.5, '#0b4a4c'], [1, '#08313d']]);
+  function fascia(w, h) {
+    return S.makeTex(w, h, function (x) {
+      x.fillStyle = grad(x, 0, 0, 0, h, [[0, '#ffefc7'], [.54, '#f5e7c9'], [1, '#e3cba2']]);
       x.fillRect(0, 0, w, h);
-      x.fillStyle = 'rgba(255,255,255,.09)';
-      for (var i = 0; i < 80; i++) x.fillRect(i * 26, 0, 2, h);
-      x.strokeStyle = 'rgba(160,255,228,.85)'; x.lineWidth = 5;
-      x.strokeRect(10, 10, w - 20, h - 20);
-      x.strokeStyle = 'rgba(255,255,255,.22)'; x.lineWidth = 2;
-      x.strokeRect(19, 19, w - 38, h - 38);
-
-      /* crescent moon + little roof = original brand mark */
-      x.beginPath(); x.arc(100, 78, 50, 0, Math.PI * 2);
-      x.fillStyle = '#ffb26b'; x.fill();
-      x.beginPath(); x.arc(80, 66, 46, 0, Math.PI * 2);
-      x.fillStyle = '#0b4a4c'; x.fill();
-      x.fillStyle = '#fff4d9'; x.fillRect(64, 116, 74, 8);
-      x.beginPath(); x.moveTo(58, 116); x.lineTo(101, 96); x.lineTo(144, 116); x.closePath(); x.fill();
-
-      txt(x, 'YORU MART', 186, 68, 82, '#f6fffb', '800');
-      x.shadowColor = 'rgba(120,255,220,.85)'; x.shadowBlur = 20;
-      txt(x, 'YORU MART', 186, 68, 82, 'rgba(215,255,244,.45)', '800');
-      x.shadowBlur = 0;
-      txt(x, 'よるのコンビニ ／ 24時間営業 ／ いつもの灯り', 192, 126, 25, '#a8e8d8', '600');
-
-      rr(x, 1810, 26, 210, 108, 12, '#ff9d5c');
-      txt(x, '24H', 1915, 68, 62, '#20323b', '800', 'center');
-      txt(x, 'OPEN', 1915, 112, 24, '#20323b', '800', 'center');
+      x.fillStyle = '#185b54';
+      x.fillRect(0, 0, w, 8); x.fillRect(0, h - 9, w, 9);
+      x.fillStyle = '#a97b4a'; x.fillRect(0, h - 14, w, 2);
+      x.beginPath(); x.arc(h*.55, h*.49, h*.27, 0, Math.PI*2); x.fillStyle='#175b52'; x.fill();
+      x.beginPath(); x.arc(h*.55, h*.47, h*.18, 0, Math.PI*2); x.fillStyle='#ffe2a3'; x.fill();
+      x.beginPath(); x.arc(h*.62, h*.41, h*.17, 0, Math.PI*2); x.fillStyle='#175b52'; x.fill();
+      x.fillStyle='#ffe2a3'; x.fillRect(h*.40,h*.62,h*.30,2);
+      txt(x, '夜町マート', h*1.03, h*.47, h*.5, '#153e37', '800');
+      txt(x, 'YORU MART', h*3.8, h*.51, h*.25, '#3d5e4d', '700');
+      rr(x, w-h*1.4, h*.27, h*1.13, h*.46, 5, '#245e52');
+      txt(x, '24H', w-h*.84, h*.51, h*.29, '#fff0cf', '800', 'center');
     });
-  };
-
-  tex.brandShort = function () {
-    return S.makeTex(1024, 100, function (x, w, h) {
-      x.fillStyle = grad(x, 0, 0, 0, h, [[0, '#13726a'], [1, '#08313d']]);
-      x.fillRect(0, 0, w, h);
-      x.strokeStyle = 'rgba(160,255,228,.85)'; x.lineWidth = 4;
-      x.strokeRect(8, 8, w - 16, h - 16);
-      txt(x, 'YORU MART', 112, 50, 56, '#f6fffb', '800');
-      txt(x, '24時間営業', 620, 52, 30, '#a8e8d8', '700');
-      rr(x, 892, 18, 110, 64, 8, '#ff9d5c');
-      txt(x, '24H', 947, 50, 38, '#20323b', '800', 'center');
-    });
-  };
+  }
+  tex.brandWide = function () { return fascia(1800,144); };
+  tex.brandShort = function () { return fascia(1400,144); };
 
   /* vertical neon sub-sign */
   tex.neonVertical = function (main, sub, bg) {

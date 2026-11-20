@@ -115,7 +115,7 @@
       [-7.9, -3.1, 1.9, 2.4, .1], [5.0, -6.2, 1.8, 1.3, .8]
     ];
     spots.forEach(function (p) {
-      var mat = S.basic(0xffffff, { map: puddleTex, transparent: true, depthWrite: false, opacity: .58, blending: T.AdditiveBlending });
+      var mat = S.basic(0xffffff, { map: puddleTex, transparent: true, depthWrite: false, opacity: .39, blending: T.AdditiveBlending });
       var m = groundPlane(p[2], p[3], mat, p[0], 0.031, p[1], p[4]);
       S.puddles.push({ x: p[0], z: p[1], r: Math.min(p[2], p[3]) * 0.42, mesh: m });
       /* a crisp specular rim */
@@ -132,12 +132,12 @@
       S.reflections.push({ mesh: m, base: op, phase: S.range(0, 6.28) });
       return m;
     }
-    refl(-1.6, 2.4, 1.5, 4.4, '#66f0cf', .42);
-    refl(0.9, 2.2, 1.3, 4.0, '#66f0cf', .30);
-    refl(-3.4, 1.9, 1.6, 3.6, '#ffcf8c', .40);
-    refl(-0.2, 2.0, 1.3, 3.4, '#ffcf8c', .30);
-    refl(3.2, 2.3, 1.1, 3.8, '#ff86a8', .36);
-    refl(4.0, 1.9, 0.8, 3.0, '#ff86a8', .22);
+    refl(-1.6, 2.4, 1.5, 4.4, '#a3cdb8', .12);
+    refl(0.9, 2.2, 1.3, 4.0, '#99c0b1', .10);
+    refl(-3.4, 1.9, 1.6, 3.6, '#ffcf8c', .24);
+    refl(-0.2, 2.0, 1.3, 3.4, '#ffcf8c', .20);
+    refl(3.2, 2.3, 1.1, 3.8, '#ff987e', .15);
+    refl(4.0, 1.9, 0.8, 3.0, '#ffc192', .16);
     refl(6.4, 3.6, 1.7, 5.0, '#a9d6ff', .34);
     refl(7.3, 4.1, 0.9, 4.2, '#a9d6ff', .18);
     refl(-7.7, -0.7, 1.2, 3.0, '#ffb77a', .32);

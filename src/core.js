@@ -76,11 +76,11 @@ window.S = window.S || {};
     scene.add(moon);
     scene.add(moon.target);
 
-    var signGlow = new T.PointLight(0x86ddd0, 0.40, 6, 2);
+    var signGlow = new T.PointLight(0xffdfaa, 0.50, 6, 2);
     signGlow.position.set(-1.5, 4.15, -1.2);
     scene.add(signGlow);
 
-    var vmLight = new T.PointLight(0xff84a8, 0.55, 6, 2);
+    var vmLight = new T.PointLight(0xffb082, 0.36, 5, 2);
     vmLight.position.set(3.4, 1.5, -0.6);
     scene.add(vmLight);
 
@@ -149,10 +149,10 @@ window.S = window.S || {};
       S.camera.fov = S.portrait ? (S.isStoreView(S.view) ? 68 : 76) : (view.fov || 48);
       S.camera.lookAt(new T.Vector3().fromArray(S.portrait && view.portraitTarget || view.target));
     } else {
-      C.theta = C.tTheta = .55;
-      C.phi = C.tPhi = 1.02;
-      C.radius = C.tRadius = S.portrait ? 112 : 43;
-      C.target.set(0, 1, -.5);
+      C.theta = C.tTheta = .49;
+      C.phi = C.tPhi = 1.00;
+      C.radius = C.tRadius = S.portrait ? 87 : 37;
+      C.target.set(-1.3, 1.05, -1.1);
       C.tTarget.copy(C.target);
       S.camera.fov = 38;
       updateCamera(1);

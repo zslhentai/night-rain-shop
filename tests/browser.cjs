@@ -53,7 +53,7 @@ async function main() {
 
       await page.goto(base.href);
       await page.waitForFunction(() => Boolean(window.S?.renderer && S.simulationTime > 0), {}, {timeout:12000});
-      assert.equal(await page.title(), '雨夜便利店 6.0 · 雨夜晚班');
+      assert.equal(await page.title(), '雨夜便利店 · 雨巷灯火');
       await chooseView(page,'interior');
       if (device === 'mobile') assert(await page.locator('#joystick').isVisible());
       else {

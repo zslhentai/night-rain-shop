@@ -71,12 +71,14 @@
   function vendingMachines() {
     [[2.95, 0], [3.98, 1]].forEach(function (v, idx) {
       var x = v[0], z = -0.82, warm = v[1];
-      var body = mat(warm ? 0xa8324c : 0x24538c);
+      var body = S.shopMaterial(warm ? 0xb93e32 : 0x315d65,{shininess:24,emissiveIntensity:.32});
       S.box(1.02, 2.05, 0.82, body, x, 1.08, z, { cast: true, outline: true, outlineOpacity: .45 });
       S.box(1.06, 0.12, 0.86, mat(0xd9e2e6), x, 2.14, z, {});
       /* lit product panel */
       S.box(0.86, 1.52, 0.04, S.basic(0xffffff), x - 0.04, 1.23, z + 0.43, {});
-      S.plane(0.80, 1.44, S.basic(0xffffff, { map: S.tex.vmPanel(warm ? 'warm' : 'cold') }), x - 0.04, 1.23, z + 0.457, {});
+      var panel = S.plane(0.80, 1.44, S.basic(0xffffff, { map: S.tex.vmPanel(warm ? 'warm' : 'cold') }), x - 0.04, 1.23, z + 0.457, {});
+      if (!S.wetVending) S.wetVending = [];
+      S.wetVending.push({ panel:panel, color:warm ? 0x993427 : 0x294750 });
       S.box(0.06, 1.52, 0.05, mat(0x2a3646), x + 0.42, 1.23, z + 0.45, {});
       /* buttons + coin slot */
       for (var b = 0; b < 4; b++) S.cyl(0.03, 0.03, 0.02, 8, S.basic(b === 0 ? 0xff9d8a : 0xc9d9e2), x + 0.42, 1.62 - b * 0.14, z + 0.48, { rx: Math.PI / 2 });
@@ -86,9 +88,9 @@
       S.box(1.02, 0.10, 0.82, mat(0x2a3646), x, 0.06, z, {});
       /* top light box */
       S.plane(0.86, 0.10, S.basic(0xffffff, { map: S.tex.label(warm ? 'あたたかい' : 'つめたい', '', warm ? '#a8324c' : '#24538c', '#f4f9ff'), transparent: true }), x, 2.14, z + 0.44, {});
-      var g = S.glow(x, 1.4, z + 0.55, warm ? 0xff8ba6 : 0x8dd0f5, 2.6, .28);
-      S.neonExtras.push({ sprite: g, base: .28, phase: idx * 2.1 });
-      S.glow(x, 2.14, z + 0.5, warm ? 0xff9ab0 : 0x9cd8ff, 1.5, .25);
+      var g = S.glow(x, 1.4, z + 0.55, warm ? 0xffac7e : 0x9ed8dd, 2.2, .16);
+      S.neonExtras.push({ sprite: g, base: .16, phase: idx * 2.1 });
+      S.glow(x, 2.14, z + 0.5, warm ? 0xffbc91 : 0x9cd8df, 1.4, .13);
     });
     /* bottle recycle bin */
     S.box(0.56, 0.72, 0.52, mat(0x3f6f7c), 4.55, 0.42, -1.15, { outline: true, outlineOpacity: .35 });

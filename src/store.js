@@ -13,15 +13,15 @@
 
     var wall = S.toon(0xd6d2c6);
     var wallIn = S.toon(0xdcd9cf);
-    var frame = S.toon(0x33465d);
-    var frameHi = S.toon(0x6d809a);
-    var roofMat = S.toon(0x465a70);
-    var awning = S.toon(0x3b5064);
+    var frame = S.toon(0x2a403e);
+    var frameHi = S.toon(0x63847b);
+    var roofMat = S.toon(0x34485a);
+    var awning = S.toon(0x364c52);
     var dark = S.toon(0x1d2a3c);
-    var teal = S.toon(0x114b4c);
+    var teal = S.toon(0x234f49);
     var steel = S.toon(0x9aa9b6);
     var warmLight = S.basic(0xffdca2);
-    var neonGreen = S.basic(0x76f5d2);
+    var enamel = S.shopMaterial(0x317468,{emissiveIntensity:.24});
 
     var floorMap = S.tex.shopFloor();
     /* ---------- interior floor / ceiling / solid walls ---------- */
@@ -115,7 +115,7 @@
 
     /* corner column with a neon edge */
     S.box(0.26, 3.30, 0.26, frame, x1, 1.75, z1, { cast: true, outline: true, outlineOpacity: .5 });
-    S.box(0.045, 2.95, 0.045, neonGreen, x1 + 0.145, 1.62, z1 + 0.145, {});
+    S.box(0.045, 2.95, 0.045, enamel, x1 + 0.145, 1.62, z1 + 0.145, {});
     S.glow(x1 + 0.16, 2.2, z1 + 0.16, 0x54e8c4, 1.5, .30);
 
     /* ---------- automatic sliding door ---------- */
@@ -185,41 +185,33 @@
     /* downpipe */
     S.tube([[x0 - 0.05, 3.18, z1 + 0.9], [x0 - 0.18, 2.4, z1 + 0.9], [x0 - 0.18, 0.2, z1 + 0.9], [x0 - 0.18, 0.08, z1 + 0.55]], 0.055, S.toon(0x8e9cac));
 
-    /* ---------- main illuminated signage (L shape) ---------- */
+    /* ---------- warm backlit signage and painted bands ---------- */
     var signMatFront = S.basic(0xffffff, { map: S.tex.brandWide() });
     var signMatRight = S.basic(0xffffff, { map: S.tex.brandShort() });
     S.signMaterials.push(signMatFront, signMatRight);
     S.box(W + 0.75, 0.80, 0.14, teal, cx, 3.94, z1 + 0.08, { cast: true, outline: true, outlineOpacity: .5 });
     S.box(0.14, 0.80, D + 0.62, teal, x1 + 0.08, 3.94, cz, { cast: true, outline: true, outlineOpacity: .5 });
-    S.plane(W + 0.62, 0.72, signMatFront, cx, 3.94, z1 + 0.16, {});
-    S.plane(D + 0.48, 0.72, signMatRight, x1 + 0.16, 3.94, cz, { ry: Math.PI / 2 });
-    /* crisp neon rails above and below */
-    S.box(W + 0.75, 0.035, 0.05, neonGreen, cx, 4.35, z1 + 0.16, {});
-    S.box(W + 0.75, 0.035, 0.05, neonGreen, cx, 3.53, z1 + 0.16, {});
-    S.box(0.05, 0.035, D + 0.62, neonGreen, x1 + 0.16, 4.35, cz, {});
-    S.box(0.05, 0.035, D + 0.62, neonGreen, x1 + 0.16, 3.53, cz, {});
-    for (var sg = 0; sg < 5; sg++) S.glow(-5.6 + sg * 2.2, 3.95, z1 + 0.25, 0x58eac8, 1.75, .12);
-    for (var sg2 = 0; sg2 < 3; sg2++) S.glow(x1 + 0.28, 3.95, -7.4 + sg2 * 2.5, 0x58eac8, 1.65, .11);
-
-    /* hanging vertical neon sign at the corner */
-    var vSign = S.basic(0xffffff, { map: S.tex.neonVertical('おでん', 'コーヒー', '#6a2f58') });
-    S.signMaterials.push(vSign);
-    S.box(0.72, 2.02, 0.10, S.toon(0x4a2545), 3.62, 2.44, -1.06, { outline: true, outlineOpacity: .5 });
-    S.plane(0.64, 1.92, vSign, 3.62, 2.44, -1.00, {});
-    S.box(0.05, 1.92, 0.05, S.basic(0xff9ad4), 3.29, 2.44, -0.99, {});
-    S.box(0.05, 1.92, 0.05, S.basic(0xff9ad4), 3.95, 2.44, -0.99, {});
-    S.glow(3.62, 2.44, -0.92, 0xff77c8, 2.8, .26);
-    S.box(0.05, 0.55, 0.05, frameHi, 3.62, 3.72, -1.06, {});
+    var frontFascia = S.plane(W + 0.62, 0.72, signMatFront, cx, 3.94, z1 + 0.16, {});
+    var sideFascia = S.plane(D + 0.48, 0.72, signMatRight, x1 + 0.16, 3.94, cz, { ry: Math.PI / 2 });
+    S.wetShop = { x0:x0, x1:x1, z1:z1, depth:D, fascia:[frontFascia,sideFascia] };
+    S.box(W + 0.75, 0.058, 0.05, enamel, cx, 4.35, z1 + 0.16, {});
+    S.box(W + 0.75, 0.058, 0.05, enamel, cx, 3.53, z1 + 0.16, {});
+    S.box(0.05, 0.058, D + 0.62, enamel, x1 + 0.16, 4.35, cz, {});
+    S.box(0.05, 0.058, D + 0.62, enamel, x1 + 0.16, 3.53, cz, {});
+    S.box(W + 0.80, 0.10, 0.07, enamel, cx, 3.25, z1 + 1.06, {});
+    S.box(0.07, 0.10, D + 0.80, enamel, x1 + 1.06, 3.25, cz, {});
+    for (var sg = 0; sg < 3; sg++) S.glow(-4.8 + sg * 3.2, 3.92, z1 + 0.23, 0xffde9d, 1.9, .08);
+    S.glow(x1 + 0.24, 3.91, z1 - 2.1, 0xffde9d, 1.75, .08);
 
     /* ---------- pylon sign on the left of the forecourt ---------- */
     S.box(1.25, 0.16, 0.85, dark, -8.75, 0.14, -0.55, { outline: true, outlineOpacity: .4 });
     S.box(0.24, 3.5, 0.24, S.toon(0x4b5c70), -8.75, 1.9, -0.55, {});
-    var py = S.basic(0xffffff, { map: S.tex.neonVertical('コンビニ', '24H 営業中', '#165a5c') });
+    var py = S.basic(0xffffff, { map: S.tex.label('夜町マート','24H','#f2dfb3','#28544a') });
     S.signMaterials.push(py);
     S.box(1.05, 2.55, 0.12, teal, -8.75, 3.05, -0.55, { outline: true, outlineOpacity: .5 });
     S.plane(0.96, 2.44, py, -8.75, 3.05, -0.48, {});
-    S.box(1.05, 0.06, 0.08, neonGreen, -8.75, 4.36, -0.48, {});
-    S.glow(-8.75, 3.1, -0.4, 0x5ce6c6, 3.2, .22);
+    S.box(1.05, 0.06, 0.08, enamel, -8.75, 4.36, -0.48, {});
+    S.glow(-8.75, 3.1, -0.4, 0xffdfaa, 2.9, .13);
 
     /* ---------- entrance mat + small forecourt details ---------- */
     S.plane(2.95, 1.10, S.basic(0xffffff, { map: S.tex.mat(), transparent: true }), -0.8, 0.078, -1.02, { rx: -Math.PI / 2 });
