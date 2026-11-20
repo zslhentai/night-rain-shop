@@ -36,7 +36,7 @@ async function run() {
       url.searchParams.set('view','overview');
       await page.goto(url.href);
       await page.waitForFunction(()=>window.S?.coolerSampleState==='ready' && window.captureFrame,{},{timeout:60000});
-      for (const view of ['overview','entrance', ...(release==='fusion'?['aisle']:[])]) {
+      for (const view of ['overview','entrance', ...(release==='fusion'?['corner','aisle']:[])]) {
         await page.evaluate(view=>{
           S.setView(view);
           captureFrame(performance.now());

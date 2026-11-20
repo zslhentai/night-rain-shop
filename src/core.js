@@ -141,7 +141,7 @@ window.S = window.S || {};
   S.setView = function (name) {
     if(S.returnProduct) S.returnProduct();
     if(S.resetWalkInput) S.resetWalkInput();
-    S.view = views[name] ? name : 'overview';
+    S.view = views[name] || name==='corner' ? name : 'overview';
     S.portrait = window.innerWidth < window.innerHeight;
     var view = views[S.view];
     if (view) {
@@ -149,10 +149,12 @@ window.S = window.S || {};
       S.camera.fov = S.portrait ? (S.isStoreView(S.view) ? 68 : 76) : (view.fov || 48);
       S.camera.lookAt(new T.Vector3().fromArray(S.portrait && view.portraitTarget || view.target));
     } else {
-      C.theta = C.tTheta = .49;
-      C.phi = C.tPhi = 1.00;
-      C.radius = C.tRadius = S.portrait ? 87 : 37;
-      C.target.set(-1.3, 1.05, -1.1);
+      var corner = name==='corner';
+      C.theta = C.tTheta = corner ? .41 : .49;
+      C.phi = C.tPhi = corner ? 1.08 : 1.00;
+      C.radius = C.tRadius = corner ? (S.portrait ? 47 : 24) : (S.portrait ? 91 : 40);
+      if(corner) C.target.set(-.65,1.55,-1.55);
+      else C.target.set(-1.3,1.05,-1.1);
       C.tTarget.copy(C.target);
       S.camera.fov = 38;
       updateCamera(1);
@@ -161,7 +163,8 @@ window.S = window.S || {};
     S.scene.fog.density = view ? .0115 : S.scene.fog.density;
     if (S.refreshAudio) S.refreshAudio();
   };
-  S.resetView = function () { S.setView('overview'); };
+  S.resetView = function () { S.setView('corner'); };
+  S.isOrbitView = function () { return S.view==='corner' || S.view==='overview'; };
   var C = {
     theta: 0.70, phi: 1.13, radius: 27.5,
     tTheta: 0.70, tPhi: 1.13, tRadius: 27.5,
@@ -201,7 +204,7 @@ window.S = window.S || {};
     canvas.addEventListener('pointermove', function (e) {
       if (!pointers[e.pointerId]) return;
       pointers[e.pointerId].x = e.clientX; pointers[e.pointerId].y = e.clientY;
-      if (S.view !== 'overview') {
+      if (!S.isOrbitView()) {
         if(start && Math.hypot(e.clientX-start.x,e.clientY-start.y)>7) start.dragged=true;
         if(Object.keys(pointers).length===1 && document.pointerLockElement!==canvas &&
             (S.holdingProduct?.() || e.pointerType!=='touch' || !S.isStoreView(S.view) || e.clientX>innerWidth*.42)) {
@@ -254,7 +257,7 @@ window.S = window.S || {};
     canvas.addEventListener('contextmenu', function (e) { e.preventDefault(); });
     canvas.addEventListener('wheel', function (e) {
       e.preventDefault();
-      if (S.view !== 'overview') { S.walkStep(0,Math.sign(e.deltaY)*.22); return; }
+      if (!S.isOrbitView()) { S.walkStep(0,Math.sign(e.deltaY)*.22); return; }
       C.tRadius = clamp(C.tRadius * (1 + Math.sign(e.deltaY) * Math.min(Math.abs(e.deltaY) * 0.0012, 0.16)), 12, 140);
     }, { passive: false });
   }
@@ -278,7 +281,7 @@ window.S = window.S || {};
     S.scene.fog.density = .0115 * Math.min(1, 43 / C.radius);
   }
   S.updateCamera = function(dt) {
-    if(S.view === 'overview') updateCamera(1-Math.pow(.001,dt));
+    if(S.isOrbitView()) updateCamera(1-Math.pow(.001,dt));
     else S.updateWalk(dt);
   };
 

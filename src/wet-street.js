@@ -86,14 +86,14 @@
           float grain = noise(p * vec2(21.,77.));
           float rivulets = noise(p * vec2(3.8,29.) + vec2(0.,age*.65));
           float patches = noise(p * vec2(1.35,1.75));
-          uv += vec2((rivulets-.5)*.015, (grain-.5)*.009);
+          uv += vec2((rivulets-.5)*.028, (grain-.5)*.012);
           if (any(lessThan(uv,vec2(.003))) || any(greaterThan(uv,vec2(.997)))) discard;
           vec4 color = texture2D(mirrorMap,uv);
-          float wet = smoothstep(.12,.80,patches*.72 + rivulets*.28);
+          float wet = smoothstep(.32,.76,patches*.66 + rivulets*.34);
           float facing = normalize(cameraPosition-world).y;
           float fresnel = mix(.78,1.12,1.-clamp(facing,0.,1.));
-          float alpha = color.a * (.24+.47*wet) * (.42+.58*grain) * fresnel * mix(.81,1.,rain);
-          gl_FragColor = vec4(color.rgb,alpha);
+          float alpha = color.a * (.08+.64*wet) * (.38+.62*grain) * fresnel * mix(.81,1.,rain);
+          gl_FragColor = vec4(color.rgb*vec3(1.0,.88,.69),alpha);
           #include <tonemapping_fragment>
           #include <encodings_fragment>
         }`
@@ -105,7 +105,7 @@
     var lastDraw = -Infinity, planeY = asphalt.position.y;
     S.updateWetStreet = function (stamp, time) {
       var view = S.camera, renderer = S.renderer;
-      var inView = (S.view==='overview' || S.view==='entrance') &&
+      var inView = (S.isOrbitView() || S.view==='entrance') &&
         view.position.y > planeY && (view.position.z > shop.z1 || view.position.x > shop.x1);
       asphalt.visible = inView;
       if (!inView) return;

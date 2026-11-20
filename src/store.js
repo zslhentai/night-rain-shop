@@ -116,7 +116,7 @@
     /* corner column with a neon edge */
     S.box(0.26, 3.30, 0.26, frame, x1, 1.75, z1, { cast: true, outline: true, outlineOpacity: .5 });
     S.box(0.045, 2.95, 0.045, enamel, x1 + 0.145, 1.62, z1 + 0.145, {});
-    S.glow(x1 + 0.16, 2.2, z1 + 0.16, 0x54e8c4, 1.5, .30);
+    S.glow(x1 + 0.16, 2.2, z1 + 0.16, 0xaac5ad, 1.25, .11);
 
     /* ---------- automatic sliding door ---------- */
     var doorZ = zf + 0.05;
@@ -173,6 +173,23 @@
     var doorwayReflection=S.basic(0xffffff,{map:wetLight,transparent:true,opacity:.38,
       blending:T.AdditiveBlending,depthWrite:false});
     S.groundPlane(3.1,1.70,doorwayReflection,-.8,.073,.18);
+    var spill = S.makeTex(256,96,function(ctx,w,h){
+      var wash = ctx.createRadialGradient(w*.5,h*.39,6,w*.5,h*.39,w*.5);
+      wash.addColorStop(0,'rgba(255,187,104,.72)');
+      wash.addColorStop(.68,'rgba(255,193,117,.43)');
+      wash.addColorStop(1,'rgba(255,196,129,0)');
+      ctx.fillStyle=wash;ctx.fillRect(0,0,w,h);
+      ctx.globalCompositeOperation='destination-in';
+      var depth=ctx.createLinearGradient(0,0,0,h);
+      depth.addColorStop(0,'rgba(255,255,255,0)');
+      depth.addColorStop(.26,'rgba(255,255,255,1)');
+      depth.addColorStop(.85,'rgba(255,255,255,.78)');
+      depth.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle=depth;ctx.fillRect(0,0,w,h);
+    });
+    var spillMat=S.basic(0xffffff,{map:spill,transparent:true,opacity:.52,
+      blending:T.AdditiveBlending,depthWrite:false});
+    S.groundPlane(W+1.1,2.30,spillMat,cx,.0615,-.50);
     /* awning posts + gutter */
     [[-5.95, z1 + 0.98], [2.62, z1 + 0.98], [x1 + 0.98, -7.9]].forEach(function (p) {
       S.cyl(0.045, 0.05, 3.05, 8, steel, p[0], 1.60, p[1], {});
@@ -193,7 +210,7 @@
     S.box(0.14, 0.80, D + 0.62, teal, x1 + 0.08, 3.94, cz, { cast: true, outline: true, outlineOpacity: .5 });
     var frontFascia = S.plane(W + 0.62, 0.72, signMatFront, cx, 3.94, z1 + 0.16, {});
     var sideFascia = S.plane(D + 0.48, 0.72, signMatRight, x1 + 0.16, 3.94, cz, { ry: Math.PI / 2 });
-    S.wetShop = { x0:x0, x1:x1, z1:z1, depth:D, fascia:[frontFascia,sideFascia] };
+    S.wetShop = { x0:x0, x1:x1, z1:z1, fascia:[frontFascia,sideFascia] };
     S.box(W + 0.75, 0.058, 0.05, enamel, cx, 4.35, z1 + 0.16, {});
     S.box(W + 0.75, 0.058, 0.05, enamel, cx, 3.53, z1 + 0.16, {});
     S.box(0.05, 0.058, D + 0.62, enamel, x1 + 0.16, 4.35, cz, {});
