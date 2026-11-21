@@ -1,7 +1,7 @@
 name: Night shift visual review
 on:
   push:
-    branches: [feat/night-shift-v6, feat/minamo-fusion]
+    branches: [feat/night-shift-v6, feat/minamo-fusion, feat/yomachi-street-walk]
   workflow_dispatch:
 permissions:
   contents: read
@@ -16,9 +16,9 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
-        if: github.ref_name == 'feat/minamo-fusion'
+        if: github.ref_name == 'feat/minamo-fusion' || github.ref_name == 'feat/yomachi-street-walk'
         with:
-          ref: 1b12c613bf4ee799b916ad369c1e5e5cf1a9c59c
+          ref: ${{ github.ref_name == 'feat/yomachi-street-walk' && 'efeff42943f5bb09a4a980514d99fed42c5dccf4' || '1b12c613bf4ee799b916ad369c1e5e5cf1a9c59c' }}
           path: baseline-v6
       - uses: actions/setup-node@v4
         with:
@@ -42,6 +42,7 @@ jobs:
           trap 'kill "$server"' EXIT
           qa_script=tests/night-visual.cjs
           if [[ "$GITHUB_REF_NAME" == "feat/minamo-fusion" ]]; then qa_script=tests/minamo-visual.cjs; fi
+          if [[ "$GITHUB_REF_NAME" == "feat/yomachi-street-walk" ]]; then qa_script=tests/street-visual.cjs; fi
           node "$qa_script" http://127.0.0.1:8174/ review-output "${{ matrix.device }}"
       - uses: actions/upload-artifact@v4
         if: always()
