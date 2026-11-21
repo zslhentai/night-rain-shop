@@ -43,6 +43,17 @@
 
   var tex = S.tex = {};
 
+  tex.tactile = function () {
+    return S.makeTex(128,64,function(ctx,w,h){
+      ctx.fillStyle='#c9b676';ctx.fillRect(0,0,w,h);
+      ctx.fillStyle='#a79359';ctx.fillRect(w/2,0,2,h);
+      for(var x=9;x<w-4;x+=16) for(var y=8;y<h-4;y+=16){
+        ctx.fillStyle='#988449';ctx.beginPath();ctx.arc(x+1,y+1,3.6,0,Math.PI*2);ctx.fill();
+        ctx.fillStyle='#decc8b';ctx.beginPath();ctx.arc(x,y,2.7,0,Math.PI*2);ctx.fill();
+      }
+    });
+  };
+
   /* ---------- main store sign ---------- */
   function fascia(w, h) {
     return S.makeTex(w, h, function (x) {

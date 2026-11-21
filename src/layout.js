@@ -12,6 +12,40 @@
   S.layout.entrance = { x: -.8, threshold: -1.55, sensorFront: -.35, sensorBack: -2.15 };
   S.layout.umbrellaStandX = -3.92;
   S.layout.busStop = { curbX: 11.5, waitX: 12.3, boardingZ: 6.1, laneX: 10.26 };
+  // Walkable center-lines overlap at the curb ramps and street corners.
+  S.layout.streetWalk = {
+    spawn: [12.18, 7.6],
+    crossing: [4.64, 10.68, 1.49, 2.81],
+    paths: [
+      [-13.53, 4.13, -.83, .55], // continuous store and diner pavement
+      [-1.23, -.37, -1.84, -.57], // automatic door approach
+      [3.40, 4.79, .28, 2.81], // shop-side corner and ramp
+      [10.53, 12.30, 1.49, 2.81], // bus-side ramp
+      [11.72, 13.57, -2.2, 11.71],
+      [-13.58, -10.34, -4.06, .37], // diner frontage
+      [-9.14, -6.52, -7.14, .20], // service alley
+      [2.99, 4.09, -7.70, -.34] // vending machine service sidewalk
+    ],
+    // Footprints for props the player can actually walk around.
+    obstacles: [
+      [12.98,13.57,6.77,8.43], [13.57,13.69,5.28,5.42],
+      [13.57,13.69,8.68,8.81], [13.12,13.39,5.35,5.58],
+      [12.51,12.69,4.31,4.49], [11.69,11.91,.98,1.22],
+      [3.70,3.91,3.06,3.33], [2.44,3.46,-1.23,-.41],
+      [3.47,4.49,-1.23,-.41], [-3.88,-3.59,-1.12,-.36],
+      [-5.21,-3.93,-.53,-.10], [-7.77,-7.13,-1.04,-.40],
+      [-8.86,-8.44,-5.21,-4.79], [-7.67,-6.53,-7.16,-6.65],
+      [-12,-11.61,1.43,1.77]
+    ]
+  };
+  S.streetZone = function (p) {
+    var a=S.layout.entrance;
+    if(p.x>S.SHOP.x0 && p.x<S.SHOP.x1 && p.z>S.SHOP.z0 && p.z<S.SHOP.z1) return 'inside';
+    if(p.x>11.87 && p.x<13.8 && p.z>5.2 && p.z<8.9) return 'stop';
+    if(p.x>-14 && p.x<-9.6 && p.z>-4.7 && p.z<-3.6) return 'diner';
+    if(Math.abs(p.x-a.x)<4.76 && p.z>a.threshold-.1 && p.z<-.62) return 'awning';
+    return 'street';
+  };
   // Coordinates of the fixtures and their collision footprints in the existing shell.
   var fixtures = {
     stockroom: {bounds:[-6.1,-4.01,-8.5,-6.5]},
@@ -67,6 +101,7 @@
       if (x >= 10.6 && x <= 11.5) return .085 * (x - 10.6) / .9;
     }
     if (x >= 11.5 || z >= 10.75) return .085;
+    if (x>2.8 && x<4.3 && z<1.35 && z>.55) return .06;
     if (x < -10 || (x < 4.4 && z < .75)) return .06;
     return .008;
   };

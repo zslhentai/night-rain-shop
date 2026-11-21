@@ -96,7 +96,11 @@ window.S = window.S || {};
     if(S.renderer.getPixelRatio()!==pixelRatio) S.renderer.setPixelRatio(pixelRatio);
     S.renderer.setSize(window.innerWidth, window.innerHeight);
     var portrait = window.innerWidth < window.innerHeight;
-    if (portrait !== S.portrait) S.setView(S.view);
+    if(portrait!==S.portrait && S.view==='street-walk'){
+      S.portrait=portrait;
+      S.camera.fov=portrait?67:61;
+      S.camera.updateProjectionMatrix();
+    } else if (portrait !== S.portrait) S.setView(S.view);
   }
 
   /* ---------- orbit control: drag = rotate, wheel = zoom, right-drag = pan ---------- */
@@ -133,12 +137,17 @@ window.S = window.S || {};
     drinks: { eye: [-.8,1.65,-6.7], target: [-1.6,1.25,-8.1], fov: 74 },
     diner: { eye: [-12.85, 2.2, .15], target: [-11.8, 1.42, -4.25],
       portraitEye: [-12.6, 2.05, .75], portraitTarget: [-11.8, 1.48, -4.25], fov: 51 },
+    alley: {eye:[-7.90,1.86,.55], target:[-7.85,1.42,-6.1],
+      portraitEye:[-7.9,1.77,.45],portraitTarget:[-7.84,1.46,-5.8], fov:51},
+    'street-walk': {eye:[12.18,1.685,7.6],target:[11.94,1.60,2.15],fov:61},
     stop: { eye: [11.48, 2.22, 10.4], target: [13.0, 1.58, 6.96],
       portraitEye: [11.52, 2.12, 11.05], portraitTarget: [13.0, 1.66, 6.96], fov: 55 }
   };
   S.isStoreView = function(view) {
+    if(view==='street-walk') return !!S.camera && S.streetZone(S.camera.position)==='inside';
     return view === 'cooler-art' || view === 'aisle' || view === 'interior' || view === 'bento' || view === 'checkout' || view === 'drinks';
   };
+  S.isWalkView = function(view){return view==='street-walk' || S.isStoreView(view);};
 
   S.setView = function (name) {
     if(S.returnProduct) S.returnProduct();
@@ -148,21 +157,25 @@ window.S = window.S || {};
     var view = views[S.view];
     if (view) {
       S.camera.position.fromArray(S.portrait && view.portraitEye || view.eye);
-      S.camera.fov = S.portrait ? (S.isStoreView(S.view) ? 68 : 76) : (view.fov || 48);
+      if(S.view==='street-walk'){
+        var spawn=S.layout.streetWalk.spawn;
+        S.camera.position.set(spawn[0],1.6+S.groundHeight(spawn[0],spawn[1]),spawn[1]);
+      }
+      S.camera.fov = S.portrait ? (S.view==='street-walk' ? 67 : S.isStoreView(S.view) ? 68 : 76) : (view.fov || 48);
       S.camera.lookAt(new T.Vector3().fromArray(S.portrait && view.portraitTarget || view.target));
     } else {
       var corner = name==='corner';
-      C.theta = C.tTheta = corner ? .41 : .49;
-      C.phi = C.tPhi = corner ? 1.08 : 1.00;
-      C.radius = C.tRadius = corner ? (S.portrait ? 47 : 24) : (S.portrait ? 91 : 40);
-      if(corner) C.target.set(-.65,1.55,-1.55);
+      C.theta = C.tTheta = corner ? .31 : .49;
+      C.phi = C.tPhi = corner ? 1.29 : 1.08;
+      C.radius = C.tRadius = corner ? (S.portrait ? 39 : 23.5) : (S.portrait ? 86 : 40);
+      if(corner) C.target.set(-.65,1.49,-1.95);
       else C.target.set(-1.3,1.05,-1.1);
       C.tTarget.copy(C.target);
       S.camera.fov = 38;
       updateCamera(1);
     }
     S.camera.updateProjectionMatrix();
-    S.scene.fog.density = view ? .0115 : S.scene.fog.density;
+    S.scene.fog.density = view ? .017 : S.scene.fog.density;
     if (S.refreshAudio) S.refreshAudio();
   };
   S.resetView = function () { S.setView('corner'); };
@@ -187,7 +200,7 @@ window.S = window.S || {};
       S.camera.quaternion.setFromEuler(angles);
     }
     document.addEventListener('mousemove',function(e){
-      if(document.pointerLockElement===canvas && S.isStoreView(S.view)) turn(e.movementX,e.movementY);
+      if(document.pointerLockElement===canvas && S.isWalkView(S.view)) turn(e.movementX,e.movementY);
     });
 
     canvas.addEventListener('pointerdown', function (e) {
@@ -209,7 +222,7 @@ window.S = window.S || {};
       if (!S.isOrbitView()) {
         if(start && Math.hypot(e.clientX-start.x,e.clientY-start.y)>7) start.dragged=true;
         if(Object.keys(pointers).length===1 && document.pointerLockElement!==canvas &&
-            (S.holdingProduct?.() || e.pointerType!=='touch' || !S.isStoreView(S.view) || e.clientX>innerWidth*.42)) {
+            (S.holdingProduct?.() || e.pointerType!=='touch' || !S.isWalkView(S.view) || e.clientX>innerWidth*.42)) {
           turn(e.clientX-lastX,e.clientY-lastY);
         }
         lastX=e.clientX; lastY=e.clientY;

@@ -129,16 +129,18 @@
     <button id="errand-undo" type="button" hidden>归还一件</button>
     <button id="errand-exit" type="button">退出</button>
   </section>
-  <div class="toolbar" id="walk-controls" aria-label="店内移动" hidden>
+  <div class="toolbar" id="walk-controls" aria-label="移动与观察" hidden>
     <button type="button" id="walk-forward">向前</button><button type="button" id="walk-back">后退</button>
     <button type="button" id="inspect-product">查看商品</button>
     <button type="button" id="mouse-lock" aria-pressed="false">锁定鼠标</button>
     <button type="button" id="cold-door" hidden>打开冷柜</button>
   </div>
+  <p id="street-walk-hint" hidden style="margin:.28rem 0;color:#edf4ee;text-shadow:0 1px 4px #07131b;font-size:.82rem">沿人行道往斑马线走</p>
   <nav class="toolbar" id="view-list" aria-label="场景镜头">
     <button type="button" data-view="corner" aria-pressed="true">街角</button>
     <button type="button" data-view="overview" aria-pressed="false">全景</button>
     <button type="button" data-view="entrance" aria-pressed="false">店门口</button>
+    <button type="button" data-view="street-walk" aria-pressed="false">街上漫步</button>
     <button type="button" data-view="interior" aria-pressed="false">店内</button>
     <button type="button" data-view="aisle" aria-pressed="false">货架</button>
     <button type="button" data-view="bento" aria-pressed="false">鲜食柜</button>
@@ -147,11 +149,12 @@
     <button type="button" data-view="drinks" aria-pressed="false">饮料柜</button>
     <button type="button" data-view="diner" aria-pressed="false">食堂</button>
     <button type="button" data-view="stop" aria-pressed="false">公交站</button>
+    <button type="button" data-view="alley" aria-pressed="false">后巷</button>
   </nav>
   <div id="settings-list" class="toolbar" hidden>
     <button id="rain-audio" type="button" aria-pressed="false">雨声：关</button>
     <input id="rain-volume" type="range" min="0" max="100" value="35" aria-label="雨声音量" aria-valuetext="35%">
-    <select id="weather" aria-label="降雨强度"><option value="1">中雨</option><option value=".46">小雨</option></select>
+    <select id="weather" aria-label="降雨强度"><option value=".46">小雨</option><option value="1" selected>中雨</option><option value="1.28">大雨</option></select>
     <select id="quality" aria-label="画质"><option value="high">高清</option><option value="low">流畅</option></select>
     <button id="perf-toggle" type="button" aria-controls="perf-panel" aria-expanded="false" disabled>性能</button>
     <button id="photo" type="button">拍照模式</button>
@@ -241,6 +244,7 @@
 <script src="src/street.js"></script>
 <script src="src/buildings.js"></script>
 <script src="src/details.js"></script>
+<script src="src/street-district.js"></script>
 <script src="src/people.js"></script>
 <script src="src/bus.js"></script>
 <script src="src/effects.js"></script>

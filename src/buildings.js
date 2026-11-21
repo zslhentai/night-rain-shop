@@ -95,14 +95,13 @@
     });
   }
   S.buildNeighborhood = function () {
-    var asphalt = S.toon(0xffffff, { map: S.tex.asphalt() });
     var pavement = S.toon(0xffffff, { map: S.tex.pavement() });
     var curb = S.toon(0x748494);
     // New outer sidewalks connect the crossing to both sides of the block.
-    S.box(2.4, .12, 26, curb, 12.7, .02, 0, {});
-    S.groundPlane(2.4, 26, pavement, 12.7, .085, 0);
-    S.box(28, .12, 2.3, curb, 0, .02, 11.85, {});
-    S.groundPlane(28, 2.2, pavement, 0, .085, 11.85);
+    S.box(2.4, .12, 62, curb, 12.7, .02, 0, {});
+    S.groundPlane(2.4, 62, pavement, 12.7, .085, 0);
+    S.box(46, .12, 2.3, curb, -11.5, .02, 11.85, {});
+    S.groundPlane(46, 2.2, pavement, -11.5, .085, 11.85);
     S.groundPlane(3.8, 15, pavement, -11.9, .06, -5.5);
     function ramp(x0, x1, h0, h1) {
       var geometry = new T.BufferGeometry();

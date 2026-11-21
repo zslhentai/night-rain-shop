@@ -1,5 +1,5 @@
 /* ============================================================
-   base.js — square display plinth, wet L-shaped street corner
+   base.js — wet L-shaped street corner and connected sidewalks
    ============================================================ */
 (function (S) {
   var T = THREE;
@@ -13,9 +13,6 @@
   S.groundPlane = groundPlane;
 
   S.buildBase = function () {
-    var dark = S.toon(0x1a2334);
-    var side = S.toon(0x2b364b);
-    var trim = S.toon(0x4a5b78);
     var curb = S.toon(0x8b95a6);
     var white = S.basic(0xdfe9e2, { transparent:true, opacity:.86 });
     var crossingPaint=S.makeTex(64,192,function(ctx,w,h){
@@ -31,23 +28,13 @@
     });
     var stripe=S.basic(0xffffff,{map:crossingPaint,transparent:true,opacity:.87,depthWrite:false});
 
-    /* ---- plinth ---- */
-    var slab = S.box(28, 0.9, 26, side, 0, -0.45, 0, { cast: true, outline: true, outlineColor: 0x0b1322, outlineOpacity: 0.8 });
-    S.box(27.6, 0.06, 25.6, S.toon(0x222d40), 0, -0.88, 0, {});
-    /* floating shadow halo under the model */
-    var haloTex = S.makeTex(256, 256, function (x, w, h) {
-      var g = x.createRadialGradient(128, 128, 10, 128, 128, 126);
-      g.addColorStop(0, 'rgba(4,8,16,.75)'); g.addColorStop(0.7, 'rgba(4,8,16,.28)'); g.addColorStop(1, 'rgba(4,8,16,0)');
-      x.fillStyle = g; x.fillRect(0, 0, w, h);
-    });
-    groundPlane(26, 26, S.basic(0xffffff, { map: haloTex, transparent: true, depthWrite: false, opacity: 0.9 }), 0, -0.97, 0);
-
     /* ---- asphalt ---- */
     var asphalt = S.toon(0xd2d9d6, { map: S.tex.asphalt() });
     groundPlane(28, 26, asphalt, 0, 0.008, 0);
-
-    /* a cool ambient wash over the whole road */
-    groundPlane(28, 26, S.basic(0x3d5e8c, { transparent: true, opacity: 0.09, depthWrite: false }), 0, 0.011, 0);
+    var roadMap=asphalt.map.clone();
+    roadMap.wrapS=roadMap.wrapT=T.RepeatWrapping;
+    roadMap.repeat.set(4,4);roadMap.needsUpdate=true;
+    groundPlane(112,104,S.toon(0xd2d9d6,{map:roadMap}),0,.003,0);
 
     /* ---- L-shaped sidewalk ---- */
     var pave = S.toon(0xffffff, { map: S.tex.pavement() });
@@ -64,11 +51,16 @@
     }
 
     /* ---- curbs ---- */
-    S.box(14.0, 0.11, 0.20, curb, -2.7, 0.085, 0.74, { outline: true, outlineOpacity: .3 });
-    S.box(0.20, 0.11, 8.6, curb, 4.36, 0.085, -4.3, { outline: true, outlineOpacity: .3 });
+    S.box(12.6, 0.095, 0.20, curb, -3.54, 0.034, 0.74, {});
+    S.box(0.20, 0.095, 9.64, curb, 4.36, 0.034, -3.65, {});
     /* wet highlight along curb tops */
-    S.box(14.0, 0.012, 0.05, S.basic(0x9fc7e8, { transparent: true, opacity: .55 }), -2.7, 0.143, 0.70, {});
-    S.box(0.05, 0.012, 8.6, S.basic(0x9fc7e8, { transparent: true, opacity: .55 }), 4.32, 0.143, -4.3, {});
+    var curbGlint=S.basic(0xaabcc1,{transparent:true,opacity:.36});
+    S.box(12.6, .008, .036, curbGlint, -3.54, .085, .70, {});
+    S.box(.036, .008, 9.64, curbGlint, 4.32, .085, -3.65, {});
+    groundPlane(1.50,1.52,pave,3.55,.060,1.10);
+    var approach=S.toon(0x968964,{map:S.tex.tactile()});
+    groundPlane(.92,.35,approach,3.82,.065,1.55);
+    groundPlane(.43,1.28,approach,11.92,.090,2.16);
 
     /* ---- alley floor (left of the shop) ---- */
     groundPlane(3.35, 7.1, S.toon(0x2b3547, { map: S.tex.asphalt() }), -7.85, 0.015, -5.1);
