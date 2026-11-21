@@ -114,16 +114,14 @@
     /* ---- puddles ---- */
     var puddleTex = S.tex.puddle();
     var spots = [
-      [-5.4, 3.3, 3.5, 2.1, .2], [1.0, 6.0, 3.0, 1.7, -.3], [6.6, 5.1, 3.2, 2.2, .5],
-      [3.0, 8.0, 2.6, 1.5, -.2], [-1.7, 1.9, 2.1, 1.2, .4], [8.2, 1.1, 2.2, 1.4, -.4],
-      [-7.9, -3.1, 1.9, 2.4, .1], [5.0, -6.2, 1.8, 1.3, .8]
+      [-5.08,1.25,1.98,.61,0], [1.98,1.31,1.68,.58,-.1], [5.04,3.20,1.45,.73,.13],
+      [10.93,3.56,.78,1.62,0], [11.09,7.78,.67,2.51,0],
+      [-7.9,-5.93,.83,1.57,-.1], [-12.9,-2.51,1.11,.48,0]
     ];
     spots.forEach(function (p) {
-      var mat = S.basic(0xffffff, { map: puddleTex, transparent: true, depthWrite: false, opacity: .39, blending: T.AdditiveBlending });
-      var m = groundPlane(p[2], p[3], mat, p[0], 0.031, p[1], p[4]);
-      S.puddles.push({ x: p[0], z: p[1], r: Math.min(p[2], p[3]) * 0.42, mesh: m });
-      /* a crisp specular rim */
-      groundPlane(p[2] * 0.72, 0.025, S.basic(0xb9ddf6, { transparent: true, opacity: .16, blending: T.AdditiveBlending, depthWrite: false }), p[0], 0.033, p[1] - p[3] * 0.22, p[4]);
+      var mat=S.basic(0xffffff,{map:puddleTex,transparent:true,depthWrite:false,opacity:.23,blending:T.AdditiveBlending});
+      var m=groundPlane(p[2],p[3],mat,p[0],S.groundHeight(p[0],p[1])+.014,p[1],p[4]);
+      S.puddles.push({x:p[0],z:p[1],r:Math.min(p[2],p[3])*.42,mesh:m});
     });
 
     /* ---- elongated light reflections on wet asphalt ---- */
@@ -142,24 +140,6 @@
     refl(-0.2, 2.0, 1.3, 3.4, '#ffcf8c', .20);
     refl(3.2, 2.3, 1.1, 3.8, '#ff987e', .15);
     refl(4.0, 1.9, 0.8, 3.0, '#ffc192', .16);
-    refl(6.4, 3.6, 1.7, 5.0, '#a9d6ff', .34);
-    refl(7.3, 4.1, 0.9, 4.2, '#a9d6ff', .18);
-    refl(-7.7, -0.7, 1.2, 3.0, '#ffb77a', .32);
-    refl(-7.9, -4.4, 0.9, 2.6, '#ffb77a', .20);
-    refl(6.9, 7.0, 0.8, 2.6, '#ff7676', .20);
-
-    /* light pools directly under lamps / doorway */
-    function pool(x, z, r, color, op) {
-      var t = S.makeTex(128, 128, function (cx, w, h) {
-        var g = cx.createRadialGradient(64, 64, 0, 64, 64, 64);
-        g.addColorStop(0, color); g.addColorStop(1, 'rgba(0,0,0,0)');
-        cx.fillStyle = g; cx.fillRect(0, 0, w, h);
-      });
-      groundPlane(r * 2, r * 2, S.basic(0xffffff, { map: t, transparent: true, opacity: op, blending: T.AdditiveBlending, depthWrite: false }), x, 0.03, z, 0);
-    }
-    pool(-1.5, -0.9, 3.0, 'rgba(255,196,126,.62)', .72);
-    pool(6.4, 1.4, 3.2, 'rgba(160,205,255,.45)', .42);
-    pool(3.3, -0.7, 1.7, 'rgba(255,130,170,.42)', .42);
-    pool(-7.7, -6.8, 2.0, 'rgba(255,185,120,.40)', .40);
+    refl(6.4, 2.35, 1.21, 2.8, '#b0c7cc', .24);
   };
 })(window.S);

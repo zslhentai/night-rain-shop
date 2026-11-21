@@ -53,4 +53,33 @@
     S.box(.65,.09,.23,wall,-8.49,2.14,-8.25,{});
     S.box(.53,.021,.16,S.basic(0xead0aa),-8.49,2.086,-8.22,{});
   };
+  S.buildDistrictLighting=function(){
+    var falloff=S.makeTex(128,128,function(ctx,w,h){
+      var g=ctx.createRadialGradient(w/2,h/2,2,w/2,h/2,w/2);
+      g.addColorStop(0,'rgba(255,255,255,1)');
+      g.addColorStop(.36,'rgba(255,255,255,.64)');
+      g.addColorStop(.78,'rgba(255,255,255,.10)');
+      g.addColorStop(1,'rgba(255,255,255,0)');
+      ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+    });
+    function light(x,z,w,d,h,color,opacity){
+      return S.groundPlane(w,d,S.basic(color,{map:falloff,opacity:opacity,transparent:true,
+        blending:T.AdditiveBlending,depthWrite:false,toneMapped:false}),x,h,z);
+    }
+    light(-1.56,-.37,9.6,2.05,.088,0xe0be94,.39);
+    light(-.95,.18,4.35,1.25,.092,0xc4ba9d,.16);
+    light(6.4,1.4,5.3,5.3,.016,0x829ba7,.29);
+    light(12.70,4.47,2.5,5.5,.095,0x8bacbe,.18);
+    light(12.71,6.55,2.4,3.6,.094,0xd2bfa0,.28);
+    light(-12.4,-3.75,2.8,2.1,.073,0xe4ae72,.39);
+    light(-8.05,-1.43,2.4,1.75,.035,0xd3a477,.27);
+    light(-8.44,-7.48,2.1,1.85,.035,0xc9a883,.24);
+    light(3.44,-.33,2.8,.95,.074,0xb2cfb2,.23);
+    S.dinerGroundLight=light(-12.98,-4.06,2.2,1.62,.078,0xffb569,.24);
+    S.addUpdate(function(t){
+      var p=t%120;
+      var closed=S.clamp(Math.min((p-78)/4,(118-p)/4),0,1);
+      S.dinerGroundLight.material.opacity=.24*(1-closed);
+    });
+  };
 })(window.S);

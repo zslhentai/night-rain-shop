@@ -10,8 +10,8 @@
   function r(a, b) { return a + (b - a) * Math.random(); }
 
   S.buildEffects = function () {
-    rainLayer(1020, 0.13, 7.5, 0.41);
-    rainLayer(120, 0.075, 11.5, 0.64);
+    rainLayer(1180, 0.145, 7.5, 0.41);
+    rainLayer(156, 0.09, 11.5, 0.64);
     ripples();
     eaveDrips();
     glassStreaks();
@@ -66,7 +66,8 @@
     S.world.add(lines);
 
     S.addUpdate(function (t, dt) {
-      var visibleCount = Math.floor(count * S.rainIntensity * (S.quality === 'low' ? .55 : 1));
+      var visibleCount = Math.floor(count * Math.min(1,S.rainIntensity/1.28) * (S.quality === 'low' ? .55 : 1));
+      mat.opacity=alpha*(.72+S.rainIntensity*.28);
       geom.setDrawRange(0, visibleCount * 2);
       var pA = geom.attributes.position, cA = geom.attributes.color;
       for (var k = 0; k < visibleCount; k++) {

@@ -79,21 +79,32 @@
           return mix(mix(hash(i),hash(i+vec2(1.,0.)),f.x),
                      mix(hash(i+vec2(0.,1.)),hash(i+1.),f.x),f.y);
         }
+        float zone(vec2 p, vec2 center, vec2 size) {
+          vec2 d = abs(p-center)/size;
+          return 1.-smoothstep(.76,1.1,max(d.x,d.y));
+        }
         void main() {
           if (mirrorCoord.w <= 0.) discard;
           vec2 uv = mirrorCoord.xy / mirrorCoord.w * .5 + .5;
           vec2 p = world.xz;
-          float grain = noise(p * vec2(21.,77.));
+          float road = max(smoothstep(.58,1.06,p.y),smoothstep(4.27,4.62,p.x));
+          float asphaltMask = road * (1.-smoothstep(11.31,11.55,p.x)) * (1.-smoothstep(10.45,10.78,p.y));
+          float apron = zone(p,vec2(-1.7,-.32),vec2(4.51,.34))*.22;
+          float dry = zone(p,vec2(-1.7,-1.04),vec2(4.61,.37));
+          float mask=max(asphaltMask,apron)*(1.-dry);
+          if(mask < .005) discard;
+          float grain = noise(p * vec2(20.,67.));
           float rivulets = noise(p * vec2(3.8,29.) + vec2(0.,age*.65));
           float patches = noise(p * vec2(1.35,1.75));
           uv += vec2((rivulets-.5)*.028, (grain-.5)*.012);
           if (any(lessThan(uv,vec2(.003))) || any(greaterThan(uv,vec2(.997)))) discard;
           vec4 color = texture2D(mirrorMap,uv);
-          float wet = smoothstep(.32,.76,patches*.66 + rivulets*.34);
+          float gutter = max(1.-smoothstep(.08,.72,abs(p.y-1.)),1.-smoothstep(.09,.56,abs(p.x-11.15)));
+          float wet = smoothstep(.25,.76,patches*.63 + rivulets*.22 + gutter*.23);
           float facing = normalize(cameraPosition-world).y;
           float fresnel = mix(.78,1.12,1.-clamp(facing,0.,1.));
-          float alpha = color.a * (.08+.64*wet) * (.38+.62*grain) * fresnel * mix(.81,1.,rain);
-          gl_FragColor = vec4(color.rgb*vec3(1.0,.88,.69),alpha);
+          float alpha = color.a * (.02+.68*wet) * (.62+.38*grain) * fresnel * mix(.48,1.,clamp(rain/1.28,0.,1.)) * mask;
+          gl_FragColor = vec4(color.rgb*vec3(1.0,.92,.78),alpha);
           #include <tonemapping_fragment>
           #include <encodings_fragment>
         }`
@@ -105,7 +116,9 @@
     var lastDraw = -Infinity, planeY = asphalt.position.y;
     S.updateWetStreet = function (stamp, time) {
       var view = S.camera, renderer = S.renderer;
-      var inView = (S.isOrbitView() || S.view==='entrance') &&
+      var walking=S.view==='street-walk' && !S.isStoreView(S.view) &&
+        view.position.x>-7 && view.position.x<10.8 && view.position.z>-.63;
+      var inView = (S.isOrbitView() || S.view==='entrance' || walking) &&
         view.position.y > planeY && (view.position.z > shop.z1 || view.position.x > shop.x1);
       asphalt.visible = inView;
       if (!inView) return;

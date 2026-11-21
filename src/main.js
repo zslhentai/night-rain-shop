@@ -31,6 +31,7 @@
     S.buildNeighborhood();
     S.buildDetails();
     S.buildDistrict();
+    S.buildDistrictLighting();
     S.buildPeople();
     S.buildBus();
     S.buildEffects();
