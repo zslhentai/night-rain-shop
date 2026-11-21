@@ -131,8 +131,10 @@ window.S = window.S || {};
     'cooler-art': {eye:[-.85,1.67,-5.87],target:[-.44,1.31,-7.94],
       portraitEye:[-1.19,1.64,-4.35],portraitTarget:[-.48,1.23,-7.88],fov:72},
     drinks: { eye: [-.8,1.65,-6.7], target: [-1.6,1.25,-8.1], fov: 74 },
-    diner: { eye: [-9.1, 2.6, .35], target: [-11.8, 1.35, -4.45] },
-    stop: { eye: [13.4, 2.64, 3.8], target: [11.05, 1.25, 6.65] }
+    diner: { eye: [-12.85, 2.2, .15], target: [-11.8, 1.42, -4.25],
+      portraitEye: [-12.6, 2.05, .75], portraitTarget: [-11.8, 1.48, -4.25], fov: 51 },
+    stop: { eye: [11.48, 2.22, 10.4], target: [13.0, 1.58, 6.96],
+      portraitEye: [11.52, 2.12, 11.05], portraitTarget: [13.0, 1.66, 6.96], fov: 55 }
   };
   S.isStoreView = function(view) {
     return view === 'cooler-art' || view === 'aisle' || view === 'interior' || view === 'bento' || view === 'checkout' || view === 'drinks';
