@@ -85,9 +85,10 @@
   function vendingMachines() {
     [[2.95, 0], [3.98, 1]].forEach(function (v, idx) {
       var x = v[0], z = -0.82, warm = v[1];
+      var fallback=S.group();
       var body = S.shopMaterial(warm ? 0xb93e32 : 0x315d65,{shininess:24,emissiveIntensity:.32});
-      S.box(1.02, 2.05, 0.82, body, x, 1.08, z, { cast: true, outline: true, outlineOpacity: .45 });
-      S.box(1.06, 0.12, 0.86, mat(0xd9e2e6), x, 2.14, z, {});
+      S.box(1.02, 2.05, 0.82, body, x, 1.08, z, { parent:fallback, cast: true, outline: true, outlineOpacity: .45 });
+      S.box(1.06, 0.12, 0.86, mat(0xd9e2e6), x, 2.14, z, {parent:fallback});
       /* lit product panel */
       S.box(0.86, 1.52, 0.04, S.basic(0xffffff), x - 0.04, 1.23, z + 0.43, {});
       var panel = S.plane(0.80, 1.44, S.basic(0xffffff, { map: S.tex.vmPanel(warm ? 'warm' : 'cold') }), x - 0.04, 1.23, z + 0.457, {});
@@ -98,13 +99,14 @@
       for (var b = 0; b < 4; b++) S.cyl(0.03, 0.03, 0.02, 8, S.basic(b === 0 ? 0xff9d8a : 0xc9d9e2), x + 0.42, 1.62 - b * 0.14, z + 0.48, { rx: Math.PI / 2 });
       S.box(0.12, 0.05, 0.03, mat(0x8d99a4), x + 0.42, 0.92, z + 0.48, {});
       var slotDark=mat(0x212c34), trim=mat(warm ? 0xbfa386 : 0x859797);
-      S.box(.66,.34,.055,trim,x-.12,.35,z+.42,{});
-      S.box(.53,.059,.07,slotDark,x-.12,.46,z+.47,{});
-      S.box(.49,.016,.04,trim,x-.12,.39,z+.482,{});
+      S.box(.66,.34,.055,trim,x-.12,.35,z+.42,{parent:fallback});
+      S.box(.53,.059,.07,slotDark,x-.12,.46,z+.47,{parent:fallback});
+      S.box(.49,.016,.04,trim,x-.12,.39,z+.482,{parent:fallback});
       S.box(.12,.045,.02,S.basic(0xc6dfbe),x+.415,1.07,z+.48,{});
       /* delivery flap + base */
-      S.box(0.59, 0.26, 0.05, mat(0x1b2634), x - 0.12, 0.35, z + 0.43, {});
-      S.box(1.02, 0.10, 0.82, mat(0x2a3646), x, 0.06, z, {});
+      S.box(0.59, 0.26, 0.05, mat(0x1b2634), x - 0.12, 0.35, z + 0.43, {parent:fallback});
+      S.box(1.02, 0.10, 0.82, mat(0x2a3646), x, 0.06, z, {parent:fallback});
+      if(S.streetArtSlot) S.streetArtSlot(warm ? 'vending-warm' : 'vending-cold',fallback,S.world,[x,0,z]);
       /* top light box */
       S.plane(0.86, 0.10, S.basic(0xffffff, { map: S.tex.label(warm ? 'あたたかい' : 'つめたい', '', warm ? '#a8324c' : '#24538c', '#f4f9ff'), transparent: true }), x, 2.14, z + 0.44, {});
       var g = S.glow(x, 1.4, z + 0.55, warm ? 0xffac7e : 0x9ed8dd, 2.2, .16);
@@ -122,6 +124,7 @@
   function bicycle() {
     var g = S.group();
     g.position.set(-4.55, 0.07, -0.35);
+    g.userData.staticScenery=true;
     g.rotation.y = -0.30;
     var frame = mat(0x4a7fa0), dark = mat(0x2b3846), chrome = mat(0xc6d2d8);
     [-0.56, 0.56].forEach(function (wx) {

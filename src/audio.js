@@ -1,7 +1,7 @@
 /* Field-recorded rain. Lazy loaded, quiet by default, no autoplay. */
 (function (S) {
-  var context, source, gain, filter, hum, humGain, enabled = false;
-  var stepTime=0;
+  var context, source, gain, filter, hum, humGain, motor, motorGain, enabled = false;
+  var stepTime=0, busTime=0;
   var button = document.getElementById('rain-audio');
   var volume = document.getElementById('rain-volume');
   var status = document.getElementById('audio-status');
@@ -9,6 +9,12 @@
   function indoors() {
     if(S.isStoreView) return S.isStoreView(S.view) && S.camera && S.inShop && S.inShop(S.camera.position);
     return ['interior','bento','checkout','drinks'].indexOf(S.view)!==-1;
+  }
+  function zone(){
+    if(indoors()) return 'inside';
+    if(S.view==='stop' || S.view==='entrance' || S.view==='diner')
+      return S.view==='entrance'?'awning':S.view;
+    return S.view==='street-walk' && S.streetZone ? S.streetZone(S.camera.position) : 'street';
   }
   var doorMix=0;
   S.refreshDoorAudio=function(){
@@ -19,12 +25,14 @@
     if(Math.abs(next-doorMix)>.025 || (next===0 && doorMix)){doorMix=next;S.refreshAudio();}
   };
   function level() {
-    var shelter = indoors() ? .42+.23*doorMix : S.view === 'entrance' ? .76 : S.view === 'stop' ? .85 : 1;
+    var place=zone();
+    var shelter=place==='inside'?.42+.23*doorMix:place==='awning'?.73:place==='stop'?.86:place==='diner'?.78:1;
     return volumeLevel() * shelter * (.55 + .45 * S.rainIntensity);
   }
   S.refreshAudio = function () {
     if (!enabled || !filter) return;
-    var cutoff = indoors() ? 680+1330*doorMix : S.view === 'entrance' ? 2300 : 5200;
+    var place=zone();
+    var cutoff=place==='inside'?680+1330*doorMix:place==='awning'?2300:place==='stop'?3250:place==='diner'?2850:5200;
     filter.frequency.setTargetAtTime(cutoff, context.currentTime, .2);
     fade(level(), .35);
     if(humGain) humGain.gain.setTargetAtTime(indoors()?volumeLevel()*.011:0,context.currentTime,.3);
@@ -32,24 +40,36 @@
   S.playSceneSound = function (name) {
     if (!enabled || document.hidden || context.state !== 'running') return;
     var drip = name === 'drip';
-    if (drip && S.view !== 'entrance') return;
+    var busDoor=name==='bus-stop';
+    if(drip && zone()!=='awning') return;
+    if(busDoor && (!S.camera || !S.bus || Math.hypot(S.camera.position.x-S.layout.busStop.laneX,S.camera.position.z-S.bus.z)>7)) return;
     var now = context.currentTime, voice = context.createOscillator(), env = context.createGain();
     var step=name==='step', door=name==='door';
-    var duration = step?.09:door?.18:drip?.055:.10;
-    voice.type = 'sine';
-    voice.frequency.setValueAtTime(step?110:door?640:drip?710:1040,now);
-    voice.frequency.exponentialRampToValueAtTime(step?47:door?880:drip?370:820,now+duration);
+    var duration = step?.09:door?.18:drip?.055:busDoor?.23:.10;
+    voice.type = busDoor?'triangle':'sine';
+    voice.frequency.setValueAtTime(step?110:door?640:drip?710:busDoor?145:1040,now);
+    voice.frequency.exponentialRampToValueAtTime(step?47:door?880:drip?370:busDoor?52:820,now+duration);
     env.gain.setValueAtTime(0, now);
-    env.gain.linearRampToValueAtTime(volumeLevel() * (step?.038:door?.045:drip?.035*S.rainIntensity:indoors()?.12:.035), now + .006);
+    env.gain.linearRampToValueAtTime(volumeLevel() * (step?(indoors()?.038:.019):door?.045:drip?.035*S.rainIntensity:busDoor?.026:indoors()?.12:.035), now + .006);
     env.gain.linearRampToValueAtTime(0, now + duration);
     voice.connect(env); env.connect(context.destination);
     voice.onended = function () { voice.disconnect(); env.disconnect(); };
     voice.start(now); voice.stop(now + duration);
   };
   S.walkAmbience=function(dt){
-    if(!enabled || !indoors()) return;
+    if(!enabled) return;
     stepTime+=dt;
     if(stepTime>.48){stepTime=0;S.playSceneSound('step');}
+  };
+  S.updateBusAudio=function(pos,visible,phase,dt){
+    if(!enabled || !motorGain || !S.camera || document.hidden) return;
+    busTime+=dt;
+    if(busTime<.14) return;
+    busTime=0;
+    var p=S.camera.position, distance=Math.hypot(p.x-pos.x,p.z-pos.z);
+    var level=visible && !indoors()?Math.max(0,1-distance/9)*volumeLevel()*.039:0;
+    motorGain.gain.setTargetAtTime(level,context.currentTime,.16);
+    motor.frequency.setTargetAtTime(phase==='stop'||phase==='close'?46:58,context.currentTime,.20);
   };
   function fade(value, seconds) {
     var now = context.currentTime;
@@ -82,6 +102,10 @@
     hum.frequency.value=61;
     humGain=context.createGain();humGain.gain.value=0;
     hum.connect(humGain);humGain.connect(context.destination);hum.start();
+    motor=context.createOscillator();
+    motor.type='triangle';motor.frequency.value=46;
+    motorGain=context.createGain();motorGain.gain.value=0;
+    motor.connect(motorGain);motorGain.connect(context.destination);motor.start();
   }
   button.addEventListener('click', async function () {
     button.disabled = true;
@@ -96,6 +120,7 @@
       if (enabled) {
         fade(0, .45);
         if(humGain) humGain.gain.setTargetAtTime(0,context.currentTime,.13);
+        if(motorGain) motorGain.gain.setTargetAtTime(0,context.currentTime,.13);
         await new Promise(function (resolve) { setTimeout(resolve, 500); });
         await context.suspend(); enabled = false;
       } else {
@@ -109,7 +134,7 @@
       status.textContent = '';
     } catch (error) {
       if (context) { try { await context.close(); } catch (_) {} }
-      context = source = gain = filter = hum = humGain = null; enabled = false;
+      context = source = gain = filter = hum = humGain = motor = motorGain = null; enabled = false;
       button.textContent = '雨声重试'; button.setAttribute('aria-pressed', 'false');
       status.textContent = '雨声暂时无法播放，请重试';
     } finally { button.disabled = false; }

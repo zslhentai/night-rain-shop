@@ -32,6 +32,7 @@
     S.buildDetails();
     S.buildDistrict();
     S.buildDistrictLighting();
+    S.batchStaticScenery();
     S.buildPeople();
     S.buildBus();
     S.buildEffects();
@@ -197,6 +198,8 @@
           }
           if(window.rainPreview) window.rainPreview.ready();
           if(!S.legacyTuning && S.loadCoolerSample) S.loadCoolerSample();
+          if(window.requestIdleCallback) window.requestIdleCallback(S.loadStreetArt,{timeout:1700});
+          else window.setTimeout(S.loadStreetArt,540);
         }
         if(firstAssetFrame && S.coolerSampleState==='ready'){
           firstAssetFrame=false;

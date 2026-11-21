@@ -78,21 +78,22 @@
     S.plane(.25, .23, S.basic(0xb2c1bc), -9.159, 1.57, -5.65, { ry: Math.PI / 2 });
     S.tube([[-9.22, 1.2, -5.65], [-9.22, .55, -5.65], [-9.22, .55, -6.5]], .025, steel);
     // Bus shelter stays entirely on the pavement. Its road side is open.
-    var roof = S.toon(0x3d565e);
-    S.box(1.85, .10, 3.7, roof, 12.85, 3.04, 7.05, { cast: true });
+    var roof = S.toon(0x3d565e), shelterFrame=S.group();
+    S.box(1.85, .10, 3.7, roof, 12.85, 3.04, 7.05, {parent:shelterFrame,cast:true});
     [5.35, 8.75].forEach(function (z) {
-      S.box(.075, 2.9, .075, steel, 13.62, 1.535, z, { cast: true });
-      S.box(.24, .04, .24, dark, 13.62, .105, z, {});
-      S.box(1.7, .055, .055, steel, 12.83, 2.98, z, {});
+      S.box(.075, 2.9, .075, steel, 13.62, 1.535, z, {parent:shelterFrame,cast:true});
+      S.box(.24, .04, .24, dark, 13.62, .105, z, {parent:shelterFrame});
+      S.box(1.7, .055, .055, steel, 12.83, 2.98, z, {parent:shelterFrame});
     });
     S.plane(3.3, 2.1, S.glass(0x92aab1, .16), 13.62, 1.78, 7.05, { ry: -Math.PI / 2 });
     S.box(.04, .05, 3.4, steel, 13.62, .72, 7.05, {});
     // Bench runs parallel to the curb, leaving a 1.2m approach lane.
-    for (var slat = 0; slat < 3; slat++) S.box(.12, .07, 1.65, wood, 13.18 + slat * .15, .58, 7.6, {});
-    [6.98, 8.22].forEach(function (z) { S.box(.43, .46, .07, steel, 13.33, .315, z, {}); });
-    S.box(.055, .28, 1.65, wood, 13.54, .9, 7.6, {});
+    for (var slat = 0; slat < 3; slat++) S.box(.12, .07, 1.65, wood, 13.18 + slat * .15, .58, 7.6, {parent:shelterFrame});
+    [6.98, 8.22].forEach(function (z) { S.box(.43, .46, .07, steel, 13.33, .315, z, {parent:shelterFrame}); });
+    S.box(.055, .28, 1.65, wood, 13.54, .9, 7.6, {parent:shelterFrame});
     plaque('02 / 07', '夜灯駅方面', .65, .43, 13.55, 1.8, 6.0, -Math.PI / 2);
-    S.box(.07, .045, 3.7, steel, 13.75, 3.09, 7.05, {});
+    S.box(.07, .045, 3.7, steel, 13.75, 3.09, 7.05, {parent:shelterFrame});
+    if(S.streetArtSlot) S.streetArtSlot('shelter-frame',shelterFrame,S.world,[12.85,0,7.05]);
     S.tube([[13.75, 3.05, 8.75], [13.75, .22, 8.75], [13.55, .12, 8.9]], .035, steel);
     grate(13.5, 8.95, .5, .35, .09);
     S.layout.shelters.push({ x0: 11.925, x1: 13.775, z0: 5.2, z1: 8.9, height: 3.1 });

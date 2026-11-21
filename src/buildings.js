@@ -28,7 +28,7 @@
     });
   }
   function building(x, z, w, d, h, color, name, style) {
-    var g = S.group(); g.position.set(x, 0, z);
+    var g = S.group(); g.position.set(x, 0, z); g.userData.staticScenery=true;
     var wall = S.phong(color,{map:wallFinish(style),shininess:4});
     var trim = S.toon(0x27333c), frame = S.toon(0x5d6b70), roof=S.toon(0x303d49);
     S.box(w, h, d, wall, 0, h / 2, 0, { parent:g, cast:true });
@@ -76,7 +76,7 @@
     S.groundPlane(1.2, 3, S.basic(0xffffff, { map: S.tex.reflection('#9dc4db'), transparent: true, opacity: .23, depthWrite: false, blending: T.AdditiveBlending }), x, .038, z + 1);
   }
   function car() {
-    var g = S.group(); g.position.set(-7.4, .008, 7.0);
+    var g = S.group(); g.position.set(-7.4, .008, 7.0); g.userData.staticScenery=true;
     var paint = S.toon(0x6b878b), glass = S.phong(0x233b50), rubber = S.toon(0x121c29);
     S.box(1.65, .55, 2.9, paint, 0, .55, 0, { parent: g, cast: true });
     S.box(1.42, .65, 1.65, glass, 0, 1.12, -.05, { parent: g });
@@ -141,7 +141,7 @@
       S.box(.2, .025, .02, S.basic(0x243040), 7.5 + m * .34, 1, -5.22, {});
     }
     // Low street-facing facades keep the main shop visible from the default camera.
-    var kiosk = S.group(); kiosk.position.set(-11.4, 0, 11.8); kiosk.rotation.y = Math.PI;
+    var kiosk = S.group(); kiosk.position.set(-11.4, 0, 11.8); kiosk.userData.staticScenery=true; kiosk.rotation.y = Math.PI;
     S.box(4.7, 2.25, 1.8, S.toon(0x465361), 0, 1.18, 0, { parent: kiosk });
     S.box(4.9, .15, 2, S.toon(0x2d394b), 0, 2.4, 0, { parent: kiosk });
     S.box(3.9, 1.65, .08, S.toon(0x657078), 0, 1, .94, { parent: kiosk });
