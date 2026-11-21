@@ -15,7 +15,7 @@
     var wallIn = S.toon(0xdcd9cf);
     var frame = S.toon(0x2a403e);
     var frameHi = S.toon(0x63847b);
-    var roofMat = S.toon(0x34485a);
+    var roofMat = S.phong(0x344651,{shininess:8});
     var awning = S.toon(0x364c52);
     var dark = S.toon(0x1d2a3c);
     var teal = S.toon(0x234f49);
@@ -67,15 +67,44 @@
     }
     S.box(0.85, 0.05, 0.70, S.toon(0x5d6f83), -0.9, 3.63, -3.4, { outline: true, outlineOpacity: .3 });
     S.box(0.55, 0.05, 0.55, S.toon(0x5d6f83), 1.9, 3.63, -5.5, { outline: true, outlineOpacity: .3 });
-    /* water tank + ducts */
-    S.box(0.16, 0.45, 0.16, steel, 0.9, 3.82, -7.3, {});
-    S.box(0.16, 0.45, 0.16, steel, 1.55, 3.82, -7.3, {});
-    S.cyl(0.48, 0.48, 0.72, 12, steel, 1.22, 4.27, -7.3, {});
-    S.cyl(0.50, 0.50, 0.08, 12, S.toon(0x8e9ba8), 1.22, 4.66, -7.3, {});
-    S.box(1.1, 0.38, 0.72, S.toon(0x9facb6), -4.4, 3.78, -7.5, { outline: true, outlineOpacity: .3 });
-    S.cyl(0.24, 0.24, 0.38, 10, S.toon(0x8795a2), -4.4, 4.12, -7.5, {});
-    S.cyl(0.30, 0.30, 0.06, 10, S.toon(0x6e7c8a), -4.4, 4.34, -7.5, {});
-    S.box(0.7, 0.24, 0.5, S.toon(0x9facb6), -2.4, 3.72, -6.9, {});
+    // Outdoor condensers sit on service rails and connect to the rear riser.
+    var condenser=S.phong(0xa4aca8,{shininess:18});
+    var fanGrille=S.makeTex(192,192,function(ctx,w,h){
+      var c=w/2;
+      ctx.fillStyle='#687875';ctx.fillRect(0,0,w,h);
+      ctx.beginPath();ctx.arc(c,c,76,0,Math.PI*2);ctx.fillStyle='#26363c';ctx.fill();
+      ctx.fillStyle='#72827e';
+      for(var i=0;i<5;i++){
+        ctx.save();ctx.translate(c,c);ctx.rotate(i*Math.PI*2/5);
+        ctx.beginPath();ctx.moveTo(0,0);ctx.quadraticCurveTo(18,-53,36,-59);
+        ctx.quadraticCurveTo(53,-48,45,-22);ctx.closePath();ctx.fill();ctx.restore();
+      }
+      ctx.strokeStyle='#526966';ctx.lineWidth=3;
+      for(var r=21;r<=73;r+=13){ctx.beginPath();ctx.arc(c,c,r,0,Math.PI*2);ctx.stroke();}
+      ctx.beginPath();ctx.arc(c,c,13,0,Math.PI*2);ctx.fillStyle='#91a098';ctx.fill();
+    });
+    var intake=S.makeTex(224,64,function(ctx,w,h){
+      ctx.fillStyle='#86918d';ctx.fillRect(0,0,w,h);
+      for(var i=0;i<7;i++){
+        ctx.fillStyle='#34434a';ctx.fillRect(12,8+i*7,w-26,3);
+        ctx.fillStyle='#a7b3a9';ctx.fillRect(12,11+i*7,w-26,1);
+      }
+    });
+    var fanMaterial=S.phong(0xffffff,{map:fanGrille,shininess:11});
+    var intakeMaterial=S.phong(0xffffff,{map:intake,shininess:9});
+    [-4.46,-2.89].forEach(function(x){
+      [-.45,.45].forEach(function(dx){S.box(.11,.11,1.12,dark,x+dx,3.655,-6.9,{});});
+      S.box(1.32,.43,.99,condenser,x,3.925,-6.9,{cast:true});
+      S.box(1.37,.047,1.04,condenser,x,4.154,-6.9,{});
+      S.plane(.70,.70,fanMaterial,x,4.179,-6.9,{rx:-Math.PI/2});
+      S.plane(1.19,.33,intakeMaterial,x,3.937,-6.403,{});
+      S.tube([[x+.53,3.94,-7.39],[x+.59,3.71,-7.61],[-2.02,3.71,-7.61]],.026,dark);
+    });
+    S.box(.62,.24,.52,steel,-1.95,3.72,-7.65,{});
+    S.cyl(.105,.105,.42,10,steel,1.78,3.81,-7.15,{});
+    S.cyl(.17,.13,.08,12,frameHi,1.78,4.06,-7.15,{});
+    S.box(.91,.048,.76,frame,-.9,3.655,-3.4,{});
+    S.box(.18,.035,.07,steel,-.9,3.70,-3.19,{});
 
     /* ---------- glass facade frames ---------- */
     var zf = z1 + 0.02, xf = x1 + 0.02;
@@ -137,6 +166,12 @@
     }
     var leftLeaf = leaf(-1.50, true), rightLeaf = leaf(-0.10, false);
     S.door = { left: leftLeaf, right: rightLeaf, closedL: -1.50, closedR: -0.10, open: 0 };
+    /* Recessed sill: fixed strips stay below the moving glass leaves. */
+    var track=S.phong(0x8a9791,{shininess:30,specular:0x5e675f});
+    S.box(2.84,.014,.174,track,-.8,.119,doorZ-.018,{});
+    [-.059,.025,.076].forEach(function(offset){
+      S.box(2.77,.004,.014,dark,-.8,.127,doorZ+offset,{});
+    });
     /* door rail + sensor */
     S.box(3.0, 0.035, 0.10, frameHi, -0.8, 0.11, doorZ + 0.03, {});
     S.box(0.52, 0.14, 0.18, frame, -0.8, 2.82, doorZ - 0.02, {});
@@ -175,8 +210,8 @@
     S.groundPlane(3.1,1.70,doorwayReflection,-.8,.073,.18);
     var spill = S.makeTex(256,96,function(ctx,w,h){
       var wash = ctx.createRadialGradient(w*.5,h*.39,6,w*.5,h*.39,w*.5);
-      wash.addColorStop(0,'rgba(255,187,104,.72)');
-      wash.addColorStop(.68,'rgba(255,193,117,.43)');
+      wash.addColorStop(0,'rgba(255,187,106,.84)');
+      wash.addColorStop(.68,'rgba(255,187,106,.50)');
       wash.addColorStop(1,'rgba(255,196,129,0)');
       ctx.fillStyle=wash;ctx.fillRect(0,0,w,h);
       ctx.globalCompositeOperation='destination-in';
@@ -187,9 +222,9 @@
       depth.addColorStop(1,'rgba(255,255,255,0)');
       ctx.fillStyle=depth;ctx.fillRect(0,0,w,h);
     });
-    var spillMat=S.basic(0xffffff,{map:spill,transparent:true,opacity:.52,
+    var spillMat=S.basic(0xffffff,{map:spill,transparent:true,opacity:.68,
       blending:T.AdditiveBlending,depthWrite:false});
-    S.groundPlane(W+1.1,2.30,spillMat,cx,.0615,-.50);
+    S.groundPlane(W+.3,2.13,spillMat,cx,.0615,-.59);
     /* awning posts + gutter */
     [[-5.95, z1 + 0.98], [2.62, z1 + 0.98], [x1 + 0.98, -7.9]].forEach(function (p) {
       S.cyl(0.045, 0.05, 3.05, 8, steel, p[0], 1.60, p[1], {});

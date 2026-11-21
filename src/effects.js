@@ -10,8 +10,8 @@
   function r(a, b) { return a + (b - a) * Math.random(); }
 
   S.buildEffects = function () {
-    rainLayer(1150, 0.15, 7.5, 0.48);
-    rainLayer(160, 0.10, 11.5, 0.8);
+    rainLayer(1020, 0.13, 7.5, 0.41);
+    rainLayer(120, 0.075, 11.5, 0.64);
     ripples();
     eaveDrips();
     glassStreaks();

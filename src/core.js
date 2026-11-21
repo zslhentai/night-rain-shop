@@ -76,8 +76,8 @@ window.S = window.S || {};
     scene.add(moon);
     scene.add(moon.target);
 
-    var signGlow = new T.PointLight(0xffdfaa, 0.50, 6, 2);
-    signGlow.position.set(-1.5, 4.15, -1.2);
+    var signGlow = new T.PointLight(0xffd5a1, 0.85, 5.7, 2);
+    signGlow.position.set(-1.5, 2.65, -0.75);
     scene.add(signGlow);
 
     var vmLight = new T.PointLight(0xffb082, 0.36, 5, 2);

@@ -52,12 +52,26 @@
     S.box(0.5, 0.02, 0.02, mat(0x8793a3), 8.7, 5.85, -8.0, {});
     S.box(0.6, 0.5, 0.5, mat(0x8b98a6), 8.2, 4.85, -8.2, {});
 
-    /* clipped street tree */
-    S.cyl(0.09, 0.14, 1.55, 8, mat(0x6c5747), 8.55, 0.78, -2.85, {});
-    S.sphere(0.68, mat(0x3f6f5b), 8.55, 1.92, -2.85, { scale: [1.15, .85, 1.1] });
-    S.sphere(0.46, mat(0x4d7d64), 8.05, 2.35, -2.62, {});
-    S.sphere(0.42, mat(0x4a7a61), 9.05, 2.30, -3.10, {});
-    S.cyl(0.55, 0.62, 0.10, 10, mat(0x6b7169), 8.55, 0.06, -2.85, {});
+    /* The street tree grows from a low planter beside the residence. */
+    var trunk=mat(0x544e42);
+    S.cyl(.066,.115,1.96,10,trunk,8.55,1.05,-2.85,{});
+    S.tube([[8.55,1.2,-2.85],[8.15,1.9,-2.71],[7.98,2.35,-2.64]],.038,trunk);
+    S.tube([[8.57,1.3,-2.85],[8.98,1.92,-2.99],[9.16,2.21,-3.09]],.034,trunk);
+    var leaves=new T.InstancedMesh(new T.IcosahedronGeometry(1,1),mat(0xffffff),23);
+    var transform=new T.Object3D(), color=new T.Color();
+    for(var leaf=0;leaf<leaves.count;leaf++){
+      var angle=leaf*2.39996, radius=Math.sqrt(leaf/leaves.count);
+      transform.position.set(8.54+Math.cos(angle)*radius*.99,
+        2.22+(1-radius)*.65+Math.sin(leaf*1.8)*.22,-2.83+Math.sin(angle)*radius*.69);
+      var size=.21+.12*(.5+.5*Math.cos(leaf*1.77));
+      transform.scale.set(size*1.25,size*.85,size);transform.rotation.y=angle;
+      transform.updateMatrix();leaves.setMatrixAt(leaf,transform.matrix);
+      leaves.setColorAt(leaf,color.setHex([0x395747,0x456450,0x53705a,0x496356][leaf%4]));
+    }
+    leaves.name='Street tree canopy';leaves.frustumCulled=false;leaves.receiveShadow=true;
+    S.world.add(leaves);
+    S.cyl(.59,.63,.10,12,mat(0x5a6460),8.55,.06,-2.85,{});
+    S.cyl(.52,.52,.015,12,mat(0x3c4037),8.55,.117,-2.85,{});
 
     /* low wall + hedge continuing the block */
     S.box(3.9, 0.9, 0.22, mat(0x4a5668), 7.4, 0.45, -1.05, { outline: true, outlineOpacity: .35 });
@@ -83,8 +97,13 @@
       /* buttons + coin slot */
       for (var b = 0; b < 4; b++) S.cyl(0.03, 0.03, 0.02, 8, S.basic(b === 0 ? 0xff9d8a : 0xc9d9e2), x + 0.42, 1.62 - b * 0.14, z + 0.48, { rx: Math.PI / 2 });
       S.box(0.12, 0.05, 0.03, mat(0x8d99a4), x + 0.42, 0.92, z + 0.48, {});
+      var slotDark=mat(0x212c34), trim=mat(warm ? 0xbfa386 : 0x859797);
+      S.box(.66,.34,.055,trim,x-.12,.35,z+.42,{});
+      S.box(.53,.059,.07,slotDark,x-.12,.46,z+.47,{});
+      S.box(.49,.016,.04,trim,x-.12,.39,z+.482,{});
+      S.box(.12,.045,.02,S.basic(0xc6dfbe),x+.415,1.07,z+.48,{});
       /* delivery flap + base */
-      S.box(0.60, 0.30, 0.05, mat(0x1b2634), x - 0.12, 0.35, z + 0.43, {});
+      S.box(0.59, 0.26, 0.05, mat(0x1b2634), x - 0.12, 0.35, z + 0.43, {});
       S.box(1.02, 0.10, 0.82, mat(0x2a3646), x, 0.06, z, {});
       /* top light box */
       S.plane(0.86, 0.10, S.basic(0xffffff, { map: S.tex.label(warm ? 'あたたかい' : 'つめたい', '', warm ? '#a8324c' : '#24538c', '#f4f9ff'), transparent: true }), x, 2.14, z + 0.44, {});
@@ -181,8 +200,8 @@
     S.tube([[x, 4.92, z], [x, 5.14, z + 0.35], [x, 5.16, z + 1.05], [x, 5.12, z + 1.32]], 0.055, mat(0x8b9aab));
     S.box(0.50, 0.12, 0.78, mat(0x5b6b7e), x, 5.06, z + 1.28, {});
     S.box(0.42, 0.025, 0.68, S.basic(0xdcefff), x, 4.99, z + 1.28, {});
-    S.glow(x, 4.92, z + 1.28, 0xb9dcff, 3.6, .42);
-    S.glow(x, 5.02, z + 1.28, 0xeaf6ff, 1.6, .32);
+    S.glow(x, 4.92, z + 1.28, 0xb2d3e7, 2.55, .22);
+    S.glow(x, 5.02, z + 1.28, 0xd4e5ed, 1.20, .20);
     S.plane(0.20, 0.28, S.basic(0xffffff, { map: S.tex.label('2-1', '', '#e8eef2', '#4b5a68'), transparent: true }), x, 2.10, z + 0.09, {});
   }
 

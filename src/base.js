@@ -17,7 +17,19 @@
     var side = S.toon(0x2b364b);
     var trim = S.toon(0x4a5b78);
     var curb = S.toon(0x8b95a6);
-    var white = S.basic(0xdfe9f2, { transparent: true, opacity: 0.86 });
+    var white = S.basic(0xdfe9e2, { transparent:true, opacity:.86 });
+    var crossingPaint=S.makeTex(64,192,function(ctx,w,h){
+      ctx.fillStyle='#d9d9cc';ctx.fillRect(0,0,w,h);
+      var seed=64697;
+      function next(){seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;}
+      for(var i=0;i<340;i++){
+        var x=next()*w, y=next()*h, tone=next();
+        var edge=Math.min(x,w-x,y,h-y)<3;
+        ctx.fillStyle='rgba(23,33,41,'+(edge?.55:.08+tone*.43)+')';
+        ctx.fillRect(x,y,1+next()*1.8,.65+next()*3.4);
+      }
+    });
+    var stripe=S.basic(0xffffff,{map:crossingPaint,transparent:true,opacity:.87,depthWrite:false});
 
     /* ---- plinth ---- */
     var slab = S.box(28, 0.9, 26, side, 0, -0.45, 0, { cast: true, outline: true, outlineColor: 0x0b1322, outlineOpacity: 0.8 });
@@ -31,7 +43,7 @@
     groundPlane(26, 26, S.basic(0xffffff, { map: haloTex, transparent: true, depthWrite: false, opacity: 0.9 }), 0, -0.97, 0);
 
     /* ---- asphalt ---- */
-    var asphalt = S.toon(0xffffff, { map: S.tex.asphalt(), color: 0xffffff });
+    var asphalt = S.toon(0xd2d9d6, { map: S.tex.asphalt() });
     groundPlane(28, 26, asphalt, 0, 0.008, 0);
 
     /* a cool ambient wash over the whole road */
@@ -82,8 +94,8 @@
     /* zebra crossing across the corner road */
     for (var z = 0; z < 12; z++) {
       var cx = 4.9 + z * 0.48;
-      groundPlane(0.34, 1.55, white, cx, 0.024, 2.15, 0);
-      groundPlane(0.34, 1.55, S.basic(0x8fbce8, { transparent: true, opacity: .20, blending: T.AdditiveBlending, depthWrite: false }), cx, 0.027, 2.15, 0);
+      groundPlane(0.34, 1.55, stripe, cx, 0.024, 2.15, z%2?0:Math.PI);
+      groundPlane(0.34, 1.55, S.basic(0x8fbce8, { transparent: true, opacity: .065, blending: T.AdditiveBlending, depthWrite: false }), cx, 0.027, 2.15, 0);
     }
     /* stop line + painted characters */
     groundPlane(4.9, 0.13, white, 7.6, 0.023, 3.35, 0);

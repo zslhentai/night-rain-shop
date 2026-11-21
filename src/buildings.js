@@ -4,25 +4,65 @@
   function label(text, w, h, x, y, z, bg, fg, parent) {
     return S.plane(w, h, S.basic(0xffffff, { map: S.tex.label(text, '', bg, fg) }), x, y, z, { parent: parent });
   }
-  function building(x, z, w, d, h, color, name) {
+  function wallFinish(style) {
+    return S.makeTex(512,768,function(ctx,w,h){
+      var rng=style*2053+31;
+      function next(){rng=(Math.imul(rng,1664525)+1013904223)>>>0;return rng/4294967296;}
+      var wash=ctx.createLinearGradient(0,0,0,h);
+      wash.addColorStop(0,'#a6abae');wash.addColorStop(.48,'#919da3');wash.addColorStop(.88,'#a3a6a6');wash.addColorStop(1,'#737e86');
+      ctx.fillStyle=wash;ctx.fillRect(0,0,w,h);
+      var tileH=[26,68,37,30][style], tileW=[72,155,34,105][style];
+      for(var y=0;y<h;y+=tileH){
+        for(var x=-(y/tileH%2)*tileW*.5;x<w;x+=tileW){
+          ctx.fillStyle=next()<.5?'rgba(30,42,49,.10)':'rgba(245,237,215,.08)';
+          ctx.fillRect(x,y,tileW-2,tileH-2);
+        }
+        ctx.fillStyle='rgba(41,54,61,.18)';ctx.fillRect(0,y,w,1);
+      }
+      for(var drip=0;drip<60;drip++){
+        var x0=next()*w,y0=next()*h,length=8+next()*75;
+        var stain=ctx.createLinearGradient(x0,y0,x0,y0+length);
+        stain.addColorStop(0,'rgba(33,45,47,.13)');stain.addColorStop(1,'rgba(33,45,47,0)');
+        ctx.fillStyle=stain;ctx.fillRect(x0,y0,2+next()*9,length);
+      }
+    });
+  }
+  function building(x, z, w, d, h, color, name, style) {
     var g = S.group(); g.position.set(x, 0, z);
-    var wall = S.toon(color), trim = S.toon(0x283546), frame = S.toon(0x8a989f);
-    S.box(w, h, d, wall, 0, h / 2, 0, { parent: g, cast: true });
-    S.box(w + .2, .18, d + .2, trim, 0, h + .06, 0, { parent: g });
-    for (var row = 0; row < Math.floor(h / 2); row++) {
-      for (var col = 0; col < 3; col++) {
-        var wx = (col - 1) * w / 3.5, wy = 1.1 + row * 1.9;
-        S.box(.85, 1.05, .08, frame, wx, wy, d / 2 + .04, { parent: g });
-        var warm = (row + col) % 3 === 0;
-        S.plane(.73, .91, S.basic(warm ? 0xc6a778 : 0x293b51), wx, wy, d / 2 + .09, { parent: g });
-        S.box(.035, .94, .04, trim, wx, wy, d / 2 + .12, { parent: g });
+    var wall = S.phong(color,{map:wallFinish(style),shininess:4});
+    var trim = S.toon(0x27333c), frame = S.toon(0x5d6b70), roof=S.toon(0x303d49);
+    S.box(w, h, d, wall, 0, h / 2, 0, { parent:g, cast:true });
+    S.box(w+.14,.16,d+.14,roof,0,h+.055,0,{parent:g});
+    S.box(w+.07,.23,.085,trim,0,h+.24,d/2,{parent:g});
+    S.box(w+.07,.23,.085,trim,0,h+.24,-d/2,{parent:g});
+    [-1,1].forEach(function(side){
+      S.box(.085,.23,d,trim,side*w/2,h+.24,0,{parent:g});
+    });
+    S.box(w,.24,.10,trim,0,.18,d/2+.02,{parent:g});
+    for (var row=0;row<Math.floor(h/2);row++) {
+      var wy=1.16+row*1.83;
+      if(row>0) S.box(w+.05,.075,.11,trim,0,wy-.67,d/2+.025,{parent:g});
+      for (var col=0;col<3;col++) {
+        if(row===0 && col===0) continue;
+        var wx=(col-1)*w/3.5;
+        var width=style===1 ? 1.02 : style===2 ? .69 : .83;
+        var warm=(row*3+col+style)%7===2;
+        S.box(width+.14,1.04,.09,trim,wx,wy,d/2+.035,{parent:g});
+        S.plane(width,.88,S.basic(warm ? 0x9c875f : 0x283747),wx,wy,d/2+.087,{parent:g});
+        S.box(.026,.89,.025,frame,wx,wy,d/2+.102,{parent:g});
+        S.box(width+.20,.065,.16,frame,wx,wy-.50,d/2+.065,{parent:g});
+        if(warm) S.box(width*.29,.88,.02,S.toon(0x706959),wx-width*.346,wy,d/2+.097,{parent:g});
       }
     }
-    S.box(.85, 1.6, .1, trim, -w * .33, .85, d / 2 + .1, { parent: g });
-    S.box(.06, .1, .04, frame, -w * .33 + .28, .9, d / 2 + .17, { parent: g });
-    S.box(1.2, .1, .7, trim, -w * .33, 1.8, d / 2 + .25, { parent: g });
-    label(name, w * .65, .32, 0, h - .28, d / 2 + .12, '#263444', '#b5c4c9', g);
-    S.layout.shelters.push({ x0: x - w / 2, x1: x + w / 2, z0: z - d / 2, z1: z + d / 2, height: h + .2 });
+    var door=-w*.33;
+    S.box(.89,1.77,.1,trim,door,.94,d/2+.06,{parent:g});
+    S.box(.62,.55,.014,S.basic(0x536171),door,1.24,d/2+.115,{parent:g});
+    S.box(.035,.22,.04,frame,door+.26,.90,d/2+.14,{parent:g});
+    S.box(1.10,.11,.53,roof,door,1.94,d/2+.24,{parent:g});
+    S.box(.62,.30,.07,frame,door+.89,.94,d/2+.052,{parent:g});
+    S.box(.49,.021,.018,trim,door+.89,1.02,d/2+.093,{parent:g});
+    label(name,Math.min(1.28,w*.34),.15,door,1.79,d/2+.12,'#343e44','#aab3ab',g);
+    S.layout.shelters.push({ x0:x-w/2,x1:x+w/2,z0:z-d/2,z1:z+d/2,height:h+.36 });
     return g;
   }
   function lamp(x, z) {
@@ -43,7 +83,16 @@
     S.box(1.55, .1, 1.8, paint, 0, 1.48, -.05, { parent: g });
     [-.71, .71].forEach(function (x) { S.box(.08, .65, 1.7, paint, x, 1.12, -.05, { parent: g }); });
     [-.84, .84].forEach(function (x) { [-.9, .9].forEach(function (z) { S.cyl(.29, .29, .16, 12, rubber, x, .29, z, { rz: Math.PI / 2, parent: g }); }); });
-    [-.55, .55].forEach(function (x) { S.box(.35, .16, .04, S.basic(0xc9c8aa), x, .6, 1.47, { parent: g }); });
+    var bumper=S.toon(0x35434a), lens=S.phong(0xa99e7b,{shininess:26});
+    [-1,1].forEach(function (side) {
+      S.box(1.60,.14,.12,bumper,0,.39,side*1.49,{parent:g});
+      S.box(.43,.137,.02,S.basic(0xc9cfba),0,.51,side*1.56,{parent:g});
+      [-.55,.55].forEach(function(x){
+        S.box(.34,.17,.035,side>0?lens:S.phong(0x984f49),x,.62,side*1.48,{parent:g});
+      });
+      S.box(.22,.14,.27,paint,side*.84,1.16,.64,{parent:g});
+      S.box(.018,.055,.22,bumper,side*.836,1.02,.23,{parent:g});
+    });
   }
   S.buildNeighborhood = function () {
     var asphalt = S.toon(0xffffff, { map: S.tex.asphalt() });
@@ -65,7 +114,7 @@
       S.world.add(new T.Mesh(geometry, curb));
     }
     ramp(3.4,4.7,.06,.009); ramp(10.6,11.5,.009,.085);
-    building(-11.8, -7.6, 3.4, 5.8, 5.3, 0x424a59, '夜灯食堂');
+    building(-11.8, -7.6, 3.4, 5.8, 5.3, 0x53605b, '夜灯食堂', 0);
     var diner = S.group(); diner.position.set(-11.8, 0, -4.65);
     S.box(3.7, 1.8, .08, S.toon(0x293343), 0, 1, 0, { parent: diner });
     label('夜灯食堂', 3.3, .55, 0, 2.45, .1, '#554533', '#e6bd83', diner);
@@ -82,9 +131,9 @@
       })(panel, c * .7);
     }
     S.layout.shelters.push({ x0: -14, x1: -9.6, z0: -4.7, z1: -3.6, height: 2.3 });
-    building(-6.3, -11.2, 5.1, 3.2, 5.9, 0x303c50, '月見ハイツ');
-    building(.2, -11.3, 5, 3, 7.3, 0x344154, '夜灯');
-    building(6.7, -11.4, 5.2, 2.8, 5.5, 0x3d4656, '二丁目');
+    building(-6.3, -11.2, 5.1, 3.2, 5.9, 0x3d4c56, '月見ハイツ', 1);
+    building(.2, -11.3, 5, 3, 7.3, 0x4c514f, '夜灯', 2);
+    building(6.7, -11.4, 5.2, 2.8, 5.5, 0x45545b, '二丁目', 3);
     // Complete the existing residence entrance and mailboxes.
     S.box(1.4, .1, .8, curb, 6.6, .08, -5.05, {});
     S.box(1.5, .12, .9, S.toon(0x566779), 6.6, 2.05, -5.15, {});

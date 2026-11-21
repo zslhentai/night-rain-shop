@@ -196,7 +196,8 @@
 
   tex.asphalt = function () {
     return S.makeTex(512, 512, function (x, w, h) {
-      x.fillStyle = '#202a3c'; x.fillRect(0, 0, w, h);
+      x.fillStyle = grad(x,0,0,w,h,[[0,'#26313a'],[.35,'#202a35'],[.71,'#283238'],[1,'#253038']]);
+      x.fillRect(0,0,w,h);
       for (var k = 0; k < 3200; k++) {
         var v = S.rand();
         x.fillStyle = v > 0.86 ? 'rgba(150,180,215,.10)' : 'rgba(5,9,18,.20)';
@@ -212,7 +213,14 @@
 
   tex.pavement = function () {
     return S.makeTex(512, 512, function (x, w, h) {
-      x.fillStyle = '#4d596b'; x.fillRect(0, 0, w, h);
+      x.fillStyle='#4c555d';x.fillRect(0,0,w,h);
+      for(var row=0;row<4;row++) for(var col=0;col<4;col++){
+        var y0=row*128,x0=col*128;
+        x.fillStyle=(row+col*3)%3===0?'rgba(192,180,154,.075)':'rgba(38,45,48,.095)';
+        x.fillRect(x0+2,y0+2,124,124);
+        x.strokeStyle='rgba(190,198,196,.14)';x.lineWidth=1;
+        x.beginPath();x.moveTo(x0+5,y0+124);x.lineTo(x0+124,y0+124);x.lineTo(x0+124,y0+5);x.stroke();
+      }
       x.strokeStyle = 'rgba(25,34,48,.65)'; x.lineWidth = 4;
       for (var i = 0; i <= 4; i++) {
         x.beginPath(); x.moveTo(i * 128, 0); x.lineTo(i * 128, h); x.stroke();

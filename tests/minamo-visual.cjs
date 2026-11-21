@@ -29,14 +29,14 @@ async function run() {
     page.on('response',response=>{
       if (response.status()>=400 && !response.url().endsWith('/favicon.ico')) errors.push(response.status()+' '+response.url());
     });
-    for (const [release,dir] of [['v6','baseline-v6/'],['fusion','./']]) {
+    for (const [release,dir] of [['before','baseline-v6/'],['after','./']]) {
       const url = new URL(dir,base);
       url.searchParams.set('quality',mobile?'low':'high');
       url.searchParams.set('shot','1');
       url.searchParams.set('view','overview');
       await page.goto(url.href);
       await page.waitForFunction(()=>window.S?.coolerSampleState==='ready' && window.captureFrame,{},{timeout:60000});
-      for (const view of ['overview','entrance', ...(release==='fusion'?['corner','aisle']:[])]) {
+      for (const view of ['corner','overview','entrance', ...(release==='after'?['stop','diner','aisle']:[])]) {
         await page.evaluate(view=>{
           S.setView(view);
           captureFrame(performance.now());
@@ -53,14 +53,14 @@ async function run() {
             reflection:reflection?.visible??false,reflectionWidth:target?.width,reflectionHeight:target?.height};
         });
         assert(measures.calls>0);
-        if(release==='fusion'){
-          assert.equal(measures.reflection,view!=='aisle');
+        if(release==='after'){
+          assert.equal(measures.reflection,['overview','entrance','corner'].includes(view));
           assert.equal(Math.max(measures.reflectionWidth,measures.reflectionHeight),mobile?300:640);
         }
         console.log(release,view,JSON.stringify(measures));
         await page.screenshot({path:folder+'/'+release+'-'+view+'.jpg',type:'jpeg',quality:88,timeout:60000});
       }
-      if(release==='fusion'){
+      if(release==='after'){
         await page.locator('#exit-photo').click();
         // Refresh the disabled shopping action after lazy stock and cabinet mounts.
         await page.evaluate(()=>{for(let i=0;i<6;i++)S.updaters.forEach(fn=>fn(.1*i,.1));});

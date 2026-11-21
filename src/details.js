@@ -101,6 +101,39 @@
     for (var dash = 0; dash < 7; dash++) {
       S.groundPlane(.045, .38, mark, stop.curbX - .16, .018, stop.boardingZ - .8 + dash * .62);
     }
+    // The information panel is readable from the boarding lane.
+    var timetable=S.makeTex(256,320,function(ctx,w,h){
+      ctx.fillStyle='#e1d8bd';ctx.fillRect(0,0,w,h);
+      ctx.fillStyle='#42605b';ctx.fillRect(0,0,w,62);
+      ctx.fillStyle='#f3e9cc';ctx.font='bold 23px '+S.FONT;ctx.fillText('夜灯二丁目',18,32);
+      ctx.font='14px '+S.FONT;ctx.fillText('夜灯駅方面  /  02・07',18,53);
+      ctx.strokeStyle='#56796c';ctx.lineWidth=5;ctx.beginPath();
+      ctx.moveTo(36,100);ctx.lineTo(111,100);ctx.lineTo(155,146);ctx.lineTo(217,146);ctx.stroke();
+      [[36,100],[111,100],[155,146],[217,146]].forEach(function(p){
+        ctx.beginPath();ctx.arc(p[0],p[1],5,0,Math.PI*2);ctx.fill();
+      });
+      ctx.fillStyle='#3b4b44';ctx.font='bold 19px '+S.FONT;
+      ctx.fillText('発車時刻',19,193);
+      ['21    08    27    49','22    12    31    54','23    17    43'].forEach(function(row,i) {
+        ctx.fillStyle=i%2?'#c4cec1':'#d0d5c3';ctx.fillRect(16,210+i*29,w-32,29);
+        ctx.fillStyle='#3c5550';ctx.font='17px monospace';ctx.fillText(row,23,230+i*29);
+      });
+    });
+    S.box(.042,.83,.68,dark,13.56,1.68,6.37,{});
+    S.plane(.62,.77,S.basic(0xffffff,{map:timetable}),13.535,1.68,6.37,{ry:-Math.PI/2});
+    S.box(.09,.037,1.14,steel,13.34,2.977,6.05,{});
+    S.box(.064,.027,1.02,S.basic(0xf4d8aa),13.34,2.945,6.05,{});
+    S.glow(13.32,2.906,6.05,0xffdeaf,1.14,.16);
+    S.box(1.57,.05,.075,dark,12.83,2.95,8.68,{});
+    S.plane(1.2,.18,S.basic(0xffffff,{
+      map:S.tex.label('夜灯二丁目','', '#2a4948','#ddd3b4')
+    }),12.83,3.02,8.91,{});
+    // Kerb inlets anchor the wet streaks and sit flush with the carriageway.
+    [[-5.08,.98],[1.98,.98],[5.04,2.97],[10.65,3.02]].forEach(function(p){
+      S.groundPlane(.50,.32,S.phong(0x576067,{shininess:17}),p[0],.020,p[1]);
+      grate(p[0],p[1],.42,.24,.023);
+      wet(p[0],p[1]+.21,.87,.66,.029,.22);
+    });
     // Thin runoff bands follow curb edges, without covering the crossing.
     wet(11.4, 7.3, .26, 4.3, .03, .45);
     wet(1.4, .95, 3, .25, .035, .35);

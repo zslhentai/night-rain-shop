@@ -18,7 +18,7 @@ jobs:
       - uses: actions/checkout@v4
         if: github.ref_name == 'feat/minamo-fusion'
         with:
-          ref: bfcd66b3c39fbb48337812b1048b289f5403a622
+          ref: 1b12c613bf4ee799b916ad369c1e5e5cf1a9c59c
           path: baseline-v6
       - uses: actions/setup-node@v4
         with:
