@@ -73,17 +73,27 @@
     var coldDoorButton = document.getElementById('cold-door');
     var inspectButton = document.getElementById('inspect-product');
     var walkHint = document.getElementById('street-walk-hint');
+    var walkStreet = document.getElementById('walk-street');
+    walkStreet.onclick=function(){
+      document.querySelector(S.view==='street-walk'?'[data-view="corner"]':'[data-view="street-walk"]').click();
+    };
     function refreshWalkControls() {
       var outside = !S.isWalkView(S.view);
       if(walkControls.hidden!==outside) walkControls.hidden=outside;
       if(joystick.hidden!==outside) joystick.hidden=outside;
       var inStore=S.isStoreView(S.view);
-      inspectButton.hidden=!inStore;
+      if(inspectButton.hidden===inStore) inspectButton.hidden=!inStore;
+      var streetActive=S.view==='street-walk';
+      var walkLabel=streetActive?'返回街角':'街上漫步';
+      if(walkStreet.textContent!==walkLabel){
+        walkStreet.textContent=walkLabel;
+        walkStreet.setAttribute('aria-pressed',String(streetActive));
+      }
       walkHint.hidden=S.view!=='street-walk' || inStore;
       if(!walkHint.hidden){
         var p=S.camera.position;
         var zone=S.streetZone(p), atCrossing=p.z>1.28 && p.z<3.03 && (p.x>3.5 && p.x<5 || p.x>10.4 && p.x<12.4);
-        var hint=atCrossing ? (S.traffic.canEnter?'绿灯 · 可过街':'沿斑马线过街 · 等待绿灯') :
+        var hint=atCrossing ? (S.traffic.canEnter?'绿灯 · 可过街':S.traffic.pedestrianGreen?'绿灯闪烁 · 等待下一轮':'沿斑马线过街 · 等待绿灯') :
           p.x>11.5 ? '沿人行道往斑马线走' : zone==='awning' ? '走近玻璃门即可进店' : '沿人行道可到店门、食堂和后巷';
         if(hint!==walkHint.textContent) walkHint.textContent=hint;
       }

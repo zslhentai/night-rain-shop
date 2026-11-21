@@ -162,7 +162,7 @@
     S.cyl(.045, .045, 2.7, 8, metal, 13.25, 1.435, 5.45, {});
     label('夜灯二丁目', .7, .8, 13.25, 2.385, 5.50, '#385964', '#dce8db');
     // Detailed bench and shelter are assembled in details.js.
-    lamp(12.6, 4.4); lamp(-11.8, 1.6); lamp(1.5, 11.7);
+    lamp(12.6, 4.4); lamp(-11.8, 1.6); lamp(-3.7, 11.7);
     car();
     // Pedestrian lamps share one phase with the road signal.
     var pedestrianLights = [];
@@ -178,7 +178,8 @@
 
       pedestrianLights.forEach(function (light) {
         light.red.color.setHex(S.traffic.pedestrianGreen ? 0x362b31 : 0xe88877);
-        light.green.color.setHex(S.traffic.pedestrianGreen ? 0x8ed6b3 : 0x233a35);
+        var green=S.traffic.pedestrianGreen && (S.traffic.canEnter || Math.floor(t*3)%2===0);
+        light.green.color.setHex(green ? 0x8ed6b3 : 0x233a35);
       });
     });
   };

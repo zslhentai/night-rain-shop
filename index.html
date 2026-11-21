@@ -66,6 +66,8 @@
   #asset-notice {position:fixed;top:8px;left:8px;background:#17282c;color:white;padding:7px;z-index:2;font:12px system-ui;}
   #dock { gap:8px; }
   #views-toggle { display:none; }
+  #walk-street { display:none; }
+  #street-walk-hint { margin:.28rem 0; color:#edf4ee; text-shadow:0 1px 4px #07131b; font-size:.82rem; }
   #product-card { flex-wrap:wrap; width:max-content; max-width:calc(100% - 36px); }
   #product-card strong { font-size:15px; }
   .inspecting #joystick, .inspecting #walk-controls, .inspecting #view-list, .inspecting #cooler-picker,
@@ -75,6 +77,7 @@
   #vignette { opacity:.70; }
   @media(max-width:650px), (pointer:coarse) {
     #views-toggle { display:inline-block; }
+    #walk-street { display:inline-block; }
     #view-list:not(.expanded) { display:none; }
     #controls { bottom:max(8px, env(safe-area-inset-bottom)); gap:4px; }
     #view-list.expanded { display:flex; flex-wrap:wrap; justify-content:center; }
@@ -135,7 +138,7 @@
     <button type="button" id="mouse-lock" aria-pressed="false">锁定鼠标</button>
     <button type="button" id="cold-door" hidden>打开冷柜</button>
   </div>
-  <p id="street-walk-hint" hidden style="margin:.28rem 0;color:#edf4ee;text-shadow:0 1px 4px #07131b;font-size:.82rem">沿人行道往斑马线走</p>
+  <p id="street-walk-hint" hidden>沿人行道往斑马线走</p>
   <nav class="toolbar" id="view-list" aria-label="场景镜头">
     <button type="button" data-view="corner" aria-pressed="true">街角</button>
     <button type="button" data-view="overview" aria-pressed="false">全景</button>
@@ -161,6 +164,7 @@
     <span id="audio-status" role="status"></span>
   </div>
   <div id="dock" class="toolbar">
+    <button type="button" id="walk-street" aria-pressed="false">街上漫步</button>
     <button type="button" id="views-toggle" aria-expanded="false" aria-controls="view-list">镜头</button>
     <button type="button" id="errand-start">买份夜宵</button>
     <button type="button" id="settings-toggle" aria-expanded="false" aria-controls="settings-list">设置</button>

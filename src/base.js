@@ -63,8 +63,7 @@
     groundPlane(.43,1.28,approach,11.92,.090,2.16);
 
     /* ---- alley floor (left of the shop) ---- */
-    groundPlane(3.35, 7.1, S.toon(0x2b3547, { map: S.tex.asphalt() }), -7.85, 0.015, -5.1);
-    groundPlane(3.0, 6.6, S.basic(0x132238, { transparent: true, opacity: .35, depthWrite: false }), -7.85, 0.018, -5.1);
+    groundPlane(3.35, 7.1, S.toon(0x929c9e, { map: S.tex.asphalt() }), -7.85, 0.018, -5.1);
 
     /* ---- drainage grates ---- */
     var drainMat = S.basic(0xffffff, { map: S.tex.drain(), transparent: true, opacity: 0.95 });

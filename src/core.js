@@ -137,8 +137,8 @@ window.S = window.S || {};
     drinks: { eye: [-.8,1.65,-6.7], target: [-1.6,1.25,-8.1], fov: 74 },
     diner: { eye: [-12.85, 2.2, .15], target: [-11.8, 1.42, -4.25],
       portraitEye: [-12.6, 2.05, .75], portraitTarget: [-11.8, 1.48, -4.25], fov: 51 },
-    alley: {eye:[-7.90,1.86,.55], target:[-7.85,1.42,-6.1],
-      portraitEye:[-7.9,1.77,.45],portraitTarget:[-7.84,1.46,-5.8], fov:51},
+    alley: {eye:[-7.92,1.71,-2.37], target:[-7.9,1.29,-6.38],
+      portraitEye:[-7.92,1.68,-2.20],portraitTarget:[-7.89,1.32,-6.38], fov:53},
     'street-walk': {eye:[12.18,1.685,7.6],target:[11.94,1.60,2.15],fov:61},
     stop: { eye: [11.48, 2.22, 10.4], target: [13.0, 1.58, 6.96],
       portraitEye: [11.52, 2.12, 11.05], portraitTarget: [13.0, 1.66, 6.96], fov: 55 }
